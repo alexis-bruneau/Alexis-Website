@@ -9,11 +9,13 @@ html {
 
 body{
     color:#343434; 
+    background-color: #f7f7f7;
     margin: 0;   
     padding: 0;
     font-family: 'Montserrat', sans-serif;
     font-size: 18px;
     line-height: 1.25;
+    
 }
 
 
@@ -102,6 +104,7 @@ header{
 }
 .projects-item {
     overflow: hidden;
+    background-color: transparent;
 }
 
 
@@ -143,6 +146,13 @@ footer {
 .contact-list a{
     padding: 15px;
     display: inline-block;
+}
+
+/* Carousel
+-------------------------------------*/
+.carousel-control {
+    background-color: transparent;
+    
 }
 
 
