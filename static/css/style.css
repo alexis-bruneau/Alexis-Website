@@ -57,6 +57,13 @@ h1, h2 {
     padding: 60px 0;
 }
 
+.content-wrap-footer {
+    max-width: 800px;
+    width: 85%;
+    margin: 0 auto;
+    padding: 30px 0;
+}
+
 h3 {
     margin-bottom: 0;
 }
@@ -146,7 +153,7 @@ header h1 {
 -------------------------------------*/
 footer {
     background: #343434;
-    color: #f7f7f7;    
+    color: #f7f7f7;   
 }
 .contact-list{
     list-style-type: none;
