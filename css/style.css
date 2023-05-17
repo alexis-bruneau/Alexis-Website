@@ -33,6 +33,7 @@ a:hover {
 h1 {
     font-size: 64px;
     line-height: 1;
+    margin-bottom: 20px !important;
 }
 
 header h1 {
@@ -170,6 +171,31 @@ footer {
     min-height: 250px;
 
 }
+
+/* Grayscale page
+-------------------------------------*/
+/* Grayscale Results section */
+.grayscale-results {
+    text-align: center;
+    background: #ffffff;
+  }
+  
+  .grayscale-results h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  
+  .grayscale-results .image-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .grayscale-results img {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+  }
+  
 
 /* Responsive
 -------------------------------------*/
