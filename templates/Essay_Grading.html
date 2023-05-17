@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>Automated Essay Scoring</h1>
+        <p>
+            An end-to-end pipeline was developed to autonomously grade 8th to 12th student essays across the following criteria cohesion, syntax, vocabulary, phraseology,
+             grammar, and conventions. Leveraging advanced pre-trained transformer-based
+             neural language models including Deberta, BERT, and Hugging Face Transformers,
+             the project involved significant work in preprocessing and cleaning a dataset of English
+             essays from students in grades 8-12. The dataset can be found here
+             <a href="https://www.kaggle.com/competitions/feedback-prize-english-language-learningl">Kaggle Dataset</a>.
+        </p> 
+        <p>
+            The project involved intricate data manipulation techniques, such as stemming, stop word removal and vocabulary reduction. Notably, the project also involved careful handling 
+            of long essays through various text length control methods, 
+            along with data rebalancing and tokenization for optimal model performance.
+
+            The project demanded the design and implementation of a multi-approach pooling method for effective feature extraction. This was complemented by a
+            custom-built neural network architecture comprising two dense layers for regression. A Multi-level hyperparameter tuning played a crucial role in reducing the model's loss.
+            Our model achieved competitive results with the Kaggle competition winnner. A presentation of our project can be found in the video underneath.
+        </p>    
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="grayscale-results">
+        <div class="content-wrap">
+            <h2>Results</h2>
+            <div class="video-responsive">
+                <iframe src="https://www.youtube.com/embed/fNbPEZ__sWo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </section>
+    
+      
+
+      <footer>
+        <div id="contact"></div>
+      </footer>    
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>
