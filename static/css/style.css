@@ -33,7 +33,13 @@ a:hover {
 h1 {
     font-size: 64px;
     line-height: 1;
+    margin-bottom: 20px !important;
 }
+
+header h1 {
+    margin-top: 30px;
+  }
+  
 
 h2 {
   font-size: 32px;
@@ -49,6 +55,13 @@ h1, h2 {
     width: 85%;
     margin: 0 auto;
     padding: 60px 0;
+}
+
+.content-wrap-footer {
+    max-width: 800px;
+    width: 85%;
+    margin: 0 auto;
+    padding: 30px 0;
 }
 
 h3 {
@@ -78,7 +91,10 @@ header{
     color: #f7f7f7;    
 }
 
-
+header h1 {
+    margin-top: 0;
+    padding-top: 30px; /* Adjust the padding-top value as needed */
+  }
 
 /* Projects
 -------------------------------------*/
@@ -137,7 +153,7 @@ header{
 -------------------------------------*/
 footer {
     background: #343434;
-    color: #f7f7f7;    
+    color: #f7f7f7;   
 }
 .contact-list{
     list-style-type: none;
@@ -162,6 +178,47 @@ footer {
     min-height: 250px;
 
 }
+
+/* Grayscale page
+-------------------------------------*/
+/* Grayscale Results section */
+.grayscale-results {
+    text-align: center;
+    background: #ffffff;
+  }
+  
+  .grayscale-results h2 {
+    font-size: 32px;
+    margin-bottom: 20px;
+  }
+  
+  .grayscale-results .image-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .grayscale-results img {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+  }
+/* Essay Grading Video ----------------------- */
+.video-responsive {
+    position: relative;
+    padding-bottom: 56.25%; /* Aspect ratio for 16:9 */
+    padding-top: 30px; /* IE6 workaround*/
+    height: 0;
+    overflow: hidden;
+}
+
+.video-responsive iframe {
+    position: absolute;
+    top: 0; 
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
 
 /* Responsive
 -------------------------------------*/

@@ -13,16 +13,21 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"> 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/menu_bar.css">
+   
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="/static/js/MenuBar.js"></script>
+    <script src="/static/js/Email.js"></script>
+    <script src = "/static/js/GreyScale_FileUpload.js"></script>
+
   </head>
   <body>
+    <!-- ***********************  Side Bar  *********************** -->
+    <div id="menu"></div>
+    
     <main>
       <!-- ***********************  ABOUT / PROFILE  *********************** -->
       <header>
@@ -68,7 +73,7 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
                                                                   
                   <!-- Copy the whole <section> block to add more projects. -->
                   <section class = "projects-item">
-                    <img src="images/Decision-Tree.jpg" alt="description of image">
+                    <img src="/static/images/Decision-Tree.jpg" alt="description of image">
                     <h3>Machine Learning - Regression Models</h3> 
                     <p> The purpose of the project is to predict the number of bike rented using three different
                       regression models: OLS, Locally Weighted, and Poisson.</p>
@@ -80,7 +85,7 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
               <div class="item">
                 <section class="projects">
                   <section class = "projects-item">                    
-                    <img src="images/3D_Point_Cloud.png" alt="description of image">
+                    <img src="/static/images/3D_Point_Cloud.png" alt="description of image">
                     <h3>Feature Point Detection & 3D Point Cloud Registration</h3>
                     <p>This 2 part project consist of matching features between stereo camera pairs,
                       and taking a rigid transform from one point cloud to another such that they align.</p>
@@ -92,7 +97,7 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
               <div class="item">
                 <section class="projects">
                   <section class = "projects-item">                    
-                    <img src="images/Ordinal_Logistic_Regression.jpg" alt="description of image">
+                    <img src="/static/images/Ordinal_Logistic_Regression.jpg" alt="description of image">
                     <h3>Machine Learning - Ordinal Logistic Regression</h3>
                     <p> The goal of this project is to implement ordinal logistic regression to 
                       predict the yearly compensation of each participants.</p>
@@ -113,36 +118,7 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
             <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
             <span class="sr-only">Next</span>
           </a>
-        </div>
-      
-
-      <!-- ***********************  Project delete later *********************** 
-      <section class="projects">
-        <div class = "content-wrap divider">
-          <h2>Projects</h2>
-          
-
-          
-          <section class = "projects-item">
-            <img src="images/Image-Classification.webp" alt="description of image">
-            <h3>Image Classification CNN (coming soon) </h3> 
-            <p>This project will consist of classifying objects from images using machine learning.
-            More specifically, a convolutional neural network will be used to train an algorithm to detect different objects from pictures. </p>
-            <a class = "btn" href="https://github.com/alexis-bruneau/UoftProjects/tree/main/Image-Classification-CNN" target="_blank">View project</a>
-          </section>
-
-          <section class = "projects-item">
-            <img src="images/Decision-Tree.jpg" alt="description of image">
-            <h3>Decision Tree Analysis (coming soon)</h3>
-            <p>The purpose of the project is to use the supervised learning method of decision trees to do a classification and regression analysis for a specific case study.</p>
-            <a class = "btn" href="https://github.com/alexis-bruneau/UoftProjects/tree/main/Decision-Tree-Analysis" target="_blank">View project</a>
-          </section>
-          
-        
-        </div>
-      </section>
-      End of Project block. -->
-     
+        </div>    
 
       <!-- ***********************  WORK EXPERIENCE  *********************** -->
       <section class="work-experience">
@@ -263,17 +239,28 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
 
       <!-- *****************  CONTACT INFO / SOCIAL MEDIA  ***************** -->
       <footer>
+        <div id="contact"></div>
+
+        <!-- 
         <div class = "content-wrap">
           <h2>Let's Keep in Touch!</h2>
 
-          <!-- Social media and contact links. Add or remove any networks. -->
-          <ul class="contact-list">
+         
+          <ul class="contact-list" id="contact-list">
             <li><a href="https://github.com/alexis-bruneau/UoftProjects" target="_blank">GitHub Projects</a></li>                                   
             <li><a href="https://www.linkedin.com/in/alexisbruneau/" target="_blank">LinkedIn</a></li>            
+             <li><a id="email-link">Email</a></li>
           </ul>
-        </div>     
+        </div>     -->
       </footer>
     </main>
-    <script src="JS/Carousel.js"></script>
+    <script src="/static/js/Carousel.js"></script>
+    <script>
+      $(document).ready(function(){
+          $("#menu").load("menu_bar.html");
+          $("#contact").load("Contact.html")
+      });
+      </script>
+      
   </body>
 </html>

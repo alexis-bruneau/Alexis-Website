@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>Grayscale to Coloured Image </h1>
+        <p>
+            Image Colorization using cGAN is a project aimed at transforming grayscale 
+            images into colourized images. Using a cGAN, I developed and trained a model specifically designed
+            for image colorization.
+        </p>
+        <p>
+            To improve the model's performance, I implemented skip connections
+            within the U-Net architecture, enabling better feature extraction and 
+            resulting in more accurate and detailed colorization results. Through extensive
+            hyperparameter tuning, I optimized the model's performance, showcasing my understanding of how different parameters impact training and outcomes.
+        </p>
+        <p> 
+            Rather than relying on the traditional RGB color space, I leveraged the
+            LAB color space representation, offering greater flexibility in capturing
+             perceptual differences between colors. It is to note that training a cGan is quite diffuclt and 
+             the colourization of some images might not be perfect.The images underneath are some of the results obtained after training the model.
+        </p>
+       
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="grayscale-results">
+        <div class="content-wrap">
+          <h2>Results</h2>
+          <div class="image-container">
+            <img src="/static/images/cGan-result.png" alt="Results">
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div id="contact"></div>
+      </footer>     
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>
