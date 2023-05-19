@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>Autonomous Robotic Dishwasher Arm </h1>
+        <p>
+            In our project, we propose a method to have an autonomous 
+            robotic arm for dishes. Our process follows these main steps:
+            object localization, object pose estimation, grasp estimation, and motion planning of the robotic arm.
+            Each of those main steps is enhanced with AI tools and methods such as YOLOv7 for object detection, 
+            MiDaS for depth estimation, Canny method for edge detection, Gen6D for pose estimation, and a neural 
+            network and numerical optimization technique for the motion planning of the robotic arm. The main advantage 
+            of our proposed method is that it only requires a monocular RGB camera. The result of 
+            our code is presented in the following link:
+            <a href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf" target="_blank">PDF Report</a>.            
+            As per request, the code was not included.
+        </p>
+        
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="grayscale-results">
+        <div class="content-wrap">
+          <h2>High Level View</h2>
+
+            <p>
+            The objective of this project is to automate the process 
+            of loading a standard dishwasher. 
+            The high level view of our approach can be broken down into smaller stepsThe main problem can be divided into smaller problems.
+            The first task is to classify the objects present in the sink. Next, we need to determine the priority of these objects
+            by identifying the highest one. Once the priority is established, we move on to finding a suitable grasping point on the object. 
+            Afterward, the robotic gripper needs to be positioned correctly to handle the target object efficiently.
+            The fifth step involves locating the object within the real-world coordinate system. Subsequently, the object is grasped, and motion planning
+            for the robotic arm is performed. Finally, the object is placed in the dishwasher. This process is repeated until all the dishes in the sink have been handled.
+            </p>
+
+            <div class="image-container">
+                <img src="/static/images/Robotic-Arm-High-Level.png" alt="Results">
+            </div>
+        </div>
+      </section>
+
+      <section class="Robot_Arm_YOLO">
+        <div class="content-wrap">
+          <h2>Object Detection</h2>
+          
+            <p>
+            As mentioned earlier, the primary step in our methodology involves
+            detecting the different dishes present in the sink. To achieve 
+            this, we employed the YOLOv7 algorithm. The figure below showcases the results of our object detection process,
+            highlighting the detection of various dishes under different orientations within the sink.
+            </p>
+
+            <div class="image-container">
+                <div class="image-wrapper">
+                  <img src="/static/images/Robotic-Yolo-Result1.png" alt="Image 1">
+                </div>
+                <div class="image-wrapper">
+                  <img src="/static/images/Robotic-Yolo-Result2.png" alt="Image 2">
+                </div>
+              </div>
+        </div>
+      </section>
+
+      <section class="Robot_Arm_Highest_Object">
+        <div class="content-wrap">
+          <h2>Detecting Highest Object</h2>
+          
+            <p>
+                Detecting the highest object within a pile of dishes is a crucial step in our process. 
+                Once each object has been classified, the robot arms need to identify the specific object to be picked.
+                To achieve this, we utilized the pre-trained weights from 
+                <a href="https://github.com/isl-org/MiDaS" target="_blank">MiDas</a>
+                and performed depth estimation using a monocular camera. The model generates a depth map in real time.
+                Our approach involves identifying the highest point within the depth map and associating it with the object
+                that was classified in the initial step of our process. It is worth noting that MiDaS offers four distinct pre-trained models. 
+                In our case, we opted for the largest model to ensure the highest accuracy, 
+                and the model executed in real time with an average of 8 frames per second (FPS).
+            </p>
+
+            <div class="image-container">
+                <div class="image-wrapper">
+                  <img src="/static/images/Robotic-Depth-Original.png" alt="Image 1">
+                </div>
+                <div class="image-wrapper">
+                  <img src="/static/images/Robotic-Depth-Results.png" alt="Image 2">
+                </div>
+              </div>
+        </div>
+      </section>
+
+
+      <section class="Robot_Arm_Grasping">
+        <div class="content-wrap text-center">
+          <h2>Grasping Location</h2>
+          <p>
+            After identifying the tallest object, our objective is to determine an optimal grasping location.
+            The grasping locations for the utensils and the mug were pre-defined and trained using YOLOv7 to accurately locate them.
+            The image below illustrates the outcomes of the grasping point detection for these items.
+          </p>
+      
+          <div class="image-container text-center">
+            <img src="/static/images/Robotic-Grasping.png" alt="Results">
+          </div>
+          
+      
+          <p>
+            Due to the absence of a discernible pattern, we were unable to utilize YOLO for detecting the grasping area of plates and bowls.
+            To determine the optimal grasping spot for these objects, we employed Canny Edge detection to identify their edges.
+            By combining the information obtained from the highest object and the detected edges, we successfully pinpointed a location for the robot to grasp.
+            The images underneath showcase the results obtained.
+          </p>
+      
+          <div class="image-container-2-image">
+            <div class="image-wrapper-edge">
+              <img src="/static/images/Robotic-Edge-Input.png" alt="Image 1">
+            </div>
+            <div class="image-wrapper-edge">
+              <img src="/static/images/Robotic-Edge-Output.png" alt="Image 2">
+            </div>
+          </div>
+        </div>
+      </section>
+    
+      <section class="Robot_Arm_Grasping_Dark_Blue">
+        <div class="content-wrap text-center">
+          <h2>Grasping Location</h2>
+          <p>
+            After identifying the tallest object, our objective is to determine an optimal grasping location.
+            The grasping locations for the utensils and the mug were pre-defined and trained using YOLOv7 to accurately locate them.
+            The image below illustrates the outcomes of the grasping point detection for these items.
+          </p>
+    
+          <div class="image-container-single text-center">
+            <img src="/static/images/Robotic-Grasping.png" alt="Results">
+          </div>
+          
+      
+          <p>
+            Due to the absence of a discernible pattern, we were unable to utilize YOLO for detecting the grasping area of plates and bowls.
+            To determine the optimal grasping spot for these objects, we employed Canny Edge detection to identify their edges.
+            By combining the information obtained from the highest object and the detected edges, we successfully pinpointed a location for the robot to grasp.
+            The images underneath showcase the results obtained.
+          </p>
+      
+          <div class="image-container-2-image">
+            <div class="image-wrapper-edge">
+              <img src="/static/images/Robotic-3D-PointCloud.png" alt="Image 1">
+            </div>
+            <div class="image-wrapper-edge">
+              <img src="/static/images/Robotic-6D-Prediction.png" alt="Image 2">
+            </div>
+          </div>
+        </div>
+    </section>
+    
+      
+
+      
+
+
+      <footer>
+        <div id="contact"></div>
+      </footer>     
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>
