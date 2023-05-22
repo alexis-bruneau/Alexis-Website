@@ -1,6 +1,6 @@
---index-url https://download.pytorch.org/whl/cpu
+-f https://download.pytorch.org/whl/torch_stable.html
 python==3.9.6
-Flask==1.1.2
+Flask==2.3.2
 Pillow==9.5.0
 torch==2.0.0+cpu
 torchvision==0.15.1+cpu
