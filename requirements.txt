@@ -1,5 +1,6 @@
 -f https://download.pytorch.org/whl/torch_stable.html
-python==3.9.6
+torch==1.6.0+cpu
+torchvision==0.7.0+cpu
 Flask==2.3.2
 Pillow==9.5.0
 torch==2.0.0+cpu
