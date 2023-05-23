@@ -14,7 +14,7 @@ transform = transforms.Compose([transforms.Resize((224, 224)),
 
 # Load your custom model
 model = CNN_HandSign()
-model.load_state_dict(torch.load('app/model_weights.pth'))
+model.load_state_dict(torch.load('app/model_weights.pth', map_location=torch.device('cpu')))
 model.eval()
 
 
