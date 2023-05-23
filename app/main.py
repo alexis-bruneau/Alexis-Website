@@ -13,7 +13,7 @@ alexnet.eval()
 
 # Load your custom model
 model = AlexNet_CNN(32)
-model.load_state_dict(torch.load('app/model_weights.pth'))
+model.load_state_dict(torch.load('model_weights.pth'))
 model.eval()
 
 # Define transformation
