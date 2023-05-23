@@ -50,6 +50,11 @@ def predict():
 def asl_page():
     return render_template('ASL.html')
 
+@app.route('/', methods=['GET'])
+def home_page():
+    return render_template('index.html')  # Change 'home.html' to whichever HTML file you want to serve at the root.
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
 
