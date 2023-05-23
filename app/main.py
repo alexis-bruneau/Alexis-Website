@@ -3,7 +3,7 @@ import torch
 from PIL import Image
 import torchvision.transforms as transforms
 import torchvision.models as models
-from model import AlexNet_CNN 
+from app.model import AlexNet_CNN 
 
 app = Flask(__name__)
 
@@ -13,7 +13,7 @@ alexnet.eval()
 
 # Load your custom model
 model = AlexNet_CNN(32)
-model.load_state_dict(torch.load('model_weights.pth'))
+model.load_state_dict(torch.load('app/model_weights.pth'))
 model.eval()
 
 # Define transformation
