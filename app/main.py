@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template,send_from_directory
 import torch
 from PIL import Image
 import torchvision.transforms as transforms
@@ -55,6 +55,10 @@ def asl_page():
 @app.route('/', methods=['GET'])
 def home_page():
     return render_template('index.html') 
+
+@app.route('/<path:filename>')
+def serve_static_html(filename):
+    return send_from_directory('../templates', filename)
 
 
 if __name__ == '__main__':
