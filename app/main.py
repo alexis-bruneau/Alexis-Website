@@ -6,7 +6,9 @@ import torchvision.models as models
 import os
 from app.model import CNN_HandSign 
 
-app = Flask(__name__)
+app = Flask(__name__,
+            template_folder='../templates',
+            static_folder='../static')
 
 # Define transformation
 transform = transforms.Compose([transforms.Resize((224, 224)), 
@@ -52,7 +54,7 @@ def asl_page():
 
 @app.route('/', methods=['GET'])
 def home_page():
-    return render_template('index.html')  # Change 'home.html' to whichever HTML file you want to serve at the root.
+    return render_template('index.html') 
 
 
 if __name__ == '__main__':
