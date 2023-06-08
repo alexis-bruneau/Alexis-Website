@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 import os
 #from app.model import CNN_HandSign 
-from model import CNN_HangSign_New 
+from app.model import CNN_HangSign_New 
 
 app = Flask(__name__,
             template_folder='../templates',
@@ -21,8 +21,8 @@ transform = transforms.Compose([
 
 # Load your custom model
 model = CNN_HangSign_New()
-model.load_state_dict(torch.load('app/model_weights.pth', map_location=torch.device('cpu')))
-#model.load_state_dict(torch.load('app/model_number_2.pt', map_location=torch.device('cpu')))
+#model.load_state_dict(torch.load('app/model_weights.pth', map_location=torch.device('cpu')))
+model.load_state_dict(torch.load('app/model_number_2.pt', map_location=torch.device('cpu')))
 model.eval()
 
 
