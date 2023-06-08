@@ -332,10 +332,15 @@ footer {
     margin-top: 20px;
   }
 
-
+.sub-menu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    /* other styles to fit your design */
+  }
   
 
-  
   
   
   

@@ -59,6 +59,11 @@ nav ul li a:visited:not(:only-child):after {
   padding-left: 4px;
   content: " ▾";
 }
+
+nav ul li ul li a:not(:only-child):after {
+  content: " ▸";
+}
+
 nav ul li ul li {
   min-width: 190px;
 }
@@ -159,5 +164,8 @@ article {
   margin: 0 auto;
   padding: 10px;
 }
+
+
+
 
 /*# sourceMappingURL=menu_bar.css.map */
