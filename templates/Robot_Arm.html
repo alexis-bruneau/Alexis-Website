@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="stylesheet" href="/static/css/menu_bar.css">
+  <link rel="stylesheet" href="/static/css/pdf_image.css">
 </head>
 <body>
   <!-- ***********************  Side Bar  *********************** -->
@@ -27,10 +28,10 @@
             Each of those main steps is enhanced with AI tools and methods such as YOLOv7 for object detection, 
             MiDaS for depth estimation, Canny method for edge detection, Gen6D for pose estimation, and a neural 
             network and numerical optimization technique for the motion planning of the robotic arm. The main advantage 
-            of our proposed method is that it only requires a monocular RGB camera. The result of 
-            our code is presented in the following link:
-            <a href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf" target="_blank">PDF Report</a>.            
-            As per request, the code was not included.
+            of our proposed method is that it only requires a monocular RGB camera. Multiple solutions exist for grasping complex
+            object but often requires different hardware such as lidar, stereovision camera, and RGB-D 
+            camera. Our approach aims at reducing the cost of the overall robot and reducing the dependencies 
+            among hardware components. 
         </p>
         
       </div>
@@ -38,6 +39,24 @@
 
     <!-- ***********************  PROJECT CONTENT  *********************** -->
     <!-- Add your project content here -->
+    
+      <section class="pdf-results">
+        <div class="paper-content-wrap">
+          <div class="image-pdf-container">
+            <h2 class="paper">Project Paper</h2>
+            <a href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf"  target="_blank">
+                <div class="image-overlay">
+                    <img src="/static/images/Robotic_Arm_Prediction_Paper.png" alt="Results">
+                    <div class="image-text">Click to view full report</div>
+                </div>
+            </a>
+        </div>      
+        </div>
+      </section>
+    
+
+
+
     <section class="grayscale-results">
         <div class="content-wrap">
           <h2>High Level View</h2>
