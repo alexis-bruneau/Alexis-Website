@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+  <link rel="stylesheet" href="/static/css/pdf_image.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>Evaluating Classifiers for Equity Performance Direction</h1>
+        <p>
+          The work done in this project aimed to explore machine learning approaches for predicting equity performance in the stock market. 
+          The study focused on evaluating three classifier models: Random Forest (RF), Multi-Layer Perceptron (MLP), and Support Vector Machines (SVM).
+          Through an extensive analysis that included hyperparameter tuning, sensitivity studies, and explainability using feature importance analysis, 
+          the project found that RF emerged as the best-performing model, with strong generalization abilities and suitability for explainability techniques.
+          The project also highlighted the challenges of predicting stock performance and emphasized the importance of data preprocessing and exploratory data analysis. 
+          Future work directions include exploring more deep learning architectures, studying additional market datasets, and considering 
+          regression problems to capture the magnitude of stock value changes. The findings of this project contribute to the growing field of machine learning in stock market 
+          prediction and provide valuable insights for both researchers and investors. The project repo can be found here: 
+          <a href="https://github.com/alexis-bruneau/UoftProjects/tree/main/CSC%202515/Evaluating%20Classifiers%20for%20Equity">Project Repo</a>.
+
+        </p>        
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="pdf-results">
+      <div class="paper-content-wrap">
+        <div class="image-pdf-container">
+          <h2 class="paper">Project Paper</h2>
+          <a href="Project_PDF_Reports/Project Report Evaluating Classifiers for Equity.pdf"  target="_blank">
+              <div class="image-overlay">
+                  <img src="/static/images/Stock_Prediction_Paper.png" alt="Results">
+                  <div class="image-text">Click to view full report</div>
+              </div>
+          </a>
+      </div>      
+      </div>
+    </section>
+    
+    
+    
+    
+    
+      
+
+      <footer>
+        <div id="contact"></div>
+      </footer>    
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>
