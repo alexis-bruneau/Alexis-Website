@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASL Prediction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>ASL Prediction</h1>
+        <p>
+          This project aims to predict the alphabet letter represented in an image of a hand sign
+          from American Sign Language (ASL). The trained model predicts letters between A and I 
+          takes an input image and provides a prediction of the corresponding letter. 
+        </p> 
+
+        <p>
+        The given model is a CNN-based architecture for hand sign classification. It consists of 
+        three convolutional layers with increasing output channels, followed by max-pooling, batch
+        normalization, and dropout layers. The model also includes two fully connected layers for classification, 
+        resulting in a total of six convolutional layers and two fully connected layers. It is too note that transfer learning
+        was used and resulted in a more accurate model. However, that model was too large too implement on my version of Heroku.
+        </p>
+
+        <p>
+        This model was trainned on 11000 images from the following dataset:https://www.kaggle.com/datasets/lexset/synthetic-asl-numbers.
+        </p>
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <section class="asl-prediction">
+      <div class="content-wrap">
+        <h2 class="centered-heading">Predict American Sign Language</h2>
+        <form action="/predict" method="post" enctype="multipart/form-data">
+          <!--  <label for="image-file">Select image to upload:</label>
+          <label for="image-file" id="select-label" style="display: none;">Select image to upload:</label> -->
+          <img id="preview-image" src="" alt="Preview Image" style="display: none;">
+          <input type="file" name="file" id="image-file">
+          <input type="submit" value="Predict">
+        </form>
+        <div id="prediction-message"></div>
+      </div>
+    </section>
+
+    <footer>
+      <div id="contact"></div>
+    </footer>    
+  </main>
+
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>  
+  <script src="/static/js/asl.js"></script>
+  <script>
+    $(document).ready(function(){
+    $("#menu").load("/menu_bar.html");
+    $("#contact").load("/Contact.html")
+});
+    </script>
+    
+</body>
+</html>

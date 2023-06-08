@@ -96,6 +96,11 @@ header h1 {
     padding-top: 30px; /* Adjust the padding-top value as needed */
   }
 
+h2.centered-heading {
+text-align: center;
+margin-bottom: 30px;
+}
+
 /* Projects
 -------------------------------------*/
 .projects{
