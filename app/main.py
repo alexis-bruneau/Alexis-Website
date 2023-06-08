@@ -22,7 +22,7 @@ transform = transforms.Compose([
 # Load your custom model
 model = CNN_HangSign_New()
 #model.load_state_dict(torch.load('app/model_weights.pth', map_location=torch.device('cpu')))
-model.load_state_dict(torch.load('model_number_2.pt', map_location=torch.device('cpu')))
+model.load_state_dict(torch.load('app/model_number_2.pt', map_location=torch.device('cpu')))
 model.eval()
 
 
