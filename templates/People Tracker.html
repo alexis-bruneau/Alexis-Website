@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+  <link rel="stylesheet" href="/static/css/pdf_image.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>A YOLOv7-Based Multiple Object Tracking Approach</h1>
+        <p>
+          In this study, we present an Enhanced People Flow Management system using a YOLOv7-based Multiple Object Tracking (MOT) approach. 
+          Amid the post-COVID19 societal reopening, managing crowd density becomes crucial to prevent incidents caused by overcrowding. To address this,
+          we have developed an algorithm to detect, track, and count individuals in real-time, specifically designed for indoor environments like stores, 
+          restaurants, and concert venues. The model leverages YOLOv7 for detecting people and generating bounding boxes, which then facilitates multiple
+          object tracking between video frames. Furthermore, we have implemented bidirectional tracking to differentiate incoming and outgoing traffic
+          accurately. The system is trained using the 
+          <a href="https://motchallenge.net/data/MOT15/" target="_blank">MOT15 Dataset</a>,
+          MOT15 dataset, achieving a MOTA score of 94.3% and a MOTP score of 39.1%. 
+        </p>        
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="grayscale-results">
+      <div class="content-wrap">
+        <h2>Video Results</h2>        
+          <div class="gif-container">
+            <img src="/static/images/People Tracker.gif" alt="People Tracking Gif"> 
+          </div>        
+      </div>
+    </section>
+    
+
+
+
+    <section class="pdf-results">
+      <div class="paper-content-wrap">
+        <div class="image-pdf-container">
+          <h2 class="paper">Project Paper</h2>
+          <a href="Project_PDF_Reports/People Tracker.pdf"  target="_blank">
+              <div class="image-overlay">
+                  <img src="/static/images/People_tracker_pdf.png" alt="Results">
+                  <div class="image-text">Click to view full report</div>
+              </div>
+          </a>
+      </div>      
+      </div>
+    </section>
+    
+    
+    
+    
+    
+      
+
+      <footer>
+        <div id="contact"></div>
+      </footer>    
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>

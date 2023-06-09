@@ -12,10 +12,13 @@ $(document).ready(function() {
 
           // Show and hide submenu
           $(document).on('click', '.nav-dropdown > li > a', function(e) {
+            if ($(this).siblings('.sub-menu').length) {
               e.preventDefault();
               e.stopPropagation();
               $(this).siblings('.sub-menu').toggle();
+            }
           });
+
 
           // Hide menus when clicking anywhere else on the document
           $(document).click(function() {
