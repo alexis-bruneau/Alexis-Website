@@ -166,6 +166,14 @@ article {
 }
 
 
+@media (hover: hover) {
+  .selected:hover .image-overlay {
+    display: flex;
+  }
+  .selected:hover {
+    transform: scale(1.05);
+  }
+}
 
 
 /*# sourceMappingURL=menu_bar.css.map */
