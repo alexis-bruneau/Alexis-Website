@@ -2,6 +2,8 @@ $(document).ready(function() {
 
     function moveToSelected(element) {
 
+       
+
         // Hide the overlay for all images
         $('#carousel .image-overlay').hide();
 
@@ -13,7 +15,7 @@ $(document).ready(function() {
             var selected = element;
         }
   
-        var next = $(selected).next();
+        var next = $(selsected).next();
         var prev = $(selected).prev();
 
         $(selected).removeClass().addClass("selected");
@@ -26,7 +28,16 @@ $(document).ready(function() {
 
         // Show the overlay for the selected image and update its href
         var href = $(selected).data('href');  // Get the URL from the data-href attribute
-        $(selected).find('.image-overlay').attr('href', href).show();
+        console.log(href)
+        if(!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+            $(selected).find('.image-overlay').attr('href', href).show();            
+        }
+        else {
+            window.open(href)
+        }
+        
+            
+        
     }
 
     $(document).keydown(function(e) {
