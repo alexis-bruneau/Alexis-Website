@@ -1,9 +1,6 @@
 $(document).ready(function() {
 
     function moveToSelected(element) {
-
-       
-
         // Hide the overlay for all images
         $('#carousel .image-overlay').hide();
 
@@ -15,7 +12,7 @@ $(document).ready(function() {
             var selected = element;
         }
   
-        var next = $(selsected).next();
+        var next = $(selected).next();
         var prev = $(selected).prev();
 
         $(selected).removeClass().addClass("selected");
@@ -32,12 +29,6 @@ $(document).ready(function() {
         if(!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
             $(selected).find('.image-overlay').attr('href', href).show();            
         }
-        else {
-            window.open(href)
-        }
-        
-            
-        
     }
 
     $(document).keydown(function(e) {
@@ -55,8 +46,17 @@ $(document).ready(function() {
         e.preventDefault();
     });
 
-    $('#carousel div').click(function() {
-        moveToSelected($(this));
+    $('#carousel div').click(function(e) {
+        if ($(this).hasClass('selected') && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            // Prevent the carousel from moving
+            e.stopPropagation();
+            
+            // Open the link in a new tab
+            var href = $(this).data('href');
+            window.open(href, '_blank');
+        } else {
+            moveToSelected($(this));
+        }
     });
 
     $('#prev').click(function() {
