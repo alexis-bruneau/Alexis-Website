@@ -175,5 +175,38 @@ article {
   }
 }
 
+@media only screen and (max-width: 798px) {
+  
+  /* existing code ... */
+
+  nav ul li ul {
+    display: block;
+  }
+
+  nav ul li ul li {
+    float: none;
+    min-width: 100%;
+  }
+
+  nav ul li ul li a {
+    padding: 15px;
+    line-height: 20px;
+  }
+
+  /* add styles for sub-menu */
+  .sub-menu {
+    position: static;
+    display: none;
+    width: 100%;
+  }
+
+  .sub-menu li {
+    float: none;
+    min-width: 100%;
+  }
+}
+
+
+
 
 /*# sourceMappingURL=menu_bar.css.map */

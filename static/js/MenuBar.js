@@ -15,6 +15,11 @@ $(document).ready(function() {
             if ($(this).siblings('.sub-menu').length) {
               e.preventDefault();
               e.stopPropagation();
+              
+              // Hide all other sub-menus
+              $('.sub-menu').not($(this).siblings('.sub-menu')).hide();
+          
+              // Toggle this sub-menu
               $(this).siblings('.sub-menu').toggle();
             }
           });
