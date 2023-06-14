@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perception and Point Cloud Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+  <link rel="stylesheet" href="/static/css/pdf_image.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>Perception and Point Cloud Registration</h1>
+        <p>
+          This project encompassed two critical aspects: Feature Point Detection and Correspondences, and 3D Point Cloud Registration.
+        </p>  
+        
+        <p>
+          In the first phase, Feature Point Detection and Correspondences, the objective entailed the detection 
+          and alignment of feature points in stereo image pairs derived from the 
+          <a href="https://www.cvlibs.net/datasets/kitti/eval_scene_flow.php?benchmark=stereo" target="_blank">KITTI Dataset</a>
+          The ORB detector and descriptor were deployed for identifying 1000 key points per image pair. These key points and 
+          their corresponding descriptors were then meticulously matched between the left and right images, adhering to an epipolar constraint.
+          The project also included an analysis of the appearance of unreliable key
+          points, with a specific emphasis on those in less illuminated areas of the images.
+        </p>     
+
+        <p>
+          The second phase, 3D Point Cloud Registration, was dedicated to the alignment of 3D point clouds utilizing (ICP) algorithm on the 
+          <a href="http://graphics.stanford.edu/data/3Dscanrep/" target="_blank">Stanford 3D Scanning Repository</a>. 
+          The procedure of nearest neighbor search was conducted to discern the optimal matches between the source and target point clouds. The ICP algorithm progressively 
+          fine-tuned the alignment by estimating a 6D pose that minimized the Euclidean distance between matched points. Singular Value Decomposition (SVD) 
+          was employed for pose estimation, and the mean Euclidean distance was computed to assess the quality of alignment.  
+        </p>
+
+        <p>
+          At its core, the project was designed to demonstrate the intricate process of feature point detection, matching, and 3D point cloud registration techniques.
+          This involved the application of complex algorithms such as ORB, Lowe's ratio test, RANSAC, and SVD, with the ultimate goal of achieving
+          accurate alignment and registration of the point clouds. The evaluation was carried out based on the accuracy of the estimated poses and the alignment of the registered point clouds.  
+        </p>
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    <section class="pdf-results">
+      <div class="paper-content-wrap">
+        <div class="image-pdf-container">
+          <h2 class="paper">Project Paper</h2>
+          <a href="Project_PDF_Reports/Point_Cloud_Paper.pdf"  target="_blank">
+              <div class="image-overlay">
+                  <img src="/static/images/Point_Cloud_Paper.png" alt="Results">
+                  <div class="image-text">Click to view full report</div>
+              </div>
+          </a>
+      </div>      
+      </div>
+    </section>
+    
+    
+    
+    
+    
+      
+
+      <footer>
+        <div id="contact"></div>
+      </footer>    
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>

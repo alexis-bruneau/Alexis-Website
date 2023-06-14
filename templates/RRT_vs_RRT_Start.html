@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grayscale to Coloured Image - Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/menu_bar.css">
+  <link rel="stylesheet" href="/static/css/pdf_image.css">
+</head>
+<body>
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
+  
+  <main>
+    <!-- ***********************  PROJECT DESCRIPTION  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <h1>RRT vs RRT* </h1>
+        <p>
+          This project was designed to delve into sampling-based motion planning, specifically utilizing rapidly-exploring random trees (RRT) algorithms. 
+          The task involved developing motion planning solutions for a Dubins-type vehicle, a model widely used in robotics, which has restrictions on the path's 
+          curvature and assumes the vehicle can only move forward.
+        </p>
+       
+        <p>
+          Two separate motion planning algorithms were implemented: a standard RRT-based planner and an RRT*-based planner. Both these planners were developed to navigate
+          a 2D planar world with circular obstacles, with each planner accepting the same problem setup including the world map, list of obstacles, start pose, and goal pose.
+          The objective was to devise a list of nodes defining a valid path from the start to the goal state.
+        </p>
+
+        <p>
+          The project concluded with a comparative performance analysis of the RRT and RRT* planners, visualized through a bar chart plot of 1,000 random instances of a challenging
+           Dubins planning problem. The analysis focused on the average path length to highlight the efficiency gains made possible by the use of RRT*. 
+        </p>
+        
+      </div>
+    </header>
+
+    <!-- ***********************  PROJECT CONTENT  *********************** -->
+    <!-- Add your project content here -->
+    
+      <section class="pdf-results">
+        <div class="paper-content-wrap">
+          <div class="image-pdf-container">
+            <h2 class="paper">Project Paper</h2>
+            <a href="Project_PDF_Reports/RRT_Paper.pdf"  target="_blank">
+                <div class="image-overlay">
+                    <img src="/static/images/RRT_Paper.png" alt="Results">
+                    <div class="image-text">Click to view full report</div>
+                </div>
+            </a>
+        </div>      
+        </div>
+      </section>
+      
+    
+
+      <section class="Robot_Arm_Grasping_Dark_Blue">
+        <div class="content-wrap text-center">
+          <h2>RRT vs RRT* Simulation</h2>
+          <p>
+            In this section, we can see RRT (left) vs RRT* (right) for one iteration. The purpose of this project
+            was to display the difference between RRT and RRT*. 
+          </p>
+      
+          <div class="image-container-2-image">
+            <div class="image-wrapper-edge">
+              <img src="/static/images/RRT_Result.gif" alt="Image 1">
+              <div class="image-caption">RRT Simulation</div>
+            </div>
+            <div class="image-wrapper-edge">
+              <img src="/static/images/RRT_Star_Result.gif" alt="Image 2">
+              <div class="image-caption">RRT* Simulation</div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    <section class="Robot_Arm_Grasping">
+      <div class="content-wrap text-center">
+        <h2>Average Cost & Computational Time</h2>
+        <p>
+          In this section, RRT and RRT* was tested for 1000 simulations and its average cost and computational time were compared. 
+          The results were as expected where the average cost was higher for RRT with a score of 50 and RRT* having 32. On the other side,
+          RRT computational time was much lower with average time of 0.06 seconds per iteration while RRT* had an average time of 0.3 seconds. 
+          The figures underneath displays the results of the average cost and computational and an overlay of the result of RRT and RRT* path for single simulations.
+        </p>
+
+        <div class="image-container text-center">
+          <img src="/static/images/RRT_1000_Simulation_Result.png" alt="Results">
+          <div class="image-caption">Comparisson Results</div>
+        </div>
+
+        <div class="image-container-2-image">
+          <div class="image-wrapper-edge">
+            <img src="/static/images/RRT_RRT_Star_Sim1.png" alt="Image 1">
+            <div class="image-caption">RRT vs RRT Simulation 1</div>
+          </div>
+          <div class="image-wrapper-edge">
+            <img src="/static/images/RRT_RRT_Star_Sim2.png" alt="Image 2">
+            <div class="image-caption">RRT vs RRT Simulation 2</div>
+          </div>
+        </div>
+      </div>    
+  </section>
+      
+
+      <footer>
+        <div id="contact"></div>
+      </footer>     
+  </main>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script>
+    $(document).ready(function(){
+        $("#menu").load("menu_bar.html");
+        $("#contact").load("Contact.html")
+    });
+    </script>
+</body>
+</html>

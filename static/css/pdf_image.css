@@ -47,13 +47,21 @@ h2.paper {
     transform-origin: center;
 }
   
+.selected {
+    position: relative;
+}
+
+.selected:hover .image-text {
+    opacity: 1;
+}
+
 .image-text {
     z-index: 10; 
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: white;
+    color: rgb(255, 255, 255);
     font-size: 18px;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -62,6 +70,23 @@ h2.paper {
     justify-content: center;
     text-align: center; 
     width: 100%; 
+    pointer-events: none; /* Disable mouse events on the text to ensure hover effects work correctly on the image */
+}
+
+.selected .image-text {
+    opacity: 0; /* Hide the text by default */
+}
+
+.selected:hover .image-text {
+    opacity: 1; /* Show the text when hovering over the selected image */
+}
+
+/* Hide the text for non-selected images */
+.hideLeft .image-text,
+.hideRight .image-text,
+.next .image-text,
+.prev .image-text {
+    display: none;
 }
 
 .image-overlay:hover .image-text {

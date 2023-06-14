@@ -15,14 +15,18 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/menu_bar.css">
-   
+    
+    <link rel="stylesheet" type="text/css" href="/static/css/carousel.css">
+    
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
     <script src="/static/js/MenuBar.js"></script>
     <script src="/static/js/Email.js"></script>
+    <script src="/static/js/CarouselTest.js"></script>    
     <script src = "/static/js/GreyScale_FileUpload.js"></script>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
   </head>
   <body>
     <!-- ***********************  Side Bar  *********************** -->
@@ -34,13 +38,14 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
         <div class = "content-wrap">
           <h1>Alexis Bruneau</h1>         
 
-          <p>Hello and welcome to my page! My name is Alexis Bruneau, I am a student at the University of Toronto and am currently completing a Master of Engineering. 
-            My program is with an emphasis on robotics and analytics, and my interests are the following: mamchine learning, AI applications in robotics, data science, and data
-            analytics.                    
+          <p>Hello and welcome to my page! My name is Alexis Bruneau, I am a student at the University of Toronto and am currently completing a Master of Engineering. My program is with an emphasis on robotics and analytics, and my interests are the following: machine learning, AI applications in robotics, data science, and data analytics.
+            A skill of mine is that I learn new concepts quickly. Through work, I used Python, SQL, and Power BI to do data analysis. I also used UiPath to automate processes, and I dabbled a bit in web development using .NET framework. Furthermore, I learned different lean six sigma techniques to improve processes.
+            I am excited to learn new skills and apply them to projects related to my interests. On this webpage, I will update projects that I'll be working on throughout the year.
+                            
           </p>
 
 
-          <p>A skill of mine is that I learn new concepts quickly. Through work, I used Python, SQL, and Power BI to do data analysis. I also used UiPath to automateprocesses,
+          <p>A skill of mine is that I learn new concepts quickly. Through work, I used Python, SQL, and Power BI to do data analysis. I also used UiPath to automate processes, 
             and I dabbled a bit in web development using .NET framework. Furthermore, I learned different lean six sigma techniques to improve processes.        
           </p>
 
@@ -53,73 +58,53 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
 
       <!-- ********************  PROJECTS / PORTFOLIO  ********************* -->
       <!-- Test -->
-
-      
-              
-        <div id="myCarousel" class="carousel slide">          
-          <ol class="carousel-indicators">
-            <li class="item1 active"></li>
-            <li class="item2"></li>   
-            <li class="item3"></li>                    
-          </ol>
-          
-          <!-- Wrapper for slides -->
-          <div class = "content-wrap divider">
-            <h2>Projects</h2>
-            <div class="carousel-inner" role="listbox">
-              <div class="item active">
-              <!-- Copy the whole <section> block to add more projects. -->
-                <section class="projects">
-                                                                  
-                  <!-- Copy the whole <section> block to add more projects. -->
-                  <section class = "projects-item">
-                    <img src="/static/images/Decision-Tree.jpg" alt="description of image">
-                    <h3>Machine Learning - Regression Models</h3> 
-                    <p> The purpose of the project is to predict the number of bike rented using three different
-                      regression models: OLS, Locally Weighted, and Poisson.</p>
-                    <a class = "btn" href="https://github.com/alexis-bruneau/UoftProjects/tree/main/CSC%202515/Assignment%202" target="_blank">View project</a>
-                  </section>                      
-                </section>                  
-              </div>
-
-              <div class="item">
-                <section class="projects">
-                  <section class = "projects-item">                    
-                    <img src="/static/images/3D_Point_Cloud.png" alt="description of image">
-                    <h3>Feature Point Detection & 3D Point Cloud Registration</h3>
-                    <p>This 2 part project consist of matching features between stereo camera pairs,
-                      and taking a rigid transform from one point cloud to another such that they align.</p>
-                    <a class = "btn" href="https://github.com/alexis-bruneau/UoftProjects/blob/main/AER1515/Assignment%202" target="_blank">View project</a>                    
-                  </section>
-                </section>
-              </div>     
-              
-              <div class="item">
-                <section class="projects">
-                  <section class = "projects-item">                    
-                    <img src="/static/images/Ordinal_Logistic_Regression.jpg" alt="description of image">
-                    <h3>Machine Learning - Ordinal Logistic Regression</h3>
-                    <p> The goal of this project is to implement ordinal logistic regression to 
-                      predict the yearly compensation of each participants.</p>
-                    <a class = "btn" href="https://github.com/alexis-bruneau/UoftProjects/tree/main/MIE1624/Assignment%202" target="_blank">View project</a>                    
-                  </section>
-                </section>
-              </div>          
-
-
-            </div>
-          </div>
-          <!-- Left and right controls -->
-          <a class="left carousel-control" href="#myCarousel" role="button">
-            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
+      <h2 class="carousel-title">Project Paper</h2>
+      <div id="carousel">
+        <div class="hideLeft" data-href="Project_PDF_Reports/People Tracker.pdf">
+            <img src="/static/images/People_tracker_pdf.png">   
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
           </a>
-          <a class="right carousel-control" href="#myCarousel" role="button">
-            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-          </a>
-        </div>    
 
+        </div>
+        <div class="hideLeft" data-href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf">
+            <img src="/static/images/Robotic_Arm_Prediction_Paper.png"> 
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>          
+        </div>
+        <div class="prev" data-href="Project_PDF_Reports/Project Report Evaluating Classifiers for Equity.pdf">
+            <img src="/static/images/Stock_Prediction_Paper.png">  
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>       
+        </div>
+        <div class="selected" data-href="Project_PDF_Reports/Project Report Evaluating Classifiers for Equity.pdf">
+            <img src="/static/images/Stock_Prediction_Paper.png">  
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>          
+        </div>
+        <div class="next" data-href="Project_PDF_Reports/Project Report Evaluating Classifiers for Equity.pdf">
+            <img src="/static/images/Stock_Prediction_Paper.png"> 
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>           
+        </div>
+        <div class="hideRight" data-href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf">
+            <img src="/static/images/Robotic_Arm_Prediction_Paper.png">   
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>         
+        </div>
+        <div class="hideRight" data-href="Project_PDF_Reports/People Tracker.pdf">
+            <img src="/static/images/People_tracker_pdf.png">     
+            <a href="#" class="image-overlay" style="display: none;">
+              <div class="image-text">Click to view full report</div>
+          </a>       
+        </div>
+    </div>
+    
       <!-- ***********************  WORK EXPERIENCE  *********************** -->
       <section class="work-experience">
         <div class = "content-wrap item-details divider">
@@ -240,13 +225,14 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
       <!-- *****************  CONTACT INFO / SOCIAL MEDIA  ***************** -->
       <footer>
         <div id="contact"></div>
-      </footer>
+      </footer>  
     </main>
-    <script src="static/js/Carousel.js"></script>
+    
     <script>
       $(document).ready(function(){
       $("#menu").load("/menu_bar.html");
-      $("#contact").load("/Contact.html")
+      $("#contact").load("/Contact.html");
+      $("#Carousel_main_page").load("/Carousel_JQuerry.html")
   });
       </script>
       

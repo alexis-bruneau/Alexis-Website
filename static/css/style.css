@@ -332,13 +332,39 @@ footer {
     margin-top: 20px;
   }
 
+.sub-menu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    /* other styles to fit your design */
+  }
+  
+  .gif-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.gif-container img {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+}
 
   
+.image-wrapper-edge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
-  
-  
-  
-  
+.image-caption {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
   
 
   

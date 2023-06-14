@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 import torchvision.models as models
 import os
 #from app.model import CNN_HandSign 
-from app.model import CNN_HangSign_New 
+from app.model import CNN_HangSign_New #(Remove app when running locally) 
 
 app = Flask(__name__,
             template_folder='../templates',
