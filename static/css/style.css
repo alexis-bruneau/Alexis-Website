@@ -353,9 +353,18 @@ footer {
 }
 
   
+.image-wrapper-edge {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
-  
-  
+.image-caption {
+    margin-top: 10px;
+    font-size: 18px;
+}
+
   
 
   
