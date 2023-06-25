@@ -8,9 +8,12 @@ import pandas as pd
 
 # from app.model import CNN_HandSign
 from app.model import CNN_HangSign_New  # (Remove app when running locally)
-from app.scrape import scrape_page
+
+"""
+from scrape import scrape_page
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+"""
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
@@ -80,7 +83,8 @@ def serve_static_html(filename):
     return send_from_directory("../templates", filename)
 
 
-@app.route("app/scrape", methods=["GET"])
+"""
+@app.route("/scrape", methods=["GET"])
 def scrape_route():
     location = "Ottawa-ON--Canada"
     start_date = datetime(2023, 7, 30)
@@ -126,7 +130,7 @@ def scrape_route():
 @app.route("/webscraping", methods=["GET"])
 def webscraping():
     return render_template("Webscraping.html")
-
+"""
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
