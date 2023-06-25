@@ -8,7 +8,7 @@ import pandas as pd
 
 # from app.model import CNN_HandSign
 from app.model import CNN_HangSign_New  # (Remove app when running locally)
-from scrape import scrape_page
+from app.scrape import scrape_page
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -80,7 +80,7 @@ def serve_static_html(filename):
     return send_from_directory("../templates", filename)
 
 
-@app.route("/scrape", methods=["GET"])
+@app.route("app/scrape", methods=["GET"])
 def scrape_route():
     location = "Ottawa-ON--Canada"
     start_date = datetime(2023, 7, 30)
