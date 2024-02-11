@@ -7,7 +7,7 @@ import os
 import pandas as pd
 
 # from app.model import CNN_HandSign
-from model import CNN_HangSign_New  # (Remove app when running locally)
+from app.model import CNN_HangSign_New  # (Remove app when running locally)
 
 """
 from scrape import scrape_page
