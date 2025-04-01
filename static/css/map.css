@@ -1,0 +1,24 @@
+/* Ensure html and body take up full height and remove default margin */
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Map container covers the full viewport */
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+/* Controls container positioned at the top center */
+#controls {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+}

@@ -1,4 +1,5 @@
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, request, jsonify
+from app.redfin import scrape_properties, save_to_csv
 import os
 import pandas as pd
 
@@ -21,6 +22,20 @@ def home():
 @app.route("/<path:filename>")
 def serve_static_html(filename):
     return send_from_directory("../templates", filename)
+
+
+@app.route("/ottawa-map")
+def ottawa_map():
+    return render_template("ottawa_map.html")
+
+
+@app.route("/update-coordinates", methods=["POST"])
+def update_coordinates():
+    data = request.get_json()
+    # Process the coordinates as needed
+    print("Received coordinates:", data)
+    # Return a valid JSON response
+    return jsonify(success=True, received=data)
 
 
 """
