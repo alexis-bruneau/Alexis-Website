@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_from_directory, request, jsonify
-from app.redfin import scrape_properties, save_to_csv
+from Redfin import scrape_properties, get_properties
 import os
 import pandas as pd
 
@@ -11,6 +11,25 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 """
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
+
+
+@app.route("/points.json")
+def points():
+    # Always read the latest CSV, specify columns explicitly
+    df = pd.read_csv(
+        "app/Redfin/Output/redfin_data.csv", usecols=["latitude", "longitude"]
+    )
+
+    # Ensure lat/lng are numeric, coercing errors to NaN
+    df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+    df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+
+    # Drop rows with NaNs resulting from coercion
+    df = df.dropna(subset=["latitude", "longitude"])
+
+    # Convert to a list of {"latitude":.., "longitude":..}
+    pts = df.to_dict(orient="records")
+    return jsonify(pts)
 
 
 @app.route("/")

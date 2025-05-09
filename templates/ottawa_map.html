@@ -3,20 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <title>Ottawa Map with Draggable Circle</title>
-    <!-- Include Leaflet CSS -->
+
+    <!-- Leaflet core CSS -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
-    <!-- Link to your custom CSS in the css folder -->
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+    />
+
+    <!-- Your custom styling -->
     <link rel="stylesheet" href="/static/css/map.css" />
   </head>
+
   <body>
-    <!-- Controls for the circle radius -->
+    <!-- radius control -->
     <div id="controls">
-      <label for="radiusInput">Radius (km): </label>
+      <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
       <input
         type="number"
         id="radiusInput"
@@ -27,16 +39,19 @@
       />
     </div>
 
-    <!-- Map container -->
+    <!-- map container -->
     <div id="map"></div>
 
-    <!-- Include Leaflet JS -->
+    <!-- Leaflet core JS -->
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <!-- Link to your custom JS in the js folder -->
+
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Your application logic -->
     <script src="/static/js/map.js"></script>
   </body>
 </html>
