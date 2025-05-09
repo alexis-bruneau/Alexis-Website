@@ -119,13 +119,15 @@ def filtered_points():
     # Extract points for the map
     points = df[["latitude", "longitude", "price"]].dropna().to_dict(orient="records")
 
-    # Group by month for chart
+    # Group by month for chart (count + average price)
     if not df["sold_date"].isna().all():
         df["month"] = df["sold_date"].dt.to_period("M").astype(str)
+        grouped = df.groupby("month")
         by_month = (
-            df.groupby("month")
-            .size()
-            .reset_index(name="count")
+            grouped.size()
+            .to_frame("count")
+            .join(grouped["price"].mean().to_frame("avg_price"))
+            .reset_index()
             .to_dict(orient="records")
         )
     else:

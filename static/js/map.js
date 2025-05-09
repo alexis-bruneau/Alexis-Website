@@ -160,31 +160,23 @@ function updateStats(summary) {
   const { count, average_price, max_price, min_price, by_month } = summary;
 
   document.getElementById("stat-count").textContent =
-    count !== null && count !== undefined ? count.toLocaleString() : "–";
-
+    count ? count.toLocaleString() : "–";
   document.getElementById("stat-avg").textContent =
-    average_price !== null && average_price !== undefined
-      ? `$${Math.round(average_price).toLocaleString()}`
-      : "–";
-
+    average_price ? `$${Math.round(average_price).toLocaleString()}` : "–";
   document.getElementById("stat-max").textContent =
-    max_price !== null && max_price !== undefined
-      ? `$${Math.round(max_price).toLocaleString()}`
-      : "–";
-
+    max_price ? `$${Math.round(max_price).toLocaleString()}` : "–";
   document.getElementById("stat-min").textContent =
-    min_price !== null && min_price !== undefined
-      ? `$${Math.round(min_price).toLocaleString()}`
-      : "–";
+    min_price ? `$${Math.round(min_price).toLocaleString()}` : "–";
 
-  // Chart rendering
   if (by_month && by_month.length > 0) {
     const labels = by_month.map(item => item.month);
-    const values = by_month.map(item => item.count);
+    const counts = by_month.map(item => item.count);
+    const avgPrices = by_month.map(item => item.avg_price || 0);
 
     if (soldChart) {
       soldChart.data.labels = labels;
-      soldChart.data.datasets[0].data = values;
+      soldChart.data.datasets[0].data = counts;
+      soldChart.data.datasets[1].data = avgPrices;
       soldChart.update();
     } else {
       const ctx = document.getElementById("soldByMonthChart").getContext("2d");
@@ -192,20 +184,61 @@ function updateStats(summary) {
         type: "bar",
         data: {
           labels: labels,
-          datasets: [{
-            label: "# Sold per Month",
-            data: values,
-            backgroundColor: "rgba(54, 162, 235, 0.6)",
-            borderColor: "rgba(54, 162, 235, 1)",
-            borderWidth: 1
-          }]
+          datasets: [
+            {
+              label: "# Sold per Month",
+              data: counts,
+              backgroundColor: "rgba(54, 162, 235, 0.6)",
+              borderColor: "rgba(54, 162, 235, 1)",
+              borderWidth: 1,
+              yAxisID: "y"
+            },
+            {
+              label: "Average Sold Price",
+              data: avgPrices,
+              type: "line",
+              borderColor: "rgba(255, 99, 132, 0.9)",
+              backgroundColor: "rgba(255, 99, 132, 0.3)",
+              fill: false,
+              tension: 0.3,
+              yAxisID: "y1"
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
           scales: {
             y: {
-              beginAtZero: true
+              type: "linear",
+              position: "left",
+              title: { display: true, text: "Listings Sold" }
+            },
+            y1: {
+              type: "linear",
+              position: "right",
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: "Average Price ($)" },
+              ticks: {
+                callback: value => `$${value.toLocaleString()}`
+              }
+            }
+          },
+          plugins: {
+            legend: { position: "top" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  if (ctx.dataset.label === "Average Sold Price") {
+                    return `${ctx.dataset.label}: $${Math.round(ctx.raw).toLocaleString()}`;
+                  }
+                  return `${ctx.dataset.label}: ${ctx.raw}`;
+                }
+              }
             }
           }
         }
@@ -213,6 +246,8 @@ function updateStats(summary) {
     }
   }
 }
+
+
 
 function updateListingsCount() {
   const circleCenter = circle.getLatLng();
