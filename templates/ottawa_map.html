@@ -37,10 +37,44 @@
         step="0.1"
         value="5"
       />
+
+      <button id="filterToggle">Filters ⚙️</button>
+
+      <div id="filterPanel" style="display: none; margin-top: 10px">
+        <fieldset style="border: none; padding: 0">
+          <legend><strong>Sold Date Filter</strong></legend>
+          <label for="soldStart">Start:</label>
+          <input type="date" id="soldStart" />
+          <br />
+          <label for="soldEnd">End:</label>
+          <input type="date" id="soldEnd" />
+        </fieldset>
+
+        <fieldset style="border: none; padding: 0; margin-top: 10px">
+          <legend><strong>Beds</strong></legend>
+          <div id="bedButtons" style="display: flex; gap: 5px">
+            <button type="button" class="bed-btn" data-minbeds="1">1+</button>
+            <button type="button" class="bed-btn" data-minbeds="2">2+</button>
+            <button type="button" class="bed-btn" data-minbeds="3">3+</button>
+            <button type="button" class="bed-btn" data-minbeds="4">4+</button>
+            <button type="button" class="bed-btn" data-minbeds="5">5+</button>
+          </div>
+        </fieldset>
+      </div>
     </div>
+    <!-- ✅ CLOSE CONTROLS -->
+
+    <div id="map"></div>
 
     <!-- map container -->
     <div id="map"></div>
+    <!-- Summary stats (under map) -->
+    <div
+      id="stats"
+      style="padding: 10px; background: #f0f0f0; font-family: sans-serif"
+    >
+      <em>Filter the map to see summary stats appear here...</em>
+    </div>
 
     <!-- Leaflet core JS -->
     <script

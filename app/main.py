@@ -1,5 +1,6 @@
 from flask import Flask, render_template, send_from_directory, request, jsonify
 from Redfin import scrape_properties, get_properties
+from math import radians, cos, sin, asin, sqrt
 import os
 import pandas as pd
 
@@ -38,7 +39,7 @@ def home():
 
 
 # This optional route if you want to serve other template files by path
-@app.route("/<path:filename>")
+@app.route("/<path:filename>", methods=["GET"])
 def serve_static_html(filename):
     return send_from_directory("../templates", filename)
 
@@ -57,54 +58,74 @@ def update_coordinates():
     return jsonify(success=True, received=data)
 
 
-"""
-@app.route("/scrape", methods=["GET"])
-def scrape_route():
-    location = "Ottawa-ON--Canada"
-    start_date = datetime(2023, 7, 30)
-    end_date = datetime(2023, 8, 3)
-    adults = 4
-    children = 0
-    min_bedrooms = 4
-    min_beds = 4
-    total_pages = 2  # Number of pages to scrape
+def haversine(lon1, lat1, lon2, lat2):
+    # convert decimal degrees to radians
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    return 6371 * 2 * asin(sqrt(a))  # Radius of Earth in km
 
-    data_list = []
-    print("Scrape route was called")
 
-    # Create a ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        # Submit tasks to the executor
-        futures = {
-            executor.submit(
-                scrape_page,
-                page,
-                location,
-                start_date,
-                end_date,
-                adults,
-                children,
-                min_bedrooms,
-                min_beds,
-            )
-            for page in range(1, total_pages + 1)
+@app.route("/filtered-points", methods=["POST"])
+def filtered_points():
+    data = request.get_json()
+    center_lat, center_lng = data.get("center", [0, 0])
+    radius_km = data.get("radius_km", 5)
+    filters = data.get("filters", {})
+
+    # Load data
+    df = pd.read_csv("app/Redfin/Output/redfin_data.csv")
+
+    # Rename columns to standardized names
+    df = df.rename(
+        columns={
+            "Sold Price": "price",
+            "Sold Date": "sold_date",
+            "Number Beds": "beds",
+            "Number Baths": "baths",
         }
+    )
 
-        # Collect the results as they become available
-        for future in as_completed(futures):
-            data_list.extend(future.result())
+    # Ensure numeric lat/lng
+    df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+    df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+    df = df.dropna(subset=["latitude", "longitude"])
 
-    # Convert the list of dictionaries to a DataFrame
-    df.head()
-    df = pd.DataFrame(data_list)
+    # Apply radius filter
+    df["distance_km"] = df.apply(
+        lambda row: haversine(
+            center_lng, center_lat, row["longitude"], row["latitude"]
+        ),
+        axis=1,
+    )
+    df = df[df["distance_km"] <= radius_km]
 
-    return jsonify(df.to_dict(orient="records"))  # return the scraped data as JSON
+    # Optional filters
+    if "sold_start" in filters:
+        df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
+        df = df[df["sold_date"] >= pd.to_datetime(filters["sold_start"])]
+    if "sold_end" in filters:
+        df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
+        df = df[df["sold_date"] <= pd.to_datetime(filters["sold_end"])]
+    if "min_price" in filters:
+        df = df[df["price"] >= filters["min_price"]]
+    if "max_price" in filters:
+        df = df[df["price"] <= filters["max_price"]]
+    if "beds" in filters:
+        df = df[df["beds"].isin(filters["beds"])]
 
+    points = df[["latitude", "longitude", "price"]].dropna().to_dict(orient="records")
 
-@app.route("/webscraping", methods=["GET"])
-def webscraping():
-    return render_template("Webscraping.html")
-"""
+    summary = {
+        "count": len(df),
+        "average_price": round(df["price"].mean(), 2) if not df.empty else None,
+        "min_price": df["price"].min() if not df.empty else None,
+        "max_price": df["price"].max() if not df.empty else None,
+    }
+
+    return jsonify({"points": points, "summary": summary})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
