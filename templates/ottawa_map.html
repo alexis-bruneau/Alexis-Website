@@ -64,16 +64,27 @@
     </div>
     <!-- ✅ CLOSE CONTROLS -->
 
-    <div id="map"></div>
-
     <!-- map container -->
     <div id="map"></div>
     <!-- Summary stats (under map) -->
-    <div
-      id="stats"
-      style="padding: 10px; background: #f0f0f0; font-family: sans-serif"
-    >
-      <em>Filter the map to see summary stats appear here...</em>
+
+    <div id="stats" class="summary-stats">
+      <div class="stat-card">
+        <strong>Listings Sold</strong><br />
+        <span id="stat-count">–</span>
+      </div>
+      <div class="stat-card">
+        <strong>Average Price</strong><br />
+        <span id="stat-avg">–</span>
+      </div>
+      <div class="stat-card">
+        <strong>Max Price</strong><br />
+        <span id="stat-max">–</span>
+      </div>
+      <div class="stat-card">
+        <strong>Min Price</strong><br />
+        <span id="stat-min">–</span>
+      </div>
     </div>
 
     <!-- Leaflet core JS -->
