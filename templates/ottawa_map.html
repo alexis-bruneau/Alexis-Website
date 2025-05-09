@@ -68,22 +68,27 @@
     <div id="map"></div>
     <!-- Summary stats (under map) -->
 
-    <div id="stats" class="summary-stats">
-      <div class="stat-card">
-        <strong>Listings Sold</strong><br />
-        <span id="stat-count">–</span>
+    <div id="insights">
+      <div class="summary-cards">
+        <div class="card">
+          <strong>Listings Sold</strong><br />
+          <span id="stat-count">–</span>
+        </div>
+        <div class="card">
+          <strong>Average Price</strong><br />
+          <span id="stat-avg">–</span>
+        </div>
+        <div class="card">
+          <strong>Max Price</strong><br />
+          <span id="stat-max">–</span>
+        </div>
+        <div class="card">
+          <strong>Min Price</strong><br />
+          <span id="stat-min">–</span>
+        </div>
       </div>
-      <div class="stat-card">
-        <strong>Average Price</strong><br />
-        <span id="stat-avg">–</span>
-      </div>
-      <div class="stat-card">
-        <strong>Max Price</strong><br />
-        <span id="stat-max">–</span>
-      </div>
-      <div class="stat-card">
-        <strong>Min Price</strong><br />
-        <span id="stat-min">–</span>
+      <div class="chart-container">
+        <canvas id="soldByMonthChart"></canvas>
       </div>
     </div>
 
@@ -97,6 +102,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- Your application logic -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/map.js"></script>
   </body>
 </html>

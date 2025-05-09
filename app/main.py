@@ -101,12 +101,13 @@ def filtered_points():
     )
     df = df[df["distance_km"] <= radius_km]
 
+    # Convert sold_date column to datetime once before filtering
+    df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
+
     # Optional filters
     if "sold_start" in filters:
-        df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
         df = df[df["sold_date"] >= pd.to_datetime(filters["sold_start"])]
     if "sold_end" in filters:
-        df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
         df = df[df["sold_date"] <= pd.to_datetime(filters["sold_end"])]
     if "min_price" in filters:
         df = df[df["price"] >= filters["min_price"]]
@@ -115,13 +116,28 @@ def filtered_points():
     if "beds" in filters:
         df = df[df["beds"].isin(filters["beds"])]
 
+    # Extract points for the map
     points = df[["latitude", "longitude", "price"]].dropna().to_dict(orient="records")
 
+    # Group by month for chart
+    if not df["sold_date"].isna().all():
+        df["month"] = df["sold_date"].dt.to_period("M").astype(str)
+        by_month = (
+            df.groupby("month")
+            .size()
+            .reset_index(name="count")
+            .to_dict(orient="records")
+        )
+    else:
+        by_month = []
+
+    # Summary stats
     summary = {
         "count": len(df),
         "average_price": round(df["price"].mean(), 2) if not df.empty else None,
         "min_price": df["price"].min() if not df.empty else None,
         "max_price": df["price"].max() if not df.empty else None,
+        "by_month": by_month,
     }
 
     return jsonify({"points": points, "summary": summary})

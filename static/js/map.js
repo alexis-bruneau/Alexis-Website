@@ -154,8 +154,10 @@ function updateMapMarkers(points) {
   map.addLayer(markersCluster);
 }
 
+let soldChart = null;
+
 function updateStats(summary) {
-  const { count, average_price, max_price, min_price } = summary;
+  const { count, average_price, max_price, min_price, by_month } = summary;
 
   document.getElementById("stat-count").textContent =
     count !== null && count !== undefined ? count.toLocaleString() : "–";
@@ -174,6 +176,42 @@ function updateStats(summary) {
     min_price !== null && min_price !== undefined
       ? `$${Math.round(min_price).toLocaleString()}`
       : "–";
+
+  // Chart rendering
+  if (by_month && by_month.length > 0) {
+    const labels = by_month.map(item => item.month);
+    const values = by_month.map(item => item.count);
+
+    if (soldChart) {
+      soldChart.data.labels = labels;
+      soldChart.data.datasets[0].data = values;
+      soldChart.update();
+    } else {
+      const ctx = document.getElementById("soldByMonthChart").getContext("2d");
+      soldChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "# Sold per Month",
+            data: values,
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+            borderColor: "rgba(54, 162, 235, 1)",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  }
 }
 
 function updateListingsCount() {
