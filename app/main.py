@@ -38,6 +38,11 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/images/<path:filename>")
+def serve_images(filename):
+    return send_from_directory("Redfin/Output/images", filename)
+
+
 # This optional route if you want to serve other template files by path
 @app.route("/<path:filename>", methods=["GET"])
 def serve_static_html(filename):
@@ -84,9 +89,10 @@ def filtered_points():
             "Sold Date": "sold_date",
             "Number Beds": "beds",
             "Number Baths": "baths",
+            "MLS": "mls",
+            "Address": "address",
         }
     )
-
     # Ensure numeric lat/lng
     df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
     df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
@@ -117,7 +123,22 @@ def filtered_points():
         df = df[df["beds"].isin(filters["beds"])]
 
     # Extract points for the map
-    points = df[["latitude", "longitude", "price"]].dropna().to_dict(orient="records")
+    points = (
+        df[
+            [
+                "latitude",
+                "longitude",
+                "price",
+                "sold_date",
+                "address",
+                "mls",
+                "beds",
+                "baths",
+            ]
+        ]
+        .dropna(subset=["latitude", "longitude"])
+        .to_dict(orient="records")
+    )
 
     # Group by month for chart (count + average price)
     if not df["sold_date"].isna().all():

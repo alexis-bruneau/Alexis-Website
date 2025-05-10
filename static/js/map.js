@@ -143,9 +143,18 @@ function updateMapMarkers(points) {
   markersCluster.clearLayers();
   markers.length = 0;
 
-  points.forEach(({ latitude: lat, longitude: lng }) => {
+  points.forEach((point) => {
+    const { latitude: lat, longitude: lng } = point;
     if (!isNaN(lat) && !isNaN(lng)) {
       const marker = L.marker([lat, lng], { icon: redDotIcon });
+
+      // 🟢 Attach popup or click behavior to update card
+      marker.on("click", () => {
+  updatePropertyCard(point);
+});
+
+
+
       markersCluster.addLayer(marker);
       markers.push(marker);
     }
@@ -153,6 +162,7 @@ function updateMapMarkers(points) {
 
   map.addLayer(markersCluster);
 }
+
 
 let soldChart = null;
 
@@ -261,3 +271,73 @@ function updateListingsCount() {
 
   console.log(`Listings within circle: ${count}`);
 }
+
+let imageIndex = 1;
+let currentMLS = null;
+
+function updatePropertyCard({ price, address, beds, baths, sold_date, mls }) {
+  carouselImages.length = 0;
+  carouselIndex = 0;
+
+  // Push up to 5 image paths (the actual number shown depends on what loads successfully)
+  for (let i = 1; i <= 5; i++) {
+    carouselImages.push(`/images/${mls}_${i}.jpg`);
+  }
+
+  // Update text content in the card
+  document.getElementById("carousel-price").textContent = `$${parseInt(price).toLocaleString()}`;
+  document.getElementById("carousel-address").textContent = address || "Unknown address";
+  document.getElementById("carousel-details").textContent = `${beds ?? "?"} 🛏 | ${baths ?? "?"} 🛁`;
+  document.getElementById("carousel-note").textContent = getTimeSinceSold(sold_date);
+
+  showCarouselImage();
+}
+
+function getTimeSinceSold(dateStr) {
+  const soldDate = new Date(dateStr);
+  const now = new Date();
+  const diffMin = Math.floor((now - soldDate) / 60000);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hrs ago`;
+  const diffDays = Math.floor(diffHr / 24);
+  return `${diffDays} days ago`;
+}
+
+
+let carouselIndex = 0;
+let carouselImages = [];
+
+function showCarouselImage() {
+  const imgEl = document.getElementById("carouselImage");
+  const path = carouselImages[carouselIndex];
+
+  fetch(path, { method: "HEAD" })
+    .then(res => {
+      if (res.ok) {
+        imgEl.src = path;
+      } else {
+        imgEl.src = "/static/images/no-image.jpg"; // fallback image
+      }
+    })
+    .catch(() => {
+      imgEl.src = "/static/images/no-image.jpg";
+    });
+}
+
+
+function nextCarouselImage() {
+  if (carouselImages.length <= 1) return;
+  carouselIndex = (carouselIndex + 1) % carouselImages.length;
+  showCarouselImage();
+}
+
+function prevCarouselImage() {
+  if (carouselImages.length <= 1) return;
+  carouselIndex = (carouselIndex - 1 + carouselImages.length) % carouselImages.length;
+  showCarouselImage();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  showCarouselImage();
+});

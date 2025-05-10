@@ -5,15 +5,22 @@ import json, time, re
 import pandas as pd
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright, TimeoutError
+import requests
+import time
+
+start_time = time.time()
+
 
 # ---------------- config --------------------------------------------------
 test = True
-MAX_URLS = 1000
+MAX_URLS = 20
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
 OUT_CSV = Path("app/Redfin/Output/redfin_data.csv")
 OUT_HISTORY = Path("app/Redfin/Output/redfin_sale_history.csv")
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-WAIT_SEC = 4
+WAIT_SEC = 0.5
+IMAGES_DIR = Path("app/Redfin/Output/images")
+BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 
 
 # ---------------- helpers -------------------------------------------------
@@ -26,7 +33,7 @@ def load_redfin_cookies() -> list[dict]:
     return [
         {**c, "sameSite": "Lax", "expires": expire}
         for c in raw
-        if ".redfin.ca" in c["domain"]
+        if ".redfin.ca" in c.get("domain", "")
     ]
 
 
@@ -72,7 +79,6 @@ def parse_sale_history(html: str, page_url: str) -> list[dict]:
         mls_raw = div.select_one(".description-col p.subtext")
         mls_raw = mls_raw.get_text(strip=True) if mls_raw else ""
         mls_id = re.sub(r"^\s*TREB\s+#", "", mls_raw) if mls_raw else ""
-
         rows.append(
             {
                 "url": page_url,
@@ -83,6 +89,23 @@ def parse_sale_history(html: str, page_url: str) -> list[dict]:
             }
         )
     return rows
+
+
+def find_genmid_values(html: str) -> list[str]:
+    # grab filenames after genMid. ending in .jpg
+    matches = re.findall(r"genMid\.([A-Za-z0-9_]+\.jpg)", html)
+    return list(dict.fromkeys(matches))
+
+
+def download_images(image_urls: list[str], mls: str) -> None:
+    IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    for idx, url in enumerate(image_urls, start=1):
+        fname = f"{mls}_{idx}.jpg"
+        path = IMAGES_DIR / fname
+        if not path.exists():
+            resp = requests.get(url, timeout=30)
+            resp.raise_for_status()
+            path.write_bytes(resp.content)
 
 
 # ---------------- main ----------------------------------------------------
@@ -123,6 +146,17 @@ def main():
                 b.close()
             # -----------------------------------------------------------------
 
+            # save images for this page --------------------------------------
+            mls_code = extract_between(html, "TREB #", "<")
+            mls_digits = mls_code[-3:] if len(mls_code) >= 3 else mls_code
+            genmid_list = find_genmid_values(html)
+            # build full URLs
+            image_urls = [
+                f"{BASE_IMAGE_URL}{mls_digits}/genMid.{fn}" for fn in genmid_list
+            ]
+            download_images(image_urls, mls_code)
+            print(f"💾  Saved {len(image_urls)} images for MLS {mls_code}")
+
             # ---- sale‑history ----------------------------------------------
             hist = parse_sale_history(html, url)
             history_rows.extend(hist)
@@ -148,16 +182,17 @@ def main():
             )
 
             # ---- summary row -----------------------------------------------
-            summary_rows.append(
-                {
+            try:
+                mls_code = extract_between(html, "TREB #", "<")
+
+                row = {
                     "url": url,
-                    "MLS": extract_between(html, "TREB #", "<"),
-                    "Sold Price": sold_price
-                    or extract_between(html, 'latestPriceInfo":{"amount":', ","),
-                    "Number Beds": extract_between(
-                        html, '"latestListingInfo":{"beds":', ","
+                    "MLS": mls_code,
+                    "Sold Price": float(sold_price) if sold_price is not None else None,
+                    "Number Beds": float(
+                        extract_between(html, '"latestListingInfo":{"beds":', ",")
                     ),
-                    "Number Baths": extract_between(html, '"baths":', ","),
+                    "Number Baths": float(extract_between(html, '"baths":', ",")),
                     "Sold Date": (
                         sold_evt["eventDate"]
                         if sold_evt
@@ -169,20 +204,29 @@ def main():
                         html, 'Property Type","content":"', "\\"
                     ),
                     "Square Foot": extract_between(html, 'Lot Size","content":"', " "),
-                    "Parking": extract_between(html, 'Parking","content":"', " "),
-                    "Association Fee": extract_between(
-                        html, "Association Fee: <span>$", "<"
+                    "Parking": str(extract_between(html, 'Parking","content":"', " ")),
+                    "Association Fee": str(
+                        extract_between(html, "Association Fee: <span>$", "<")
                     ),
-                    "latitude": extract_between(html, 'latitude":', ","),
-                    "longitude": extract_between(html, 'longitude":', "}"),
-                    # ---- new analytics --------------------------------------
+                    "latitude": float(extract_between(html, 'latitude":', ",")),
+                    "longitude": float(extract_between(html, 'longitude":', "}")),
                     "First Listed Date": (
                         earliest_evt["eventDate"] if earliest_evt else None
                     ),
-                    "Days On Market": days_on_mk,
-                    "Sold Price Difference": price_diff,
+                    "Days On Market": (
+                        float(days_on_mk) if days_on_mk is not None else None
+                    ),
+                    "Sold Price Difference": (
+                        float(price_diff) if price_diff is not None else None
+                    ),
                 }
-            )
+
+                summary_rows.append(row)
+
+            except Exception as e:
+                print(
+                    f"❌ Skipped MLS {mls_code if 'mls_code' in locals() else 'N/A'} due to error in field: {e}"
+                )
 
             if test and scraped >= MAX_URLS:
                 break
@@ -192,6 +236,10 @@ def main():
     pd.DataFrame(history_rows).to_csv(OUT_HISTORY, index=False)
     print(f"\n✅  Saved {len(summary_rows)} rows to {OUT_CSV}")
     print(f"✅  Saved {len(history_rows)} sale‑history rows to {OUT_HISTORY}")
+
+    end_time = time.time()
+
+    print(f"⏱️  Script runtime: {end_time - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

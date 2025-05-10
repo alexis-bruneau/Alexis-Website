@@ -71,24 +71,58 @@
     <div id="insights">
       <div class="summary-cards">
         <div class="card">
-          <strong>Listings Sold</strong><br />
-          <span id="stat-count">–</span>
+          <strong>Listings Sold</strong><br /><span id="stat-count">–</span>
         </div>
         <div class="card">
-          <strong>Average Price</strong><br />
-          <span id="stat-avg">–</span>
+          <strong>Average Price</strong><br /><span id="stat-avg">–</span>
         </div>
         <div class="card">
-          <strong>Max Price</strong><br />
-          <span id="stat-max">–</span>
+          <strong>Max Price</strong><br /><span id="stat-max">–</span>
         </div>
         <div class="card">
-          <strong>Min Price</strong><br />
-          <span id="stat-min">–</span>
+          <strong>Min Price</strong><br /><span id="stat-min">–</span>
         </div>
       </div>
-      <div class="chart-container">
-        <canvas id="soldByMonthChart"></canvas>
+
+      <!-- ✅ Wrap chart and property card side by side -->
+      <div class="bottom-section">
+        <div class="chart-container">
+          <canvas id="soldByMonthChart"></canvas>
+        </div>
+
+        <div class="suggested-listing-card">
+          <div class="image-with-info">
+            <div
+              class="image-carousel"
+              onmouseenter="showArrows(true)"
+              onmouseleave="showArrows(false)"
+            >
+              <div
+                class="carousel-zone left-zone"
+                onclick="prevCarouselImage()"
+              >
+                <span class="arrow" id="leftArrow">←</span>
+              </div>
+
+              <img id="carouselImage" src="" alt="Suggested Property" />
+
+              <div
+                class="carousel-zone right-zone"
+                onclick="nextCarouselImage()"
+              >
+                <span class="arrow" id="rightArrow">→</span>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <strong id="carousel-price">$0</strong>
+              <p id="carousel-address">Address</p>
+              <p id="carousel-details">Beds/Baths</p>
+              <p id="carousel-note">Time since sold</p>
+              <button onclick="alert('Redirecting...')">View Details</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
