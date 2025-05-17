@@ -2,6 +2,10 @@
 const IMG_BASE   = "https://redfinstorage.blob.core.windows.net/images/";   // include SAS query-string if your container is Private
 const DEFAULT_IMG = IMG_BASE + "no-image.jpg";                              // same container, or any public URL
 
+/************** BED-FILTER STATE **************/
+let selectedBeds = [];      // e.g. [2,3,4,5]
+let rangeMode    = false;   // first click = “range”, second = “exact”
+
 
 /************** 1. MAP SETUP **************/
 const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
@@ -10,8 +14,6 @@ const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
 const ottawaBounds = L.latLngBounds([45.25, -76.0], [45.75, -75.4]);
 map.setMaxBounds(ottawaBounds);
 map.on("drag", () => map.panInsideBounds(ottawaBounds, { animate: false }));
-
-let selectedMinBeds = null;
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -98,14 +100,32 @@ document.getElementById("filterToggle").addEventListener("click", () => {
 document.getElementById("soldStart").addEventListener("change", fetchFilteredPoints);
 document.getElementById("soldEnd").addEventListener("change", fetchFilteredPoints);
 
+/************** BED BUTTON LOGIC **************/
 document.querySelectorAll(".bed-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".bed-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedMinBeds = parseInt(btn.dataset.minbeds);
-    fetchFilteredPoints();
+    const clicked = Number(btn.dataset.bed);
+    const allBtns = document.querySelectorAll(".bed-btn");
+
+    if (!rangeMode) {
+      /* first click → highlight clicked & everything above it */
+      allBtns.forEach(b => {
+        const val = Number(b.dataset.bed);
+        b.classList.toggle("selected", val >= clicked);
+      });
+      selectedBeds = [1, 2, 3, 4, 5].filter(n => n >= clicked);
+      rangeMode = true;          // next click switches to “exact”
+    } else {
+      /* second click → keep only the one clicked */
+      allBtns.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedBeds = [clicked];
+      rangeMode = false;         // ready for a new range later
+    }
+
+    fetchFilteredPoints();       // refresh results
   });
 });
+
 
 /************** 5. FILTERED DATA REQUEST **************/
 async function fetchFilteredPoints() {
@@ -118,9 +138,11 @@ async function fetchFilteredPoints() {
   const filters = {};
   if (soldStart) filters.sold_start = soldStart;
   if (soldEnd) filters.sold_end = soldEnd;
-  if (selectedMinBeds !== null) {
-    filters.beds = [1, 2, 3, 4, 5].filter(n => n >= selectedMinBeds);
+
+  if (selectedBeds.length) {          
+    filters.beds = selectedBeds;      
   }
+
 
   const payload = {
     center: [center.lat, center.lng],
@@ -229,7 +251,11 @@ function updateStats(summary) {
             y: {
               type: "linear",
               position: "left",
-              title: { display: true, text: "Listings Sold" }
+              title: { display: true, text: "Listings Sold" },
+              ticks: {
+                stepSize: 1,       // always increment by 1
+                precision: 0       // no decimals
+              }
             },
             y1: {
               type: "linear",
