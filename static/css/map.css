@@ -235,3 +235,19 @@ html, body {
 .info-box p {
   margin: 4px 0;
 }
+
+.view-btn {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 14px;
+  background-color: #0078d4; /* Microsoft blue */
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.view-btn:hover {
+  background-color: #005a9e;
+}

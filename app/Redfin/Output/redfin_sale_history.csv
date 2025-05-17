@@ -1,52 +1,120 @@
 url,eventDate,eventType,price,MLS
-https://www.redfin.ca/ON/Ottawa/Avenue-P-K1G/home/194107094,"Jul 2, 2024",Sold (MLS),"$535,000",X9422149
-https://www.redfin.ca/ON/Ottawa/Avenue-P-K1G/home/194107094,"Apr 23, 2024",Listed,"$539,900",X9422149
-https://www.redfin.ca/ON/Ottawa/Unknown-K1J-0J2/unit-507/home/194872115,"Jan 17, 2025",Sold (MLS) (Closed),"$505,000",X11893814
-https://www.redfin.ca/ON/Ottawa/Unknown-K1J-0J2/unit-507/home/194872115,"Dec 16, 2024",Listed (Active),"$519,900",X11893814
-https://www.redfin.ca/ON/Ottawa/Unknown-K2B-7S5/unit-8/home/194107136,"Jun 3, 2024",Sold (MLS),"$353,000",X9423157
-https://www.redfin.ca/ON/Ottawa/Unknown-K2B-7S5/unit-8/home/194107136,"Mar 5, 2024",Listed,"$369,000",X9423157
-https://www.redfin.ca/ON/Ottawa/Unknown-K2C-1C5/unit-11/home/194107073,"Dec 5, 2024",Sold (MLS),"$250,000",X9453753
-https://www.redfin.ca/ON/Ottawa/Unknown-K2C-1C5/unit-11/home/194107073,"Sep 6, 2024",Listed,"$279,900",X9453753
-https://www.redfin.ca/ON/Ottawa/Unknown-Unknown/home/194106851,"May 16, 2024",Sold (MLS),"$417,000",X9430417
-https://www.redfin.ca/ON/Ottawa/Unknown-Unknown/home/194106851,"Mar 6, 2024",Listed,"$429,900",X9430417
-https://www.redfin.ca/on/alfred-and-plantagenet/111-Panorama-Ave-K0A-3K0/home/148792818,"May 15, 2024",Sold (MLS),"$422,000",X9448185
-https://www.redfin.ca/on/alfred-and-plantagenet/111-Panorama-Ave-K0A-3K0/home/148792818,"Feb 22, 2024",Listed,"$429,000",X9448185
-https://www.redfin.ca/on/alfred-and-plantagenet/286-Trillium-Cir-K0A-3K0/home/148994579,"Apr 14, 2025",Sold (MLS) (Closed),"$421,000",X12030613
-https://www.redfin.ca/on/alfred-and-plantagenet/286-Trillium-Cir-K0A-3K0/home/148994579,"Mar 29, 2025",Price Changed,"$421,000",X12030613
-https://www.redfin.ca/on/alfred-and-plantagenet/286-Trillium-Cir-K0A-3K0/home/148994579,"Mar 20, 2025",Listed (Active),"$445,000",X12030613
-https://www.redfin.ca/on/alfred-and-plantagenet/3225-Principale-St-K0A-3K0/home/148847806,"Sep 30, 2024",Sold (MLS),"$275,000",X9448936
-https://www.redfin.ca/on/alfred-and-plantagenet/3225-Principale-St-K0A-3K0/home/148847806,"Jul 22, 2024",Listed,"$299,000",X9448936
-https://www.redfin.ca/on/alfred-and-plantagenet/3225-Principale-St-K0A-3K0/home/148847806,"Jun 13, 2024",Listed,"$349,000",X9439860
-https://www.redfin.ca/on/alfred-and-plantagenet/3626-Principale-St-K0A-3K0/unit-A/home/190544794,"Jun 27, 2024",Sold (MLS),"$415,000",X9422036
-https://www.redfin.ca/on/alfred-and-plantagenet/3626-Principale-St-K0A-3K0/unit-A/home/190544794,"Apr 18, 2024",Listed,"$424,900",X9422036
-https://www.redfin.ca/on/alfred-and-plantagenet/3680-Principale-St-K0A-3K0/home/148862080,"Aug 30, 2024",Sold (MLS),"$355,000",X9442097
-https://www.redfin.ca/on/alfred-and-plantagenet/3680-Principale-St-K0A-3K0/home/148862080,"Jun 27, 2024",Listed,"$369,900",X9442097
-https://www.redfin.ca/on/alfred-and-plantagenet/3680-Principale-St-K0A-3K0/home/148862080,"Jun 3, 2024",Listed,"$389,900",X9438126
-https://www.redfin.ca/on/alfred-and-plantagenet/3716-Prud-homme-Rd-K0A-3K0/home/190704040,"Jun 21, 2024",Sold (MLS),"$355,000",X9424122
-https://www.redfin.ca/on/alfred-and-plantagenet/3716-Prud-homme-Rd-K0A-3K0/home/190704040,"May 6, 2024",Listed,"$375,900",X9424122
-https://www.redfin.ca/on/alfred-and-plantagenet/503-Ovana-Cres-K0A-3K0/home/148771881,"Nov 29, 2024",Sold (MLS) (Closed),"$620,500",X10428866
-https://www.redfin.ca/on/alfred-and-plantagenet/503-Ovana-Cres-K0A-3K0/home/148771881,"Nov 23, 2024",Delisted (Off Market),—,X10428866
-https://www.redfin.ca/on/alfred-and-plantagenet/503-Ovana-Cres-K0A-3K0/home/148771881,"Nov 18, 2024",Listed (Active),"$624,900",X10428866
-https://www.redfin.ca/on/arnprior/100-Morgan-Clouthier-Way-K0A/home/190332022,"Apr 29, 2024",Sold (MLS),"$499,900",X9429707
-https://www.redfin.ca/on/arnprior/100-Morgan-Clouthier-Way-K0A/home/190332022,"Mar 29, 2024",Listed,"$499,900",X9429707
-https://www.redfin.ca/on/arnprior/100-Seabert-Dr-K0A/home/189617606,"May 15, 2024",Sold (MLS),"$499,000",X9448058
-https://www.redfin.ca/on/arnprior/100-Seabert-Dr-K0A/home/189617606,"Feb 2, 2024",Listed,"$499,000",X9448058
-https://www.redfin.ca/on/arnprior/102-Hugh-St-S-K7S-2V7/home/151026676,"Apr 23, 2025",Sold (MLS) (Closed),"$335,000",X12027760
-https://www.redfin.ca/on/arnprior/102-Hugh-St-S-K7S-2V7/home/151026676,"Apr 1, 2025",Listed (Active),"$339,900",X12027760
-https://www.redfin.ca/on/arnprior/102-Hugh-St-S-K7S-2V7/home/151026676,"Mar 28, 2025",Sold (MLS) (Closed),"$335,000",X12027760
-https://www.redfin.ca/on/arnprior/102-Hugh-St-S-K7S-2V7/home/151026676,"Mar 19, 2025",Listed (Active),"$339,900",X12027760
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Apr 21, 2025",Sold (MLS) (Closed),"$565,000",X12032389
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Apr 1, 2025",Listed (Active),"$575,000",X12032389
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Mar 29, 2025",Sold (MLS) (Closed),"$565,000",X12032389
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Mar 20, 2025",Listed (Active),"$575,000",X12032389
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Oct 25, 2024",Delisted,—,X9457271
-https://www.redfin.ca/on/arnprior/102-Ottawa-St-K7S-1X5/home/151000658,"Sep 16, 2024",Listed (Active),"$599,900",X9457271
-https://www.redfin.ca/on/arnprior/108-Wolff-Cres-K7S-0B9/home/150987028,"Oct 15, 2024",Sold (MLS),"$512,750",X9455434
-https://www.redfin.ca/on/arnprior/108-Wolff-Cres-K7S-0B9/home/150987028,"Jun 18, 2024",Listed,"$519,900",X9455434
-https://www.redfin.ca/on/arnprior/109-Desmond-Trudeau-Dr-K7S-3G9/home/150866545,"Nov 20, 2024",Sold (MLS),"$445,000",X10442124
-https://www.redfin.ca/on/arnprior/109-Desmond-Trudeau-Dr-K7S-3G9/home/150866545,"Oct 3, 2024",Listed,"$449,900",X10442124
-https://www.redfin.ca/on/arnprior/109-Desmond-Trudeau-Dr-K7S-3G9/home/150866545,"Sep 3, 2024",Listed,"$489,900",X9453828
-https://www.redfin.ca/on/arnprior/112-Desmond-Trudeau-Dr-K7S-3G9/home/150947422,"May 17, 2024",Sold (MLS),"$465,000",X9431883
-https://www.redfin.ca/on/arnprior/112-Desmond-Trudeau-Dr-K7S-3G9/home/150947422,"Apr 11, 2024",Listed,"$474,900",X9431883
-https://www.redfin.ca/on/arnprior/112-Russell-St-N-K7S-2J7/home/150943234,"Nov 29, 2024",Sold (MLS),"$455,000",X9451330
-https://www.redfin.ca/on/arnprior/112-Russell-St-N-K7S-2J7/home/150943234,"Aug 30, 2024",Listed,"$459,900",X9451330
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-402/home/170472868,"Jul 26, 2023",Sold (MLS),"$1,360,000",X9466265
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-402/home/170472868,"Jan 16, 2023",Listed,"$1,395,000",X9466265
+https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Apr 11, 2025",Sold (MLS) (Closed),"$955,000",X11990818
+https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Feb 27, 2025",Listed (Active),"$999,000",X11990818
+https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Mar 11, 2025",Relisted (Active),—,X11950910
+https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Feb 1, 2025",Listed (Active),"$1,100,000",X11950910
+https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-203/home/149819926,"May 30, 2024",Sold (MLS),"$450,000",X9428598
+https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-203/home/149819926,"Mar 27, 2024",Listed,"$459,900",X9428598
+https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Oct 30, 2024",Sold (MLS),"$663,500",X9450829
+https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Aug 5, 2024",Listed,"$694,900",X9450829
+https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Apr 17, 2024",Listed,"$749,000",X9430883
+https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-305/home/149850812,"Dec 22, 2021",Sold (MLS) (Sold),"$446,000",X5371705
+https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-305/home/149850812,"Sep 15, 2021",Listed (Active),"$449,800",X5371705
+https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Apr 8, 2025",Sold (MLS) (Closed),"$835,000",X12046002
+https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Mar 27, 2025",Listed (Active),"$849,900",X12046002
+https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Feb 6, 2025",Listed (Active),"$849,900",X11960618
+https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-12/home/149560198,"Jun 10, 2024",Sold (MLS),"$334,000",X9420502
+https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-12/home/149560198,"Mar 2, 2024",Listed,"$339,900",X9420502
+https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"Sep 16, 2024",Sold (MLS),"$585,000",X9442046
+https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"Jun 24, 2024",Listed,"$599,900",X9442046
+https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"May 6, 2024",Listed,"$599,900",X9425163
+https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-4/home/149560220,"Apr 4, 2025",Sold (MLS) (Closed),"$490,000",X12043258
+https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-4/home/149560220,"Mar 26, 2025",Listed (Active),"$499,900",X12043258
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Feb 21, 2025",Listed (Active),"$849,900",X10430672
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Jan 31, 2025",Listed (Active),"$849,900",X10430672
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 20, 2024",Sold (MLS) (Closed),"$830,000",X10430672
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 20, 2024",Sold (MLS) (Closed),"$830,000",X10430672
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 16, 2024",Sold (MLS) (Closed),"$830,000",X10430672
+https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Nov 19, 2024",Listed (Active),"$849,900",X10430672
+https://www.redfin.ca/on/ottawa/119-Russell-Ave-K1N-7X2/home/149748435,"Sep 5, 2024",Sold (MLS),"$882,500",X9441674
+https://www.redfin.ca/on/ottawa/119-Russell-Ave-K1N-7X2/home/149748435,"Jun 20, 2024",Listed,"$899,900",X9441674
+https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"Aug 21, 2024",Sold (MLS),"$630,000",X9437276
+https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"May 21, 2024",Listed,"$645,000",X9437276
+https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"May 2, 2024",Listed,"$675,000",X9424681
+https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Dec 2, 2024",Sold (MLS),"$886,000",X9453109
+https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Jul 31, 2024",Listed,"$949,900",X9453109
+https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Jun 24, 2024",Listed,"$989,900",X9441979
+https://www.redfin.ca/on/ottawa/131-Wurtemburg-St-K1N/unit-804/home/149887373,"May 3, 2025",Sold (MLS) (Closed),"$959,900",X12087988
+https://www.redfin.ca/on/ottawa/131-Wurtemburg-St-K1N/unit-804/home/149887373,"Apr 17, 2025",Listed (Active),"$959,900",X12087988
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1007/home/149571433,"Mar 12, 2025",Sold (MLS) (Closed),"$350,100",X11984053
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1007/home/149571433,"Feb 22, 2025",Listed (Active),"$350,000",X11984053
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"May 10, 2025",Sold (MLS) (Closed),"$489,900",X12082154
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"May 9, 2025",Delisted (Off Market),—,X12082154
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"Apr 14, 2025",Listed (Active),"$489,900",X12082154
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"Mar 21, 2025",Listed (Active),"$495,000",X12034921
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1208/home/149840443,"Nov 27, 2024",Sold (MLS) (Closed),"$367,000",X10425338
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1208/home/149840443,"Nov 14, 2024",Listed (Active),"$369,900",X10425338
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 22, 2025",Sold (MLS) (Closed),"$397,500",X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 22, 2025",Sold (MLS) (Closed),"$397,500",X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 9, 2025",Delisted (Off Market),—,X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Nov 1, 2024",Listed (Active),"$399,900",X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Nov 1, 2024",Delisted,—,X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Oct 28, 2024",Listed (Active),"$399,900",X9524292
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Apr 1, 2025",Listed (Active),"$459,900",X12017141
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Apr 1, 2025",Sold (MLS) (Closed),"$445,000",X12017141
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Mar 31, 2025",Sold (MLS) (Closed),"$445,000",X12017141
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Mar 13, 2025",Listed (Active),"$459,900",X12017141
+https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Feb 18, 2025",Listed (Active),"$469,900",X11976990
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Aug 30, 2024",Sold (MLS),"$407,000",X9438510
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Jun 26, 2024",Listed,"$407,000",X9438510
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Oct 11, 2024",Sold (MLS),"$375,000",X9458990
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Sep 30, 2024",Listed,"$385,000",X9458990
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Oct 29, 2024",Sold (MLS),"$427,000",X9447790
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Aug 22, 2024",Listed,"$429,900",X9447790
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Apr 11, 2024",Listed,"$429,900",X9426021
+https://www.redfin.ca/on/ottawa/139-Dalhousie-St-K1N-7C2/home/149650863,"Apr 22, 2024",Sold (MLS),"$538,900",X9446533
+https://www.redfin.ca/on/ottawa/139-Dalhousie-St-K1N-7C2/home/149650863,"Feb 13, 2024",Listed,"$544,900",X9446533
+https://www.redfin.ca/on/ottawa/140-St-Andrew-St-K1N-5G4/home/149635085,"Aug 15, 2024",Sold (MLS),"$550,000",X9423538
+https://www.redfin.ca/on/ottawa/140-St-Andrew-St-K1N-5G4/home/149635085,"Mar 23, 2024",Listed,"$559,000",X9423538
+https://www.redfin.ca/on/ottawa/144-Clarence-St-K1N-5P8/unit-2A/home/149447570,"Feb 14, 2024",Listed (Active),"$510,000",X8068790
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Jun 3, 2024",Listed,"$749,000",X9452459
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Mar 1, 2023",Sold (MLS),"$390,000",X10389189
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Dec 21, 2022",Listed,"$399,000",X10389189
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-207/home/149563339,"Jun 9, 2023",Sold (MLS),"$365,000",X9469749
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-207/home/149563339,"Apr 11, 2023",Listed,"$375,000",X9469749
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Jan 25, 2023",Listed,"$419,900",X9466301
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Oct 7, 2021",Sold (MLS) (Sold),"$410,000",X5341048
+https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Aug 16, 2021",Listed (Active),"$439,900",X5341048
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-2/home/149818590,"Oct 29, 2024",Sold (MLS),"$335,000",X9457697
+https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-2/home/149818590,"Sep 23, 2024",Listed,"$358,900",X9457697
+https://www.redfin.ca/on/ottawa/150-York-St-K1N-1K9/unit-3B/home/191037935,"Aug 28, 2024",Sold (MLS),"$312,900",X9437159
+https://www.redfin.ca/on/ottawa/150-York-St-K1N-1K9/unit-3B/home/191037935,"Jun 4, 2024",Listed,"$319,900",X9437159
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Dec 19, 2024",Sold (MLS) (Closed),"$302,000",X10426776
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 15, 2024",Listed (Active),"$309,999",X10426776
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 1, 2024",Listed (Active),"$349,000",X9517608
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 1, 2024",Delisted,—,X9517608
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Aug 20, 2024",Listed (Active),"$349,000",X9517608
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-702/home/149855054,"Apr 20, 2023",Sold (MLS),"$315,000",X9473830
+https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-702/home/149855054,"Jan 10, 2023",Listed,"$329,900",X9473830
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 26, 2025",Sold (MLS) (Closed),"$884,900",X10463702
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 21, 2025",Listed (Active),"$849,000",X10463702
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 3, 2025",Sold (MLS) (Closed),"$884,900",X10463702
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 22, 2024",Listed (Active),"$849,000",X10463702
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 1, 2024",Listed (Active),"$897,500",X9518687
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 1, 2024",Delisted,—,X9518687
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Aug 8, 2024",Listed (Active),"$897,500",X9518687
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 21, 2024",Sold (MLS) (Closed),"$400,000",X9520401
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 1, 2024",Listed (Active),"$411,000",X9520401
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 1, 2024",Delisted,—,X9520401
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Oct 30, 2024",Price Changed,"$411,000",X9520401
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Sep 19, 2024",Listed (Active),"$429,900",X9520401
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Oct 25, 2024",Delisted,—,X9457558
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Sep 19, 2024",Listed (Active),"$429,900",X9457558
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Sep 26, 2024",Sold (MLS),"$895,000",X9439981
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Jun 18, 2024",Listed,"$899,995",X9439981
+https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Mar 5, 2024",Listed,"$959,900",X9420693
+https://www.redfin.ca/on/ottawa/164-Guigues-Ave-K1N-5J1/unit-A/home/191596620,"Nov 25, 2024",Sold (MLS),"$695,000",X9447068
+https://www.redfin.ca/on/ottawa/164-Guigues-Ave-K1N-5J1/unit-A/home/191596620,"Jul 16, 2024",Listed,"$749,900",X9447068
+https://www.redfin.ca/on/ottawa/161-Goulburn-Ave-K1N-8E3/home/149629277,"Jun 5, 2024",Sold (MLS),"$989,000",X9420970
+https://www.redfin.ca/on/ottawa/161-Goulburn-Ave-K1N-8E3/home/149629277,"Mar 20, 2024",Listed,"$999,900",X9420970
+https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"Sep 1, 2023",Sold (MLS),"$940,000",X9472344
+https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"May 30, 2023",Listed,"$999,900",X9472344
+https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"Apr 6, 2023",Listed,"$1,025,000",X9470938
+https://www.redfin.ca/on/ottawa/166-Marlborough-Ave-K1N-8G4/home/149624549,"Jul 15, 2024",Sold (MLS),"$1,078,000",X9424430
+https://www.redfin.ca/on/ottawa/166-Marlborough-Ave-K1N-8G4/home/149624549,"Apr 18, 2024",Listed,"$1,098,000",X9424430
+https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Aug 2, 2023",Sold (MLS) (Sold),"$650,000",X6643292
+https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 28, 2023",Pending (Sold-Conditional),—,X6643292
+https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 21, 2023",Price Changed,"$697,000",X6643292
+https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 6, 2023",Listed (Active),"$749,200",X6643292

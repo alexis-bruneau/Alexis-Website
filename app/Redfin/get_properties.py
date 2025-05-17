@@ -14,52 +14,7 @@ HEADERS = {
     )
 }
 
-POSTAL_CODES = [
-    "K0A",
-    "K2J",
-    "K1V",
-    "K4A",
-    "K2G",
-    "K1C",
-    "K1T",
-    "K1G",
-    "K2B",
-    "K2S",
-    "K1K",
-    "K1S",
-    "K2C",
-    "K2M",
-    "K1J",
-    "K2H",
-    "K1N",
-    "K2K",
-    "K1Z",
-    "K1Y",
-    "K2L",
-    "K2E",
-    "K1R",
-    "K2P",
-    "K1B",
-    "K1L",
-    "K2A",
-    "K7A",
-    "K1H",
-    "K1E",
-    "K7S",
-    "K4M",
-    "K1W",
-    "K4P",
-    "K2T",
-    "K2W",
-    "K1M",
-    "K4B",
-    "K4C",
-    "K2V",
-    "K2R",
-    "K1X",
-    "K1P",
-    "K1A",
-]  # add more if you wish
+POSTAL_CODES = ["K1N"]  # add more if you wish
 
 MAX_PAGES = 50  # stop if pagination gets this far w/out results
 SLEEP_RANGE = (0.3, 0.6)  # polite delay between page requests

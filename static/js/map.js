@@ -1,3 +1,8 @@
+/************** 0. GLOBAL CONSTANTS **************/
+const IMG_BASE   = "https://redfinstorage.blob.core.windows.net/images/";   // include SAS query-string if your container is Private
+const DEFAULT_IMG = IMG_BASE + "no-image.jpg";                              // same container, or any public URL
+
+
 /************** 1. MAP SETUP **************/
 const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
              .setView([45.4215, -75.6972], 13);
@@ -40,6 +45,9 @@ fetch("/points.json")
 
     map.addLayer(markersCluster);
     updateListingsCount();
+
+    /* 👇  kick off the “real” data load so each point gets its photo */
+    fetchFilteredPoints();              // <-- ADD THIS LINE
   })
   .catch(console.error);
 
@@ -143,18 +151,12 @@ function updateMapMarkers(points) {
   markersCluster.clearLayers();
   markers.length = 0;
 
-  points.forEach((point) => {
+  points.forEach(point => {
     const { latitude: lat, longitude: lng } = point;
     if (!isNaN(lat) && !isNaN(lng)) {
       const marker = L.marker([lat, lng], { icon: redDotIcon });
 
-      // 🟢 Attach popup or click behavior to update card
-      marker.on("click", () => {
-  updatePropertyCard(point);
-});
-
-
-
+      marker.on("click", () => updatePropertyCard(point)); // pass whole point
       markersCluster.addLayer(marker);
       markers.push(marker);
     }
@@ -162,6 +164,7 @@ function updateMapMarkers(points) {
 
   map.addLayer(markersCluster);
 }
+
 
 
 let soldChart = null;
@@ -257,8 +260,6 @@ function updateStats(summary) {
   }
 }
 
-
-
 function updateListingsCount() {
   const circleCenter = circle.getLatLng();
   const circleRadius = circle.getRadius();
@@ -275,23 +276,35 @@ function updateListingsCount() {
 let imageIndex = 1;
 let currentMLS = null;
 
-function updatePropertyCard({ price, address, beds, baths, sold_date, mls }) {
+function updatePropertyCard(point) {
+  const { price, address, beds, baths, sold_date, mls, url } = point;
+
+  /* ---------- build the image list ----------------------------- */
   carouselImages.length = 0;
   carouselIndex = 0;
 
-  // Push up to 5 image paths (the actual number shown depends on what loads successfully)
+  // try the first 5 photos following <MLS>_1.jpg, _2.jpg…
   for (let i = 1; i <= 5; i++) {
-    carouselImages.push(`/images/${mls}_${i}.jpg`);
+    carouselImages.push(`${IMG_BASE}${mls}_${i}.jpg`);
   }
 
-  // Update text content in the card
-  document.getElementById("carousel-price").textContent = `$${parseInt(price).toLocaleString()}`;
-  document.getElementById("carousel-address").textContent = address || "Unknown address";
-  document.getElementById("carousel-details").textContent = `${beds ?? "?"} 🛏 | ${baths ?? "?"} 🛁`;
-  document.getElementById("carousel-note").textContent = getTimeSinceSold(sold_date);
+  /* ---------- the rest of your card logic ---------------------- */
+  document.getElementById("carousel-price").textContent =
+    `$${parseInt(price).toLocaleString()}`;
+  document.getElementById("carousel-address").textContent =
+    address || "Unknown address";
+  document.getElementById("carousel-details").textContent =
+    `${beds ?? "?"} 🛏 | ${baths ?? "?"} 🛁`;
+  document.getElementById("carousel-note").textContent =
+    getTimeSinceSold(sold_date);
+
+  const viewBtn = document.getElementById("viewDetailsBtn");
+  viewBtn.href = url || "#";
+  viewBtn.style.pointerEvents = url ? "auto" : "none";
 
   showCarouselImage();
 }
+
 
 function getTimeSinceSold(dateStr) {
   const soldDate = new Date(dateStr);
@@ -304,26 +317,17 @@ function getTimeSinceSold(dateStr) {
   return `${diffDays} days ago`;
 }
 
-
 let carouselIndex = 0;
 let carouselImages = [];
 
 function showCarouselImage() {
   const imgEl = document.getElementById("carouselImage");
-  const path = carouselImages[carouselIndex];
+  const src   = carouselImages[carouselIndex];
 
-  fetch(path, { method: "HEAD" })
-    .then(res => {
-      if (res.ok) {
-        imgEl.src = path;
-      } else {
-        imgEl.src = "/static/images/no-image.jpg"; // fallback image
-      }
-    })
-    .catch(() => {
-      imgEl.src = "/static/images/no-image.jpg";
-    });
+  imgEl.onerror = () => { imgEl.src = DEFAULT_IMG; };
+  imgEl.src     = src;
 }
+
 
 
 function nextCarouselImage() {
@@ -341,3 +345,13 @@ function prevCarouselImage() {
 document.addEventListener("DOMContentLoaded", () => {
   showCarouselImage();
 });
+
+function showArrows(visible) {
+  const left = document.getElementById("leftArrow");
+  const right = document.getElementById("rightArrow");
+
+  if (left && right) {
+    left.style.display = visible ? "block" : "none";
+    right.style.display = visible ? "block" : "none";
+  }
+}
