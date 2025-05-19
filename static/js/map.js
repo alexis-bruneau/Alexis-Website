@@ -2,6 +2,10 @@
 const IMG_BASE   = "https://redfinstorage.blob.core.windows.net/images/";   // include SAS query-string if your container is Private
 const DEFAULT_IMG = IMG_BASE + "no-image.jpg";                              // same container, or any public URL
 
+/************** BED-FILTER STATE **************/
+let selectedBeds = [];      // e.g. [2,3,4,5]
+let rangeMode    = false;   // first click = “range”, second = “exact”
+
 
 /************** 1. MAP SETUP **************/
 const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
@@ -10,8 +14,6 @@ const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
 const ottawaBounds = L.latLngBounds([45.25, -76.0], [45.75, -75.4]);
 map.setMaxBounds(ottawaBounds);
 map.on("drag", () => map.panInsideBounds(ottawaBounds, { animate: false }));
-
-let selectedMinBeds = null;
 
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
@@ -95,32 +97,132 @@ document.getElementById("filterToggle").addEventListener("click", () => {
   panel.style.display = panel.style.display === "none" ? "block" : "none";
 });
 
-document.getElementById("soldStart").addEventListener("change", fetchFilteredPoints);
-document.getElementById("soldEnd").addEventListener("change", fetchFilteredPoints);
 
+/************** BED BUTTON LOGIC **************/
 document.querySelectorAll(".bed-btn").forEach(btn => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".bed-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    selectedMinBeds = parseInt(btn.dataset.minbeds);
-    fetchFilteredPoints();
+    const clicked = Number(btn.dataset.bed);
+    const allBtns = document.querySelectorAll(".bed-btn");
+
+    if (!rangeMode) {
+      /* first click → highlight clicked & everything above it */
+      allBtns.forEach(b => {
+        const val = Number(b.dataset.bed);
+        b.classList.toggle("selected", val >= clicked);
+      });
+      selectedBeds = [1, 2, 3, 4, 5].filter(n => n >= clicked);
+      rangeMode = true;          // next click switches to “exact”
+    } else {
+      /* second click → keep only the one clicked */
+      allBtns.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedBeds = [clicked];
+      rangeMode = false;         // ready for a new range later
+    }
+
+    fetchFilteredPoints();       // refresh results
   });
 });
 
+
 /************** 5. FILTERED DATA REQUEST **************/
+
+const dateOrigin = new Date("2019-01-01");
+const msPerDay = 1000 * 60 * 60 * 24;
+
+// Calculate total days between 2019-01-01 and today
+const today = new Date();
+const totalDays = Math.floor((today - dateOrigin) / msPerDay);
+
+
+
+// Show readable labels
+function updateDateLabels() {
+  const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
+  labelStart.textContent = offsetToDateStr(startOffset);
+  labelEnd.textContent = offsetToDateStr(endOffset);
+}
+
+
+const slider = document.getElementById("dateRangeSlider");
+const labelStart = document.getElementById("labelStart");
+const labelEnd = document.getElementById("labelEnd");
+
+noUiSlider.create(slider, {
+  start: [0, totalDays],
+  connect: true,
+  range: {
+    min: 0,
+    max: totalDays
+  },
+  step: 1,
+  tooltips: false,
+});
+
+function offsetToDateStr(offset) {
+  const d = new Date(dateOrigin.getTime() + offset * msPerDay);
+  return d.toISOString().split("T")[0];
+}
+
+slider.noUiSlider.on("update", function (values, handle) {
+  const [startOffset, endOffset] = values.map(v => Math.round(v));
+  labelStart.textContent = offsetToDateStr(startOffset);
+  labelEnd.textContent = offsetToDateStr(endOffset);
+});
+
+slider.noUiSlider.on("change", function () {
+  fetchFilteredPoints();
+});
+
+
+updateDateLabels(); // initialize
+
+const priceSlider = document.getElementById("priceRangeSlider");
+const labelPriceMin = document.getElementById("labelPriceMin");
+const labelPriceMax = document.getElementById("labelPriceMax");
+
+const MIN_PRICE = 0;
+const MAX_PRICE = 2000000;
+
+noUiSlider.create(priceSlider, {
+  start: [MIN_PRICE, MAX_PRICE],
+  connect: true,
+  range: {
+    min: MIN_PRICE,
+    max: MAX_PRICE
+  },
+  step: 10000,
+  tooltips: false
+});
+
+priceSlider.noUiSlider.on("update", function (values, handle) {
+  const [minPrice, maxPrice] = values.map(v => Math.round(v));
+  labelPriceMin.textContent = `$${minPrice.toLocaleString()}`;
+  labelPriceMax.textContent = `$${maxPrice.toLocaleString()}`;
+});
+
+priceSlider.noUiSlider.on("change", function () {
+  fetchFilteredPoints(); // trigger data refresh
+});
+
+
+
 async function fetchFilteredPoints() {
   const center = circle.getLatLng();
   const radius_km = circle.getRadius() / 1000;
 
-  const soldStart = document.getElementById("soldStart").value;
-  const soldEnd = document.getElementById("soldEnd").value;
+  const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
+  const soldStart = offsetToDateStr(startOffset);
+  const soldEnd = offsetToDateStr(endOffset);
 
   const filters = {};
   if (soldStart) filters.sold_start = soldStart;
   if (soldEnd) filters.sold_end = soldEnd;
-  if (selectedMinBeds !== null) {
-    filters.beds = [1, 2, 3, 4, 5].filter(n => n >= selectedMinBeds);
-  }
+  if (selectedBeds.length) filters.beds = selectedBeds;
+
+  const [minPrice, maxPrice] = priceSlider.noUiSlider.get().map(v => Math.round(v));
+  filters.min_price = minPrice;
+  filters.max_price = maxPrice;
 
   const payload = {
     center: [center.lat, center.lng],
@@ -141,10 +243,21 @@ async function fetchFilteredPoints() {
     updateMapMarkers(points);
     updateStats(summary);
 
+    if (!points.length) {
+  // Clear the property card
+  document.getElementById("carousel-price").textContent = "";
+  document.getElementById("carousel-address").textContent = "";
+  document.getElementById("carousel-details").textContent = "";
+  document.getElementById("carousel-note").textContent = "";
+  document.getElementById("carouselImage").src = DEFAULT_IMG;
+}
+
+
   } catch (err) {
     console.error("Failed to fetch filtered points:", err);
   }
 }
+
 
 /************** 6. MAP & UI UPDATES **************/
 function updateMapMarkers(points) {
@@ -170,6 +283,25 @@ function updateMapMarkers(points) {
 let soldChart = null;
 
 function updateStats(summary) {
+  if (!summary || summary.count === 0) {
+    // Reset all stats
+    document.getElementById("stat-count").textContent = "–";
+    document.getElementById("stat-avg").textContent = "–";
+    document.getElementById("stat-max").textContent = "–";
+    document.getElementById("stat-min").textContent = "–";
+
+    // Clear the chart if it exists
+    if (soldChart) {
+      soldChart.data.labels = [];
+      soldChart.data.datasets[0].data = [];
+      soldChart.data.datasets[1].data = [];
+      soldChart.update();
+    }
+
+    return; // Exit early
+  }
+
+  // Existing logic if there is data
   const { count, average_price, max_price, min_price, by_month } = summary;
 
   document.getElementById("stat-count").textContent =
@@ -229,7 +361,11 @@ function updateStats(summary) {
             y: {
               type: "linear",
               position: "left",
-              title: { display: true, text: "Listings Sold" }
+              title: { display: true, text: "Listings Sold" },
+              ticks: {
+                stepSize: 1,       // always increment by 1
+                precision: 0       // no decimals
+              }
             },
             y1: {
               type: "linear",
