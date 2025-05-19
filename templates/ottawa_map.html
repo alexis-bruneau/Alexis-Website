@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <title>Ottawa Map with Draggable Circle</title>
 
+    <link
+      href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css"
+      rel="stylesheet"
+    />
+
     <!-- Leaflet core CSS -->
     <link
       rel="stylesheet"
@@ -41,13 +46,46 @@
       <button id="filterToggle">Filters ⚙️</button>
 
       <div id="filterPanel" style="display: none; margin-top: 10px">
-        <fieldset style="border: none; padding: 0">
+        <fieldset
+          style="border: none; padding: 0; margin-top: 10px; width: 100%"
+        >
           <legend><strong>Sold Date Filter</strong></legend>
-          <label for="soldStart">Start:</label>
-          <input type="date" id="soldStart" />
-          <br />
-          <label for="soldEnd">End:</label>
-          <input type="date" id="soldEnd" />
+
+          <!-- This is the slider container -->
+          <div id="dateRangeSlider" style="margin-top: 10px"></div>
+
+          <!-- These are the labels on each side -->
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 14px;
+              margin-top: 5px;
+            "
+          >
+            <span id="labelStart">2019-01-01</span>
+            <span id="labelEnd">2024-12-31</span>
+          </div>
+        </fieldset>
+
+        <fieldset
+          style="border: none; padding: 0; margin-top: 20px; width: 100%"
+        >
+          <legend><strong>Sold Price Filter</strong></legend>
+
+          <div id="priceRangeSlider" style="margin-top: 10px"></div>
+
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              font-size: 14px;
+              margin-top: 5px;
+            "
+          >
+            <span id="labelPriceMin">$0</span>
+            <span id="labelPriceMax">$2,000,000</span>
+          </div>
         </fieldset>
 
         <fieldset style="border: none; padding: 0; margin-top: 10px">
@@ -144,7 +182,10 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- Your application logic -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+
     <script src="/static/js/map.js"></script>
   </body>
 </html>
