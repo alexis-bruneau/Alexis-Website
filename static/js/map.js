@@ -1,6 +1,48 @@
 /************** 0. GLOBAL CONSTANTS **************/
+const sortSelect = document.getElementById("sortSelect");
+let currentPoints = [];   // cache the last fetch so we can re-sort on demand
+
+sortSelect.addEventListener("change", () => {
+  updateListingsSidebar(currentPoints);
+});
+
+
 const IMG_BASE   = "https://redfinstorage.blob.core.windows.net/images/";   // include SAS query-string if your container is Private
-const DEFAULT_IMG = IMG_BASE + "no-image.jpg";                              // same container, or any public URL
+
+
+// ─── view-state helpers ─────────────────────────────────────────
+const listingsPanel = document.getElementById("listingsPanel");
+const insightsEl    = document.getElementById("insights");
+
+const mainPanel = document.getElementById("mainPanel");
+
+let currentView = "insights";
+
+function setView(view) {
+  currentView = view;
+  if (view === "listings") {
+    listingsPanel.classList.add("open");
+    listingsPanel.classList.remove("hidden");
+    insightsEl.classList.add("hidden");
+    mainPanel.classList.add("full-map");
+  } else {
+    listingsPanel.classList.remove("open");
+    setTimeout(() => listingsPanel.classList.add("hidden"), 300);
+    insightsEl.classList.remove("hidden");
+    mainPanel.classList.remove("full-map");
+  }
+  setTimeout(() => map.invalidateSize(), 310);
+}
+
+
+
+
+document.getElementById("toggleListings")
+        .addEventListener("click", () => setView("listings"));
+
+document.getElementById("showInsightsBtn")
+        .addEventListener("click", () => setView("insights"));
+
 
 /************** BED-FILTER STATE **************/
 let selectedBeds = [];      // e.g. [2,3,4,5]
@@ -122,6 +164,94 @@ document.querySelectorAll(".bed-btn").forEach(btn => {
 });
 
 
+function highlightSidebarListing(mls) {
+  // find the matching row
+  const row = document.getElementById(`listing-${mls}`);
+  if (!row) return;
+
+  // clear any old highlight
+  document
+    .querySelectorAll("#listingRows .highlight")
+    .forEach(el => el.classList.remove("highlight"));
+
+  // highlight + scroll
+  row.classList.add("highlight");
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+
+function updateListingsSidebar(points) {
+  // 1) clone so we don’t mutate the original array
+  let list = points.slice();
+
+  // 2) apply the user’s chosen sort
+  switch (sortSelect.value) {
+    case 'asc-price':
+      // increasing price
+      list.sort((a, b) => a.price - b.price);
+      break;
+
+    case 'desc-price':
+      // decreasing price
+      list.sort((a, b) => b.price - a.price);
+      break;
+
+    case 'recent':
+      // most recently sold first
+      list.sort((a, b) =>
+        new Date(b.sold_date) - new Date(a.sold_date)
+      );
+      break;
+
+    default:
+      // fallback: sort by proximity to the circle center
+      const center = circle.getLatLng();
+      list.sort((a, b) => {
+        const da = center.distanceTo(L.latLng(a.latitude, a.longitude));
+        const db = center.distanceTo(L.latLng(b.latitude, b.longitude));
+        return da - db;
+      });
+  }
+
+  // 3) render the top 10
+  const container = document.getElementById("listingRows");
+  container.innerHTML = "";
+
+  container.innerHTML = "";
+
+list.slice(0, 10).forEach(pt => {
+  const row = document.createElement("div");
+  row.className = "listing-row";
+  row.id = `listing-${pt.mls}`;
+
+row.innerHTML = `
+  <div class="image-wrapper">
+    <img
+      src="${IMG_BASE}${pt.mls}_1.jpg"
+      onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
+      alt=""
+    />
+  </div>
+    <div class="listing-info">
+      <strong>$${parseInt(pt.price).toLocaleString()}</strong>
+      <p>${pt.address}</p>
+      <p>${pt.beds} 🛏 | ${pt.baths} 🛁</p>
+      <p>${getTimeSinceSold(pt.sold_date)}</p>
+      <a
+        href="${pt.url}"
+        target="_blank"
+        rel="noopener"
+        class="view-btn"
+      >View Details</a>
+    </div>
+  `;
+
+  container.appendChild(row);
+});
+
+}
+
+
 /************** 5. FILTERED DATA REQUEST **************/
 
 const dateOrigin = new Date("2019-01-01");
@@ -208,48 +338,50 @@ async function fetchFilteredPoints() {
   const center = circle.getLatLng();
   const radius_km = circle.getRadius() / 1000;
 
+  // Sold date offsets
   const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
   const soldStart = offsetToDateStr(startOffset);
-  const soldEnd = offsetToDateStr(endOffset);
+  const soldEnd   = offsetToDateStr(endOffset);
 
+  // Price range
+  const [minPrice, maxPrice] = priceSlider.noUiSlider
+    .get()
+    .map(v => Math.round(v));
+
+  // Build filters
   const filters = {};
-  if (soldStart) filters.sold_start = soldStart;
-  if (soldEnd) filters.sold_end = soldEnd;
+  if (soldStart) { filters.sold_start = soldStart; }
+  if (soldEnd)   { filters.sold_end   = soldEnd;   }
 
-  if (selectedBeds.length) {          
-    filters.beds = selectedBeds;      
+  // only include if user actually moved them off the extremes
+  if (minPrice > MIN_PRICE) { filters.min_price = minPrice; }
+  if (maxPrice < MAX_PRICE) { filters.max_price = maxPrice; }
+
+
+  if (selectedBeds.length) {
+    filters.beds = selectedBeds;
   }
 
-
   const payload = {
-    center: [center.lat, center.lng],
-    radius_km: radius_km,
-    filters: filters,
+    center:     [center.lat, center.lng],
+    radius_km,
+    filters
   };
 
   try {
     const res = await fetch("/filtered-points", {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body:    JSON.stringify(payload),
     });
 
-    const data = await res.json();
-    const { points, summary } = data;
+    const { points, summary } = await res.json();
 
     updateMapMarkers(points);
     updateStats(summary);
 
-    if (!points.length) {
-  // Clear the property card
-  document.getElementById("carousel-price").textContent = "";
-  document.getElementById("carousel-address").textContent = "";
-  document.getElementById("carousel-details").textContent = "";
-  document.getElementById("carousel-note").textContent = "";
-  document.getElementById("carouselImage").src = DEFAULT_IMG;
-}
-
-
+    currentPoints = points;
+    updateListingsSidebar(points);
   } catch (err) {
     console.error("Failed to fetch filtered points:", err);
   }
@@ -262,11 +394,26 @@ function updateMapMarkers(points) {
   markers.length = 0;
 
   points.forEach(point => {
-    const { latitude: lat, longitude: lng } = point;
+    const { latitude: lat, longitude: lng, mls } = point;
     if (!isNaN(lat) && !isNaN(lng)) {
       const marker = L.marker([lat, lng], { icon: redDotIcon });
 
-      marker.on("click", () => updatePropertyCard(point)); // pass whole point
+      marker.on("click", () => {
+  if (currentView === "insights") {
+    // we’re in Insights – just update the bottom card
+    updatePropertyCard(point);
+  } else {
+    // we’re already in Listings – do the full highlight dance
+    // 1) make sure the sidebar is open (if it was closed, open it)
+    setView("listings");
+    // 2) re-render your rows so the element with id exists
+    updateListingsSidebar(currentPoints);
+    // 3) scroll + highlight
+    setTimeout(() => highlightSidebarListing(point.mls), 350);
+    // 4) still update the property card up top
+    updatePropertyCard(point);
+  }
+});
       markersCluster.addLayer(marker);
       markers.push(marker);
     }
@@ -274,8 +421,6 @@ function updateMapMarkers(points) {
 
   map.addLayer(markersCluster);
 }
-
-
 
 let soldChart = null;
 
@@ -457,9 +602,22 @@ function showCarouselImage() {
   const imgEl = document.getElementById("carouselImage");
   const src   = carouselImages[carouselIndex];
 
-  imgEl.onerror = () => { imgEl.src = DEFAULT_IMG; };
-  imgEl.src     = src;
+  // if it 404s, just turn it into a grey box
+  imgEl.onerror = () => {
+    // stop looping
+    imgEl.onerror = null;
+    // clear its src so the browser gives up
+    imgEl.removeAttribute("src");
+    // mark it for CSS styling
+    imgEl.classList.add("no-image-carousel");
+  };
+
+  // try loading the real image
+  imgEl.classList.remove("no-image-carousel");
+  imgEl.src = src;
 }
+
+
 
 
 

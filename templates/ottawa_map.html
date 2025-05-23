@@ -4,19 +4,17 @@
     <meta charset="UTF-8" />
     <title>Ottawa Map with Draggable Circle</title>
 
+    <!-- ─── Vendor styles ─────────────────────────────────── -->
     <link
       href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css"
       rel="stylesheet"
     />
-
-    <!-- Leaflet core CSS -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
-
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
@@ -26,12 +24,12 @@
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
     />
 
-    <!-- Your custom styling -->
+    <!-- ─── App styles ─────────────────────────────────────── -->
     <link rel="stylesheet" href="/static/css/map.css" />
   </head>
 
   <body>
-    <!-- radius control -->
+    <!-- ─── Radius / filter controls ───────────────────────── -->
     <div id="controls">
       <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
       <input
@@ -44,17 +42,15 @@
       />
 
       <button id="filterToggle">Filters ⚙️</button>
+      <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
 
       <div id="filterPanel" style="display: none; margin-top: 10px">
+        <!-- Sold-date filter -->
         <fieldset
           style="border: none; padding: 0; margin-top: 10px; width: 100%"
         >
           <legend><strong>Sold Date Filter</strong></legend>
-
-          <!-- This is the slider container -->
           <div id="dateRangeSlider" style="margin-top: 10px"></div>
-
-          <!-- These are the labels on each side -->
           <div
             style="
               display: flex;
@@ -68,13 +64,12 @@
           </div>
         </fieldset>
 
+        <!-- Price filter -->
         <fieldset
           style="border: none; padding: 0; margin-top: 20px; width: 100%"
         >
           <legend><strong>Sold Price Filter</strong></legend>
-
           <div id="priceRangeSlider" style="margin-top: 10px"></div>
-
           <div
             style="
               display: flex;
@@ -88,6 +83,7 @@
           </div>
         </fieldset>
 
+        <!-- Beds filter -->
         <fieldset style="border: none; padding: 0; margin-top: 10px">
           <legend><strong>Beds</strong></legend>
           <div id="bedFilter">
@@ -100,63 +96,89 @@
         </fieldset>
       </div>
     </div>
-    <!-- ✅ CLOSE CONTROLS -->
+    <!-- ✅ end controls -->
 
-    <!-- map container -->
-    <div id="map"></div>
-    <!-- Summary stats (under map) -->
+    <!-- ─── Main flex layout ───────────────────────────────── -->
+    <div id="appContainer">
+      <!-- Collapsible sidebar -->
+      <div id="listingsPanel" class="hidden">
+        <button id="showInsightsBtn" class="toolbar-btn">📊 Insights</button>
 
-    <div id="insights">
-      <div class="summary-cards">
-        <div class="card">
-          <strong>Listings Sold</strong><br /><span id="stat-count">–</span>
+        <div class="sort-container">
+          <label for="sortSelect">Sort:</label>
+          <select id="sortSelect">
+            <option value="recent">Most recently sold</option>
+            <option value="desc-price">Decreasing Price</option>
+            <option value="asc-price">Increasing Price</option>
+          </select>
         </div>
-        <div class="card">
-          <strong>Average Price</strong><br /><span id="stat-avg">–</span>
-        </div>
-        <div class="card">
-          <strong>Max Price</strong><br /><span id="stat-max">–</span>
-        </div>
-        <div class="card">
-          <strong>Min Price</strong><br /><span id="stat-min">–</span>
-        </div>
+
+        <!-- ➤ new container for your 10 rows -->
+        <div id="listingRows" class="listing-rows"></div>
       </div>
 
-      <!-- ✅ Wrap chart and property card side by side -->
-      <div class="bottom-section">
-        <div class="chart-container">
-          <canvas id="soldByMonthChart"></canvas>
-        </div>
+      <!-- Map + insights column -->
+      <div id="mainPanel">
+        <div id="map"></div>
 
-        <div class="suggested-listing-card">
-          <div class="image-with-info">
-            <div
-              class="image-carousel"
-              onmouseenter="showArrows(true)"
-              onmouseleave="showArrows(false)"
-            >
-              <div
-                class="carousel-zone left-zone"
-                onclick="prevCarouselImage()"
-              >
-                <span class="arrow" id="leftArrow">←</span>
-              </div>
+        <div id="insights">
+          <!-- Summary cards -->
+          <div class="summary-cards">
+            <div class="card">
+              <strong>Listings Sold</strong><br /><span id="stat-count">–</span>
+            </div>
+            <div class="card">
+              <strong>Average Price</strong><br /><span id="stat-avg">–</span>
+            </div>
+            <div class="card">
+              <strong>Max Price</strong><br /><span id="stat-max">–</span>
+            </div>
+            <div class="card">
+              <strong>Min Price</strong><br /><span id="stat-min">–</span>
+            </div>
+          </div>
 
-              <img id="carouselImage" src="" alt="Suggested Property" />
-
-              <div
-                class="carousel-zone right-zone"
-                onclick="nextCarouselImage()"
-              >
-                <span class="arrow" id="rightArrow">→</span>
-              </div>
+          <!-- Chart + property details -->
+          <div class="bottom-section">
+            <div class="chart-container">
+              <canvas id="soldByMonthChart"></canvas>
             </div>
 
-            <div class="info-box">
-              <strong id="carousel-price">$0</strong>
-              <p id="carousel-address">Address</p>
-              <p id="carousel-details">Beds/Baths</p>
-              <p id="carousel-note">Time since sold</p>
+            <div class="suggested-listing-card">
+              <div class="image-with-info">
+                <!-- Carousel -->
+                <div
+                  class="image-carousel"
+                  onmouseenter="showArrows(true)"
+                  onmouseleave="showArrows(false)"
+                >
+                  <div
+                    class="carousel-zone left-zone"
+                    onclick="prevCarouselImage()"
+                  >
+                    <span class="arrow" id="leftArrow">←</span>
+                  </div>
+
+                  <img id="carouselImage" src="" alt="Suggested Property" />
+
+                  <div
+                    class="carousel-zone right-zone"
+                    onclick="nextCarouselImage()"
+                  >
+                    <span class="arrow" id="rightArrow">→</span>
+                  </div>
+                </div>
+
+                <!-- Info -->
+                <div class="info-box">
+                  <strong id="carousel-price">$0</strong>
+                  <p id="carousel-address">Address</p>
+                  <p id="carousel-details">Beds/Baths</p>
+                  <p id="carousel-note">Time since sold</p>
+                </div>
+              </div>
+
+              <!-- View Details button moved here -->
               <a
                 id="viewDetailsBtn"
                 class="view-btn"
@@ -168,24 +190,25 @@
               </a>
             </div>
           </div>
+          <!-- end bottom-section -->
         </div>
+        <!-- end #insights -->
       </div>
+      <!-- end #mainPanel -->
     </div>
+    <!-- end #appContainer -->
 
-    <!-- Leaflet core JS -->
+    <!-- ─── Vendor scripts ─────────────────────────────────── -->
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-
-    <!-- Your application logic -->
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
 
+    <!-- ─── App script ─────────────────────────────────────── -->
     <script src="/static/js/map.js"></script>
   </body>
 </html>

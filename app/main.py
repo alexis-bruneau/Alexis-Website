@@ -8,7 +8,7 @@ import os, numpy as np, pandas as pd
 # ──────────────────────────────────────────────────────────────────────────
 AZURE_CSV_URL = os.getenv(
     "AZURE_CSV_URL",
-    "https://redfinstorage.blob.core.windows.net/data/redfin_data.csv?sp=r&st=2025-05-19T18:55:07Z&se=2025-05-20T02:55:07Z&spr=https&sv=2024-11-04&sr=b&sig=UbfjbvUjWftuDedLgu1wnlq0Ol%2B6If16aRS6Dlm1nu8%3D",
+    "https://redfinstorage.blob.core.windows.net/data/redfin_data.csv?sp=r&st=2025-05-23T01:21:44Z&se=2025-05-23T09:21:44Z&spr=https&sv=2024-11-04&sr=b&sig=Jq90JZib9a47%2FLXRS%2BLSXwxi7mPhoC7zVzfgqa9tACg%3D",
 )
 
 # put this once near the top of flask_app.py
