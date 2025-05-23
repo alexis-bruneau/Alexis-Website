@@ -160,6 +160,26 @@ document.querySelectorAll(".bed-btn").forEach(btn => {
     }
 
     fetchFilteredPoints();       // refresh results
+    const clicked = Number(btn.dataset.bed);
+    const allBtns = document.querySelectorAll(".bed-btn");
+
+    if (!rangeMode) {
+      /* first click → highlight clicked & everything above it */
+      allBtns.forEach(b => {
+        const val = Number(b.dataset.bed);
+        b.classList.toggle("selected", val >= clicked);
+      });
+      selectedBeds = [1, 2, 3, 4, 5].filter(n => n >= clicked);
+      rangeMode = true;          // next click switches to “exact”
+    } else {
+      /* second click → keep only the one clicked */
+      allBtns.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedBeds = [clicked];
+      rangeMode = false;         // ready for a new range later
+    }
+
+    fetchFilteredPoints();       // refresh results
   });
 });
 
@@ -334,6 +354,87 @@ priceSlider.noUiSlider.on("change", function () {
 
 
 
+
+const dateOrigin = new Date("2019-01-01");
+const msPerDay = 1000 * 60 * 60 * 24;
+
+// Calculate total days between 2019-01-01 and today
+const today = new Date();
+const totalDays = Math.floor((today - dateOrigin) / msPerDay);
+
+
+
+// Show readable labels
+function updateDateLabels() {
+  const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
+  labelStart.textContent = offsetToDateStr(startOffset);
+  labelEnd.textContent = offsetToDateStr(endOffset);
+}
+
+
+const slider = document.getElementById("dateRangeSlider");
+const labelStart = document.getElementById("labelStart");
+const labelEnd = document.getElementById("labelEnd");
+
+noUiSlider.create(slider, {
+  start: [0, totalDays],
+  connect: true,
+  range: {
+    min: 0,
+    max: totalDays
+  },
+  step: 1,
+  tooltips: false,
+});
+
+function offsetToDateStr(offset) {
+  const d = new Date(dateOrigin.getTime() + offset * msPerDay);
+  return d.toISOString().split("T")[0];
+}
+
+slider.noUiSlider.on("update", function (values, handle) {
+  const [startOffset, endOffset] = values.map(v => Math.round(v));
+  labelStart.textContent = offsetToDateStr(startOffset);
+  labelEnd.textContent = offsetToDateStr(endOffset);
+});
+
+slider.noUiSlider.on("change", function () {
+  fetchFilteredPoints();
+});
+
+
+updateDateLabels(); // initialize
+
+const priceSlider = document.getElementById("priceRangeSlider");
+const labelPriceMin = document.getElementById("labelPriceMin");
+const labelPriceMax = document.getElementById("labelPriceMax");
+
+const MIN_PRICE = 0;
+const MAX_PRICE = 2000000;
+
+noUiSlider.create(priceSlider, {
+  start: [MIN_PRICE, MAX_PRICE],
+  connect: true,
+  range: {
+    min: MIN_PRICE,
+    max: MAX_PRICE
+  },
+  step: 10000,
+  tooltips: false
+});
+
+priceSlider.noUiSlider.on("update", function (values, handle) {
+  const [minPrice, maxPrice] = values.map(v => Math.round(v));
+  labelPriceMin.textContent = `$${minPrice.toLocaleString()}`;
+  labelPriceMax.textContent = `$${maxPrice.toLocaleString()}`;
+});
+
+priceSlider.noUiSlider.on("change", function () {
+  fetchFilteredPoints(); // trigger data refresh
+});
+
+
+
 async function fetchFilteredPoints() {
   const center = circle.getLatLng();
   const radius_km = circle.getRadius() / 1000;
@@ -388,6 +489,7 @@ async function fetchFilteredPoints() {
 }
 
 
+
 /************** 6. MAP & UI UPDATES **************/
 function updateMapMarkers(points) {
   markersCluster.clearLayers();
@@ -425,6 +527,25 @@ function updateMapMarkers(points) {
 let soldChart = null;
 
 function updateStats(summary) {
+  if (!summary || summary.count === 0) {
+    // Reset all stats
+    document.getElementById("stat-count").textContent = "–";
+    document.getElementById("stat-avg").textContent = "–";
+    document.getElementById("stat-max").textContent = "–";
+    document.getElementById("stat-min").textContent = "–";
+
+    // Clear the chart if it exists
+    if (soldChart) {
+      soldChart.data.labels = [];
+      soldChart.data.datasets[0].data = [];
+      soldChart.data.datasets[1].data = [];
+      soldChart.update();
+    }
+
+    return; // Exit early
+  }
+
+  // Existing logic if there is data
   if (!summary || summary.count === 0) {
     // Reset all stats
     document.getElementById("stat-count").textContent = "–";
@@ -503,6 +624,11 @@ function updateStats(summary) {
             y: {
               type: "linear",
               position: "left",
+              title: { display: true, text: "Listings Sold" },
+              ticks: {
+                stepSize: 1,       // always increment by 1
+                precision: 0       // no decimals
+              }
               title: { display: true, text: "Listings Sold" },
               ticks: {
                 stepSize: 1,       // always increment by 1
