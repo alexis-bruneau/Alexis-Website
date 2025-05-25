@@ -385,7 +385,9 @@ function updateStats(summary) {
               type:  "line",
               fill:  false,
               tension: 0.3,
-              yAxisID: "y1"
+              yAxisID: "y1",
+              borderColor: 'red',
+              backgroundColor: 'rgba(255,0,0,0.2)',
             }
           ]
         },
