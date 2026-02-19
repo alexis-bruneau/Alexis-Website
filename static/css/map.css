@@ -1,599 +1,837 @@
-/* ─── 1. Reset & root layout ───────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   OTTAWA MAP - MODERN UI STYLES
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ─── 1. RESET & BASE ───────────────────────────────────────── */
 * {
   box-sizing: border-box;
-}
-html, body {
-  height: 100vh;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  font-family: sans-serif;
 }
+
+html,
+body {
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
+}
+
 body {
   display: flex;
   flex-direction: column;
 }
 
-/* ─── 2. Controls overlay ─────────────────────────────────────── */
+/* ─── 2. CONTROLS OVERLAY ──────────────────────────────────── */
 #controls {
   position: absolute;
-  top: 10px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  display: inline-flex;       /* shrink-wrap to just its contents */
+  display: inline-flex;
   align-items: center;
-  gap: 8px;                   /* space between inputs/buttons */
-  background: rgba(255,255,255,0.8);
-  padding: 10px;
-  border-radius: 5px;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   z-index: 1000;
+  transition: all 0.3s ease;
 }
 
-/* ─── 3. App container: sidebar + mainPanel ───────────────────── */
+#controls label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+#controls input[type="number"] {
+  width: 70px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+#controls input[type="number"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+#controls button:not(.bed-btn):not(.clear-filters-btn) {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+#controls button:not(.bed-btn):not(.clear-filters-btn):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+#controls button:not(.bed-btn):not(.clear-filters-btn):active {
+  transform: translateY(0);
+}
+
+/* ─── 3. APP CONTAINER ──────────────────────────────────────── */
 #appContainer {
   flex: 1;
   display: flex;
-  height: 0; /* allows flex:1 to work */
+  height: 0;
 }
 
-/* ─── 4. Sidebar “Listings” panel ────────────────────────────── */
+/* ─── 4. LISTINGS SIDEBAR ───────────────────────────────────── */
 #listingsPanel {
-  width: 300px;
+  width: 420px;
   max-width: 90vw;
-  background: #fff;
-  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
+  background: #ffffff;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
   overflow-y: auto;
   transform: translateX(-100%);
-  transition: transform .3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
 }
+
 #listingsPanel.open {
   transform: translateX(0);
 }
+
 #listingsPanel.hidden {
   display: none;
 }
+
 .toolbar-btn {
-  width: 100%;
-  padding: 8px;
-  font-weight: bold;
-}
-
-/* ─── 6. Main panel: map + footer ───────────────────────────── */
-#mainPanel {
-  flex: 1;
-  display: grid;
-  grid-template-rows: 1fr auto; /* map fills, footer auto height */
-  height: 100%;
-}
-#map {
-  grid-row: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0; /* for grid shrinking */
-}
-
-/* ─── 7. Insights footer ─────────────────────────────────────── */
-#insights {
-  grid-row: 2;
-  height: 30vh;     /* fixed footer height */
-  display: flex;
-  flex-direction: column;
-  padding: 10px 15px;
-  background: #fafafa;
-  overflow: hidden;
-}
-
-/* ─── 8. KPI summary row ─────────────────────────────────────── */
-.summary-cards {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 8px;
-}
-.card {
-  flex: 1;
-  background: #fff;
-  border-radius: 8px;
-  padding: 10px 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  text-align: center;
-  font-size: 14px;
-}
-
-/* ─── 9. Footer content: chart + detail card ─────────────────── */
-.bottom-section {
-  display: flex;
-  flex: 1;            /* fill remaining footer space */
-  gap: 20px;
-  min-height: 0;
-  overflow: hidden;   /* contain the chart */
-}
-.chart-container {
-  flex: 0 0 80%;      /* chart = 80% */
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
-  min-height: 0;
-}
-.chart-container canvas {
-  position: absolute !important;
+  position: sticky;
   top: 0;
-  left: 0;
-  width: 100%  !important;
-  height: 100% !important;
-}
-.suggested-listing-card {
-  flex: 0 0 20%;      /* card = 20% */
-  max-width: 350px;   /* cap width */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* pin button bottom */
-  padding: 5px 5px 12px;        /* extra bottom padding */
-  overflow: visible;              /* show the button */
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* ─── 10. Red-dot marker styling ──────────────────────────────── */
-.red-dot {
-  width: 10px;
-  height: 10px;
-  background: #d00;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-/* ─── 10.1 Draggable circle handle ───────────────────────────── */
-.drag-handle {
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  border: 2px solid blue;
-  border-radius: 50%;
-  cursor: move;
-  box-sizing: border-box;
-  z-index: 1000;
-}
-
-/* ─── 1. Reset & root layout ───────────────────────────────────── */
-* {
-  box-sizing: border-box;
-}
-html, body {
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: sans-serif;
-}
-body {
-  display: flex;
-  flex-direction: column;
-}
-
-/* ─── 2. Controls overlay ─────────────────────────────────────── */
-#controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;  /* or space-between if you ever add more controls */
-  gap: 8px;
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255,255,255,0.8);
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 1000;
-}
-
-/* ─── 3. App container: sidebar + mainPanel ───────────────────── */
-#appContainer {
-  flex: 1;
-  display: flex;
-  height: 0; /* allows flex:1 to work */
-}
-
-/* ─── 4. Sidebar “Listings” panel ────────────────────────────── */
-#listingsPanel {
-  width: 400px;
-  max-width: 90vw;
-  background: #fff;
-  box-shadow: 2px 0 6px rgba(0,0,0,0.1);
-  overflow-y: auto;
-  transform: translateX(-100%);
-  transition: transform .3s ease;
-  z-index: 1001;
-}
-#listingsPanel.open {
-  transform: translateX(0);
-}
-#listingsPanel.hidden {
-  display: none;
-}
-.toolbar-btn {
   width: 100%;
-  padding: 8px;
-  font-weight: bold;
-}
-
-/* ─── 5. Floating “🏠 Listings” toggle ───────────────────────── */
-.map-floating-btn {
-  position: static;
-  transform: none;
-  margin: 0;
-  padding: 6px 12px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* ─── 6. Main panel: map + footer ───────────────────────────── */
-#mainPanel {
-  flex: 1;
-  display: grid;
-  grid-template-rows: 1fr auto; /* map fills, footer auto */
-  height: 100%;
-}
-
-/* ─── 6.1 Collapse footer when showing listings ─────────────── */
-#mainPanel.full-map {
-  /* only one row: map takes 100% of the container */
-  grid-template-rows: 1fr;
-}
-
-/* ─── 7. Map itself ──────────────────────────────────────────── */
-#map {
-  grid-row: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0; /* for grid shrinking */
-}
-
-/* ─── 8. Insights footer ─────────────────────────────────────── */
-#insights {
-  grid-row: 2;
-  height: 30vh;     /* fixed footer height */
-  display: flex;
-  flex-direction: column;
-  padding: 10px 15px;
-  background: #fafafa;
-  overflow: hidden;
-}
-
-
-/* ─── 9. Footer content: chart + detail card ─────────────────── */
-.bottom-section {
-  display: flex;
-  flex: 1;            /* fill remaining footer space */
-  gap: 20px;
-  min-height: 0;
-  overflow: hidden;   /* contain the chart */
-}
-.chart-container {
-  flex: 0 0 80%;      /* chart = 80% */
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
-  min-height: 0;
-}
-.chart-container canvas {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  width: 100%  !important;
-  height: 100% !important;
-}
-.suggested-listing-card {
-  flex: 0 0 20%;      /* card = 20% */
-  max-width: 350px;   /* cap width */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* pin button bottom */
-  padding: 5px 5px 12px;        /* extra bottom padding */
-  overflow: visible;              /* show the button */
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-}
-
-/* ─── 10. Red-dot marker styling ──────────────────────────────── */
-.red-dot {
-  width: 10px;
-  height: 10px;
-  background: #d00;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  box-sizing: border-box;
-}
-
-/* ─── 11. Carousel + info layout ─────────────────────────────── */
-.image-with-info {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.image-carousel {
-  /* this width / max-width controls how big the box is */
-  width: 100%;
-  max-width: 225px;      /* ← change this value to grow/shrink */
-  aspect-ratio: 3 / 2;   /* keeps it at a 3:2 shape */
-  overflow: hidden;
-  position: relative;
-
-  /* add a light grey “canvas” behind the img */
-  background-color: #e0e0e0;
-}
-
-.image-carousel img {
-  /* make the <img> fill the carousel container */
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* when the src 404s, we’ll clear the src and add this class,
-   which simply hides the broken <img> tag and lets the grey
-   background show through */
-.image-carousel img.no-image-carousel {
-  visibility: hidden;
-}
-
-.carousel-zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 20%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.left-zone  { left: 0; }
-.right-zone { right: 0; }
-.arrow {
-  display: none;
-  font-size: 24px;
-  background: rgba(0,0,0,0.4);
-  color: #fff;
-  padding: 5px 10px;
-  border-radius: 5px;
-  pointer-events: none;
-}
-.image-carousel:hover .arrow {
-  display: block;
-}
-.info-box {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 13px;
-  overflow: visible;
-}
-
-/* ─── 12. View Details pill ───────────────────────────────────── */
-.view-btn {
-  background-color: #007bff;
-  color: #fff;
+  padding: 12px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
   border: none;
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-block;
-  white-space: nowrap;
-  margin-top: auto;         /* push to bottom */
-  align-self: center;       /* center horizontally */
-  z-index: 1;
-}
-.view-btn:hover {
-  background-color: #005a9e;
-}
-
-/* ─── 13. Filter panel styling ───────────────────────────────── */
-#filterPanel {
-  background: rgba(255,255,255,0.95);
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.bed-btn {
-  padding: 5px 10px;
-  margin-right: 4px;
-  border: 1px solid #ccc;
-  background: #fff;
-  border-radius: 4px;
+  font-weight: 600;
+  font-size: 15px;
   cursor: pointer;
-}
-.bed-btn.selected {
-  background: #007bff;
-  color: #fff;
-  border-color: #007bff;
+  transition: all 0.2s ease;
+  z-index: 10;
 }
 
-
-/* ─── 11. Carousel + info layout ─────────────────────────────── */
-.image-with-info {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-.image-carousel {
-  /* this width / max-width controls how big the box is */
-  width: 100%;
-  max-width: 225px;      /* ← change this value to grow/shrink */
-  aspect-ratio: 3 / 2;   /* keeps it at a 3:2 shape */
-  overflow: hidden;
-  position: relative;    
-}
-.image-carousel img {
-  /* this makes the <img> fill the carousel container */
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.carousel-zone {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 20%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.left-zone  { left: 0; }
-.right-zone { right: 0; }
-.arrow {
-  display: none;
-  font-size: 24px;
-  background: rgba(0,0,0,0.4);
-  color: #fff;
-  padding: 5px 10px;
-  border-radius: 5px;
-  pointer-events: none;
-}
-.image-carousel:hover .arrow {
-  display: block;
-}
-.info-box {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 13px;
-  overflow: visible;
+.toolbar-btn:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
 }
 
-/* ─── 12. View Details pill ───────────────────────────────────── */
-.view-btn {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  padding: 6px 12px;
-  font-size: 14px;
-  text-decoration: none;
-  display: inline-block;
-  white-space: nowrap;
-  margin-top: auto;         /* push to bottom */
-  align-self: center;       /* center horizontally */
-  z-index: 1;
-}
-.view-btn:hover {
-  background-color: #005a9e;
-}
-
-/* ─── 13. Filter panel styling ───────────────────────────────── */
-#filterPanel {
-  position: absolute;
-  top: calc(100% + 4px);     /* just below #controls */
-  left: 0;                    /* align left edges */
-  width: 240px;               /* pick whatever fixed width you like */
-  background: rgba(255,255,255,0.95);
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  z-index: 1001;
-}
-.bed-btn {
-  padding: 5px 10px;
-  margin-right: 4px;
-  border: 1px solid #ccc;
-  background: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-}
-.bed-btn.selected {
-  background: #007bff;
-  color: #fff;
-  border-color: #007bff;
-}
-
-/* ─── 14. Placeholder rows for “Listings” sidebar ───────────── */
-/* ─── Sort dropdown bar ─────────────────────────────────── */
+/* Sort Container */
 .sort-container {
+  position: sticky;
+  top: 45px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-bottom: 1px solid #ddd;
-  background: #fafafa;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  z-index: 9;
 }
 
 .sort-container label {
   font-size: 14px;
   font-weight: 500;
+  color: #475569;
 }
 
 .sort-container select {
-  padding: 4px 8px;
+  flex: 1;
+  padding: 6px 12px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
+  font-family: inherit;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
 }
 
-.listing-rows {
-  padding: 8px;
+.sort-container select:focus {
+  outline: none;
+  border-color: #2563eb;
 }
 
-/* ─── finally, hide when .hidden is applied ──────────────────── */
+/* ─── 5. MAIN PANEL ─────────────────────────────────────────── */
+#mainPanel {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+}
+
+#mainPanel.full-map {
+  grid-template-rows: 1fr;
+}
+
+#map {
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ─── 6. INSIGHTS FOOTER ────────────────────────────────────── */
+#insights {
+  height: 35vh;
+  /* Fixed height for footer */
+  min-height: 280px;
+  display: flex;
+  gap: 20px;
+  padding: 16px 24px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+}
+
 #insights.hidden {
   display: none;
 }
 
-/* ─── Listing-sidebar placeholders ───────────────────────────── */
+/* LEFT COLUMN: Summary Cards */
+.insights-left {
+  flex: 0 0 450px;
+  /* Fixed width for cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  /* 2 columns */
+  grid-auto-rows: 1fr;
+  gap: 12px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.card strong {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.card span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* RIGHT COLUMN: Chart */
+.insights-right {
+  flex: 1;
+  /* Take remaining space */
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-width: 0;
+  /* Prevent flex overflow */
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.chart-container-full {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+  width: 100%;
+}
+
+.chart-container-full canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Chart Controls */
+.chart-controls {
+  /* Deprecated in new layout, using .chart-header .btn-group instead */
+  display: none;
+}
+
+.btn-group {
+  display: inline-flex;
+  background: #e2e8f0;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+}
+
+.chart-btn {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chart-btn:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.chart-btn.active {
+  background: white;
+  color: #2563eb;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ─── 8. FILTER PANEL ───────────────────────────────────────── */
+#filterPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.clear-filters-btn {
+  padding: 6px 12px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.filter-section {
+  border: none;
+  padding: 16px;
+  margin: 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.filter-section:last-child {
+  border-bottom: none;
+}
+
+.filter-section legend {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 12px;
+  padding: 0;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-top: 8px;
+  color: #64748b;
+}
+
+.filter-mode-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid #2563eb;
+}
+
+.filter-mode-indicator .mode-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-mode-indicator #bedModeText {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.filter-hint {
+  margin: 10px 0 0 0;
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+#bedFilter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bed-btn {
+  flex: 1;
+  min-width: 50px;
+  padding: 10px 16px;
+  border: 2px solid #2563eb;
+  background: transparent;
+  color: #2563eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.bed-btn:hover {
+  background: rgba(37, 99, 235, 0.05);
+  transform: translateY(-1px);
+}
+
+.bed-btn.selected {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border-color: #1d4ed8;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.4);
+  transform: scale(1.05);
+}
+
+.bed-btn.selected-exact {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
+}
+
+.bed-btn.selected-exact::after {
+  content: "✓";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+}
+
+/* ─── 10. LISTING ROWS (SIDEBAR) ────────────────────────────── */
+.listing-rows {
+  padding: 12px;
+}
+
 .listing-row {
   display: flex;
   gap: 12px;
   padding: 12px;
-  /* make this thicker and darker: */
-  border-bottom: 4px solid rgba(0,0,0,0.15);
-  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.listing-row img.no-image {
-  background-color: #e0e0e0;
-  width: 120px;   /* match your normal img size */
-  height: 80px;
-  object-fit: none;   /* don’t stretch an empty img */
-  border-radius: 4px;
-}
-
-.listing-row img {
-  width: 120px;    /* bump this up as you like */
-  height: 80px;
-  object-fit: cover;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-.listing-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex: 1;
-}
-.listing-info p {
-  margin: 0;
-  font-size: 14px;
-  color: #333;
-}
-.listing-info .view-btn {
-  margin-top: auto;
+.listing-row:hover {
+  background: #f8fafc;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .listing-row.highlight {
-  background: rgba(255, 235, 205, 0.8);
+  background: #eff6ff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
+.listing-row img,
 .no-image-placeholder {
-  width: 120px;           /* match your img width */
-  height: 80px;           /* match your img height */
-  background: #e0e0e0;
-  border-radius: 4px;
+  width: 140px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.image-wrapper {
+  width: 140px;
+  height: 90px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.listing-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.listing-info strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.listing-info p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.listing-info .view-btn {
+  margin-top: auto;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+/* ─── Selection Banner ───────────────────────────────────────── */
+.selection-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #1e40af;
+}
+
+.selection-banner button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.selection-banner button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Pagination Controls ───────────────────────────────────── */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.page-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: white;
+  border-color: #2563eb;
+  font-weight: 600;
+}
+
+.pagination-info {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+
+/* ─── Selected Marker ───────────────────────────────────────── */
+.marker-selected .count-label {
+  background: #dc2626 !important;
+  border-color: #b91c1c !important;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.5) !important;
+  transform: scale(1.1);
+}
+
+/* ─── 11. MAP MARKERS ────────────────────────────────────────── */
+.red-dot {
+  width: 12px;
+  height: 12px;
+  background: #dc2626;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+/* Cluster Marker (grouping by Leaflet MarkerCluster) */
+.cluster-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cluster-marker .cluster-label {
+  background: #7c3aed;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+  border: 1px solid #6d28d9;
+}
+
+.cluster-marker:hover .cluster-label {
+  background: #6d28d9;
+  border-color: #5b21b6;
+  transform: scale(1.05);
+}
+
+/* Price Label Marker (Single Property) */
+.price-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.price-marker .marker-dot {
+  display: none;
+  /* Hide the dot, show only label */
+}
+
+.price-marker .price-label {
+  position: relative;
+  background: white;
+  color: #1e293b;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e8f0;
+}
+
+.price-marker:hover .price-label {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+/* Count Badge Marker (Multiple Properties) */
+.count-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.count-marker .marker-dot {
+  display: none;
+  /* Hide the dot, show only badge */
+}
+
+.count-marker .count-label {
+  position: relative;
+  background: #2563eb;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  border: 1px solid #1d4ed8;
+}
+
+.count-marker:hover .count-label {
+  background: #1d4ed8;
+  border-color: #1e40af;
+  transform: scale(1.05);
+}
+
+.drag-handle {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border: 3px solid #2563eb;
+  border-radius: 50%;
+  cursor: move;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+  box-sizing: border-box;
+  z-index: 1000;
+}
+
+/* ─── 12. RESPONSIVE DESIGN ─────────────────────────────── */
+
+/* When there's not enough space for side-by-side, stack vertically */
+@media (max-width: 1100px) {
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bottom-section {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .chart-container {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .suggested-listing-card {
+    min-width: 0;
+    max-width: 100%;
+    max-height: 400px;
+  }
+
+  .image-carousel {
+    height: clamp(160px, 20vw, 200px);
+  }
+
+  #insights {
+    height: 45vh;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  #controls {
+    flex-wrap: wrap;
+    width: calc(100% - 32px);
+    left: 16px;
+    transform: none;
+  }
+
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .card span {
+    font-size: 20px;
+  }
+
+  #listingsPanel {
+    width: 100%;
+  }
+
+  #insights {
+    height: 50vh;
+    padding: 12px;
+  }
+
+  .image-carousel {
+    height: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  #controls {
+    font-size: 13px;
+  }
+
+  #controls button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .property-info-section strong {
+    font-size: 20px;
+  }
 }

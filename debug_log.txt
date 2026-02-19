@@ -1,0 +1,4 @@
+Columns: ['url', 'mls', 'price', 'beds', 'baths', 'sold_date', 'address', 'Postal Code', 'Property Type', 'Square Foot', 'Parking', 'Association Fee', 'latitude', 'longitude', 'First Listed Date', 'Days On Market', 'Sold Price Difference', 'photo_blob', 'distance_km', 'dom', 'price_diff', 'list_price', 'price_diff_pct', 'photo', 'month']
+Raw DOM head: [93.0, 112.0, 84.0, 16.0, 11.0]
+DOM column head: [93.0, 112.0, 84.0, 16.0, 11.0]
+DOM Sum: 22125.0, Count: 247, Avg: 89.5748987854251

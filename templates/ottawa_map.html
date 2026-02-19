@@ -1,214 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Ottawa Map with Draggable Circle</title>
 
-    <!-- ─── Vendor styles ─────────────────────────────────── -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <title>Ottawa Map with Draggable Circle</title>
 
-    <!-- ─── App styles ─────────────────────────────────────── -->
-    <link rel="stylesheet" href="/static/css/map.css" />
-  </head>
+  <!-- ─── Vendor styles ─────────────────────────────────── -->
+  <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
-  <body>
-    <!-- ─── Radius / filter controls ───────────────────────── -->
-    <div id="controls">
-      <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
-      <input
-        type="number"
-        id="radiusInput"
-        min="0"
-        max="15"
-        step="0.1"
-        value="5"
-      />
+  <!-- ─── App styles ─────────────────────────────────────── -->
+  <link rel="stylesheet" href="/static/css/map.css" />
+</head>
 
-      <button id="filterToggle">Filters ⚙️</button>
-      <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
+<body>
+  <!-- ─── Radius / filter controls ───────────────────────── -->
+  <div id="controls">
+    <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
+    <input type="number" id="radiusInput" min="0" max="15" step="0.1" value="5" />
 
-      <div id="filterPanel" style="display: none; margin-top: 10px">
-        <!-- Sold-date filter -->
-        <fieldset
-          style="border: none; padding: 0; margin-top: 10px; width: 100%"
-        >
-          <legend><strong>Sold Date Filter</strong></legend>
-          <div id="dateRangeSlider" style="margin-top: 10px"></div>
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              font-size: 14px;
-              margin-top: 5px;
-            "
-          >
-            <span id="labelStart">2019-01-01</span>
-            <span id="labelEnd">2024-12-31</span>
-          </div>
-        </fieldset>
+    <button id="filterToggle">Filters ⚙️</button>
+    <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
 
-        <!-- Price filter -->
-        <fieldset
-          style="border: none; padding: 0; margin-top: 20px; width: 100%"
-        >
-          <legend><strong>Sold Price Filter</strong></legend>
-          <div id="priceRangeSlider" style="margin-top: 10px"></div>
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              font-size: 14px;
-              margin-top: 5px;
-            "
-          >
-            <span id="labelPriceMin">$0</span>
-            <span id="labelPriceMax">$2,000,000</span>
-          </div>
-        </fieldset>
-
-        <!-- Beds filter -->
-        <fieldset style="border: none; padding: 0; margin-top: 10px">
-          <legend><strong>Beds</strong></legend>
-          <div id="bedFilter">
-            <button class="bed-btn" data-bed="1">1</button>
-            <button class="bed-btn" data-bed="2">2</button>
-            <button class="bed-btn" data-bed="3">3</button>
-            <button class="bed-btn" data-bed="4">4</button>
-            <button class="bed-btn" data-bed="5">5+</button>
-          </div>
-        </fieldset>
+    <div id="filterPanel" style="display: none">
+      <div class="filter-header">
+        <h3>Filter Options</h3>
+        <button id="clearFilters" class="clear-filters-btn">🗑️ Clear All</button>
       </div>
-    </div>
-    <!-- ✅ end controls -->
 
-    <!-- ─── Main flex layout ───────────────────────────────── -->
-    <div id="appContainer">
-      <!-- Collapsible sidebar -->
-      <div id="listingsPanel" class="hidden">
-        <button id="showInsightsBtn" class="toolbar-btn">📊 Insights</button>
-
-        <div class="sort-container">
-          <label for="sortSelect">Sort:</label>
-          <select id="sortSelect">
-            <option value="recent">Most recently sold</option>
-            <option value="desc-price">Decreasing Price</option>
-            <option value="asc-price">Increasing Price</option>
-          </select>
+      <!-- Sold-date filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Sold Date Range</strong></legend>
+        <div id="dateRangeSlider"></div>
+        <div class="range-labels">
+          <span id="labelStart">2019-01-01</span>
+          <span id="labelEnd">2024-12-31</span>
         </div>
+      </fieldset>
 
-        <!-- ➤ new container for your 10 rows -->
-        <div id="listingRows" class="listing-rows"></div>
+      <!-- Price filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Price Range</strong></legend>
+        <div id="priceRangeSlider"></div>
+        <div class="range-labels">
+          <span id="labelPriceMin">$0</span>
+          <span id="labelPriceMax">$2,000,000</span>
+        </div>
+      </fieldset>
+
+      <!-- Beds filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Bedrooms</strong></legend>
+        <div id="bedFilter">
+          <button class="bed-btn" data-bed="1">1</button>
+          <button class="bed-btn" data-bed="2">2</button>
+          <button class="bed-btn" data-bed="3">3</button>
+          <button class="bed-btn" data-bed="4">4</button>
+          <button class="bed-btn" data-bed="5">5+</button>
+        </div>
+        <p class="filter-hint">💡 Click once for "X or more", twice for "exactly X"</p>
+      </fieldset>
+    </div>
+  </div>
+  <!-- ✅ end controls -->
+
+  <!-- ─── Main flex layout ───────────────────────────────── -->
+  <div id="appContainer">
+    <!-- Collapsible sidebar -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- LEFT SIDEBAR -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div id="listingsPanel" class="hidden">
+      <button class="toolbar-btn" onclick="toggleView()">
+        📊 View Insights
+      </button>
+
+      <div class="sort-container">
+        <label for="sortSelect">Sort By:</label>
+        <select id="sortSelect" onchange="sortListings(this.value)">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="desc-price">Highest Price</option>
+          <option value="asc-price">Lowest Price</option>
+        </select>
       </div>
 
-      <!-- Map + insights column -->
-      <div id="mainPanel">
-        <div id="map"></div>
+      <div id="listingRows" class="listing-rows"></div>
+    </div>
 
-        <div id="insights">
-          <!-- Summary cards -->
+    <!-- Map + insights column -->
+    <div id="mainPanel">
+      <div id="map"></div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- INSIGHTS FOOTER (expandable)                            -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div id="insights">
+        <!-- LEFT: Cards Grid -->
+        <div class="insights-left">
           <div class="summary-cards">
             <div class="card">
-              <strong>Listings Sold</strong><br /><span id="stat-count">–</span>
+              <strong>Listings Sold</strong>
+              <span id="stat-count">–</span>
             </div>
             <div class="card">
-              <strong>Average Price</strong><br /><span id="stat-avg">–</span>
+              <strong>Average Price</strong>
+              <span id="stat-avg">–</span>
             </div>
             <div class="card">
-              <strong>Max Price</strong><br /><span id="stat-max">–</span>
+              <strong>Avg DOM</strong>
+              <span id="stat-dom">–</span>
             </div>
             <div class="card">
-              <strong>Min Price</strong><br /><span id="stat-min">–</span>
+              <strong>Max Price</strong>
+              <span id="stat-max">–</span>
+            </div>
+            <div class="card">
+              <strong>Min Price</strong>
+              <span id="stat-min">–</span>
+            </div>
+            <div class="card">
+              <strong>Avg % Diff</strong>
+              <span id="stat-diff">–</span>
             </div>
           </div>
-
-          <!-- Chart + property details -->
-          <div class="bottom-section">
-            <div class="chart-container">
-              <canvas id="soldByMonthChart"></canvas>
-            </div>
-
-            <div class="suggested-listing-card">
-              <div class="image-with-info">
-                <!-- Carousel -->
-                <div
-                  class="image-carousel"
-                  onmouseenter="showArrows(true)"
-                  onmouseleave="showArrows(false)"
-                >
-                  <div
-                    class="carousel-zone left-zone"
-                    onclick="prevCarouselImage()"
-                  >
-                    <span class="arrow" id="leftArrow">←</span>
-                  </div>
-
-                  <img id="carouselImage" src="" alt="Suggested Property" />
-
-                  <div
-                    class="carousel-zone right-zone"
-                    onclick="nextCarouselImage()"
-                  >
-                    <span class="arrow" id="rightArrow">→</span>
-                  </div>
-                </div>
-
-                <!-- Info -->
-                <div class="info-box">
-                  <strong id="carousel-price">$0</strong>
-                  <p id="carousel-address">Address</p>
-                  <p id="carousel-details">Beds/Baths</p>
-                  <p id="carousel-note">Time since sold</p>
-                </div>
-              </div>
-
-              <!-- View Details button moved here -->
-              <a
-                id="viewDetailsBtn"
-                class="view-btn"
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View Details
-              </a>
-            </div>
-          </div>
-          <!-- end bottom-section -->
         </div>
-        <!-- end #insights -->
+
+        <!-- RIGHT: Chart Section -->
+        <div class="insights-right">
+          <div class="chart-header">
+            <span style="font-weight: 600; color: #555;">Market Trend</span>
+            <div class="btn-group">
+              <button class="chart-btn active" data-metric="price">Price</button>
+              <button class="chart-btn" data-metric="dom">DOM</button>
+              <button class="chart-btn" data-metric="diff">% Diff</button>
+            </div>
+          </div>
+
+          <div class="chart-container-full">
+            <canvas id="soldByMonthChart"></canvas>
+          </div>
+        </div>
       </div>
       <!-- end #mainPanel -->
     </div>
     <!-- end #appContainer -->
 
-    <!-- ─── Vendor scripts ─────────────────────────────────── -->
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SCRIPTS                                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
-
-    <!-- ─── App script ─────────────────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/map.js"></script>
-  </body>
+    <script>
+      // Simple script to handle chart toggle UI state (logic in map.js)
+      document.querySelectorAll('.chart-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (window.renderChart) window.renderChart(btn.dataset.metric);
+        });
+      });
+    </script>
+</body>
+
 </html>

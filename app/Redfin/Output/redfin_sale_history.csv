@@ -1,120 +1,753 @@
 url,eventDate,eventType,price,MLS
-https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-402/home/170472868,"Jul 26, 2023",Sold (MLS),"$1,360,000",X9466265
-https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-402/home/170472868,"Jan 16, 2023",Listed,"$1,395,000",X9466265
-https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Apr 11, 2025",Sold (MLS) (Closed),"$955,000",X11990818
-https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Feb 27, 2025",Listed (Active),"$999,000",X11990818
-https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Mar 11, 2025",Relisted (Active),—,X11950910
-https://www.redfin.ca/on/ottawa/11-13-Nelson-St-K1N-7R1/home/194566890,"Feb 1, 2025",Listed (Active),"$1,100,000",X11950910
-https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-203/home/149819926,"May 30, 2024",Sold (MLS),"$450,000",X9428598
-https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-203/home/149819926,"Mar 27, 2024",Listed,"$459,900",X9428598
-https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Oct 30, 2024",Sold (MLS),"$663,500",X9450829
-https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Aug 5, 2024",Listed,"$694,900",X9450829
-https://www.redfin.ca/on/ottawa/108-Little-London-Pvt-K1N-0A5/home/149749869,"Apr 17, 2024",Listed,"$749,000",X9430883
-https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-305/home/149850812,"Dec 22, 2021",Sold (MLS) (Sold),"$446,000",X5371705
-https://www.redfin.ca/on/ottawa/100-Bruyere-St-K1N-5C6/unit-305/home/149850812,"Sep 15, 2021",Listed (Active),"$449,800",X5371705
-https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Apr 8, 2025",Sold (MLS) (Closed),"$835,000",X12046002
-https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Mar 27, 2025",Listed (Active),"$849,900",X12046002
-https://www.redfin.ca/on/ottawa/115-Goulburn-Ave-K1N-8C9/home/149647081,"Feb 6, 2025",Listed (Active),"$849,900",X11960618
-https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-12/home/149560198,"Jun 10, 2024",Sold (MLS),"$334,000",X9420502
-https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-12/home/149560198,"Mar 2, 2024",Listed,"$339,900",X9420502
-https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"Sep 16, 2024",Sold (MLS),"$585,000",X9442046
-https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"Jun 24, 2024",Listed,"$599,900",X9442046
-https://www.redfin.ca/on/ottawa/122-King-Edward-Ave-K1N-7L1/home/149754255,"May 6, 2024",Listed,"$599,900",X9425163
-https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-4/home/149560220,"Apr 4, 2025",Sold (MLS) (Closed),"$490,000",X12043258
-https://www.redfin.ca/on/ottawa/12-Clarence-St-K1N-6Z5/unit-4/home/149560220,"Mar 26, 2025",Listed (Active),"$499,900",X12043258
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Feb 21, 2025",Listed (Active),"$849,900",X10430672
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Jan 31, 2025",Listed (Active),"$849,900",X10430672
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 20, 2024",Sold (MLS) (Closed),"$830,000",X10430672
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 20, 2024",Sold (MLS) (Closed),"$830,000",X10430672
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Dec 16, 2024",Sold (MLS) (Closed),"$830,000",X10430672
-https://www.redfin.ca/on/ottawa/124-Ave-Blackburn-K1N-8A7/home/149698515,"Nov 19, 2024",Listed (Active),"$849,900",X10430672
-https://www.redfin.ca/on/ottawa/119-Russell-Ave-K1N-7X2/home/149748435,"Sep 5, 2024",Sold (MLS),"$882,500",X9441674
-https://www.redfin.ca/on/ottawa/119-Russell-Ave-K1N-7X2/home/149748435,"Jun 20, 2024",Listed,"$899,900",X9441674
-https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"Aug 21, 2024",Sold (MLS),"$630,000",X9437276
-https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"May 21, 2024",Listed,"$645,000",X9437276
-https://www.redfin.ca/on/ottawa/124-Guigues-Ave-K1N-5H7/unit-B202/home/190667715,"May 2, 2024",Listed,"$675,000",X9424681
-https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Dec 2, 2024",Sold (MLS),"$886,000",X9453109
-https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Jul 31, 2024",Listed,"$949,900",X9453109
-https://www.redfin.ca/on/ottawa/124-Stewart-St-K1N-6J5/home/149638114,"Jun 24, 2024",Listed,"$989,900",X9441979
-https://www.redfin.ca/on/ottawa/131-Wurtemburg-St-K1N/unit-804/home/149887373,"May 3, 2025",Sold (MLS) (Closed),"$959,900",X12087988
-https://www.redfin.ca/on/ottawa/131-Wurtemburg-St-K1N/unit-804/home/149887373,"Apr 17, 2025",Listed (Active),"$959,900",X12087988
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1007/home/149571433,"Mar 12, 2025",Sold (MLS) (Closed),"$350,100",X11984053
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1007/home/149571433,"Feb 22, 2025",Listed (Active),"$350,000",X11984053
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"May 10, 2025",Sold (MLS) (Closed),"$489,900",X12082154
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"May 9, 2025",Delisted (Off Market),—,X12082154
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"Apr 14, 2025",Listed (Active),"$489,900",X12082154
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1102/home/149571416,"Mar 21, 2025",Listed (Active),"$495,000",X12034921
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1208/home/149840443,"Nov 27, 2024",Sold (MLS) (Closed),"$367,000",X10425338
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-1208/home/149840443,"Nov 14, 2024",Listed (Active),"$369,900",X10425338
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 22, 2025",Sold (MLS) (Closed),"$397,500",X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 22, 2025",Sold (MLS) (Closed),"$397,500",X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Jan 9, 2025",Delisted (Off Market),—,X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Nov 1, 2024",Listed (Active),"$399,900",X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Nov 1, 2024",Delisted,—,X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-309/home/149840355,"Oct 28, 2024",Listed (Active),"$399,900",X9524292
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Apr 1, 2025",Listed (Active),"$459,900",X12017141
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Apr 1, 2025",Sold (MLS) (Closed),"$445,000",X12017141
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Mar 31, 2025",Sold (MLS) (Closed),"$445,000",X12017141
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Mar 13, 2025",Listed (Active),"$459,900",X12017141
-https://www.redfin.ca/on/ottawa/134-York-St-K1N-1K8/unit-501/home/149571148,"Feb 18, 2025",Listed (Active),"$469,900",X11976990
-https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Aug 30, 2024",Sold (MLS),"$407,000",X9438510
-https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Jun 26, 2024",Listed,"$407,000",X9438510
-https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Oct 11, 2024",Sold (MLS),"$375,000",X9458990
-https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Sep 30, 2024",Listed,"$385,000",X9458990
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Oct 29, 2024",Sold (MLS),"$427,000",X9447790
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Aug 22, 2024",Listed,"$429,900",X9447790
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-11/home/189801192,"Apr 11, 2024",Listed,"$429,900",X9426021
-https://www.redfin.ca/on/ottawa/139-Dalhousie-St-K1N-7C2/home/149650863,"Apr 22, 2024",Sold (MLS),"$538,900",X9446533
-https://www.redfin.ca/on/ottawa/139-Dalhousie-St-K1N-7C2/home/149650863,"Feb 13, 2024",Listed,"$544,900",X9446533
-https://www.redfin.ca/on/ottawa/140-St-Andrew-St-K1N-5G4/home/149635085,"Aug 15, 2024",Sold (MLS),"$550,000",X9423538
-https://www.redfin.ca/on/ottawa/140-St-Andrew-St-K1N-5G4/home/149635085,"Mar 23, 2024",Listed,"$559,000",X9423538
-https://www.redfin.ca/on/ottawa/144-Clarence-St-K1N-5P8/unit-2A/home/149447570,"Feb 14, 2024",Listed (Active),"$510,000",X8068790
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Jun 3, 2024",Listed,"$749,000",X9452459
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Mar 1, 2023",Sold (MLS),"$390,000",X10389189
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-101/home/149845228,"Dec 21, 2022",Listed,"$399,000",X10389189
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-207/home/149563339,"Jun 9, 2023",Sold (MLS),"$365,000",X9469749
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-207/home/149563339,"Apr 11, 2023",Listed,"$375,000",X9469749
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Jan 25, 2023",Listed,"$419,900",X9466301
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Oct 7, 2021",Sold (MLS) (Sold),"$410,000",X5341048
-https://www.redfin.ca/on/ottawa/139-Guigues-Ave-K1N-5J1/unit-8/home/149782152,"Aug 16, 2021",Listed (Active),"$439,900",X5341048
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-2/home/149818590,"Oct 29, 2024",Sold (MLS),"$335,000",X9457697
-https://www.redfin.ca/on/ottawa/15-Murray-St-K1N-9M5/unit-2/home/149818590,"Sep 23, 2024",Listed,"$358,900",X9457697
-https://www.redfin.ca/on/ottawa/150-York-St-K1N-1K9/unit-3B/home/191037935,"Aug 28, 2024",Sold (MLS),"$312,900",X9437159
-https://www.redfin.ca/on/ottawa/150-York-St-K1N-1K9/unit-3B/home/191037935,"Jun 4, 2024",Listed,"$319,900",X9437159
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Dec 19, 2024",Sold (MLS) (Closed),"$302,000",X10426776
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 15, 2024",Listed (Active),"$309,999",X10426776
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 1, 2024",Listed (Active),"$349,000",X9517608
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Nov 1, 2024",Delisted,—,X9517608
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-401/home/149583822,"Aug 20, 2024",Listed (Active),"$349,000",X9517608
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-702/home/149855054,"Apr 20, 2023",Sold (MLS),"$315,000",X9473830
-https://www.redfin.ca/on/ottawa/154-Nelson-St-K1N-7R5/unit-702/home/149855054,"Jan 10, 2023",Listed,"$329,900",X9473830
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 26, 2025",Sold (MLS) (Closed),"$884,900",X10463702
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 21, 2025",Listed (Active),"$849,000",X10463702
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Feb 3, 2025",Sold (MLS) (Closed),"$884,900",X10463702
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 22, 2024",Listed (Active),"$849,000",X10463702
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 1, 2024",Listed (Active),"$897,500",X9518687
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Nov 1, 2024",Delisted,—,X9518687
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2404/home/149580586,"Aug 8, 2024",Listed (Active),"$897,500",X9518687
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 21, 2024",Sold (MLS) (Closed),"$400,000",X9520401
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 1, 2024",Listed (Active),"$411,000",X9520401
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Nov 1, 2024",Delisted,—,X9520401
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Oct 30, 2024",Price Changed,"$411,000",X9520401
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Sep 19, 2024",Listed (Active),"$429,900",X9520401
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Oct 25, 2024",Delisted,—,X9457558
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-404/home/149581214,"Sep 19, 2024",Listed (Active),"$429,900",X9457558
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Sep 26, 2024",Sold (MLS),"$895,000",X9439981
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Jun 18, 2024",Listed,"$899,995",X9439981
-https://www.redfin.ca/on/ottawa/160-George-St-K1N-9M2/unit-2504/home/149852180,"Mar 5, 2024",Listed,"$959,900",X9420693
-https://www.redfin.ca/on/ottawa/164-Guigues-Ave-K1N-5J1/unit-A/home/191596620,"Nov 25, 2024",Sold (MLS),"$695,000",X9447068
-https://www.redfin.ca/on/ottawa/164-Guigues-Ave-K1N-5J1/unit-A/home/191596620,"Jul 16, 2024",Listed,"$749,900",X9447068
-https://www.redfin.ca/on/ottawa/161-Goulburn-Ave-K1N-8E3/home/149629277,"Jun 5, 2024",Sold (MLS),"$989,000",X9420970
-https://www.redfin.ca/on/ottawa/161-Goulburn-Ave-K1N-8E3/home/149629277,"Mar 20, 2024",Listed,"$999,900",X9420970
-https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"Sep 1, 2023",Sold (MLS),"$940,000",X9472344
-https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"May 30, 2023",Listed,"$999,900",X9472344
-https://www.redfin.ca/on/ottawa/165-Clarence-St-K1N-5P7/home/149896637,"Apr 6, 2023",Listed,"$1,025,000",X9470938
-https://www.redfin.ca/on/ottawa/166-Marlborough-Ave-K1N-8G4/home/149624549,"Jul 15, 2024",Sold (MLS),"$1,078,000",X9424430
-https://www.redfin.ca/on/ottawa/166-Marlborough-Ave-K1N-8G4/home/149624549,"Apr 18, 2024",Listed,"$1,098,000",X9424430
-https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Aug 2, 2023",Sold (MLS) (Sold),"$650,000",X6643292
-https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 28, 2023",Pending (Sold-Conditional),—,X6643292
-https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 21, 2023",Price Changed,"$697,000",X6643292
-https://www.redfin.ca/on/ottawa/172-Cathcart-St-K1N-5B9/home/149712943,"Jul 6, 2023",Listed (Active),"$749,200",X6643292
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-504/home/148754717,"May 01, 2024",Listed,679900,X9426315
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-504/home/148754717,"Aug 02, 2024",Sold (MLS),660000,X9426315
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-1503/home/148754763,"May 02, 2024",Listed,1950000,X9426355
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-1503/home/148754763,"Aug 22, 2024",Sold (MLS),1925000,X9426355
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-709/home/148755561,"Sep 05, 2024",Listed,399900,X9454068
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-709/home/148755561,"Nov 28, 2024",Sold (MLS),382000,X9454068
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1408/home/148755854,"Oct 31, 2024",Listed,599900,X10410902
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1408/home/148755854,"Nov 16, 2024",Sold (MLS),597000,X10410902
+https://www.redfin.ca/on/ottawa/271-McLeod-St-K2P-1A1/unit-2/home/148755908,"Aug 07, 2024",Listed,599000,X9443745
+https://www.redfin.ca/on/ottawa/271-McLeod-St-K2P-1A1/unit-2/home/148755908,"Nov 06, 2024",Delisted,,X9443745
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Sep 30, 2024",Listed,385000,X9458990
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-912/home/148755962,"Oct 11, 2024",Sold (MLS),375000,X9458990
+https://www.redfin.ca/on/ottawa/320-McLeod-St-K2P-1A3/unit-807/home/148756053,"Jan 30, 2024",Listed,1000000,X9431448
+https://www.redfin.ca/on/ottawa/320-McLeod-St-K2P-1A3/unit-807/home/148756053,"May 31, 2024",Sold (MLS),940000,X9431448
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-706/home/148756117,"May 28, 2025",Listed,348900,X12178442
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-706/home/148756117,"Jun 04, 2025",Price Changed,344900,X12178442
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-706/home/148756117,"Jul 03, 2025",Listed,324900,X12259863
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-706/home/148756117,"Jul 11, 2025",Sold (MLS),324900,X12259863
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-907/home/148756127,"Nov 06, 2024",Listed,484900,X10411050
+https://www.redfin.ca/on/ottawa/360-McLeod-St-K2P-1A9/unit-907/home/148756127,"Nov 16, 2024",Sold (MLS),475000,X10411050
+https://www.redfin.ca/on/ottawa/1034-Riddell-Ave-S-K2C-2J7/home/148763259,"Sep 23, 2025",Listed,769900,X12422229
+https://www.redfin.ca/on/ottawa/1034-Riddell-Ave-S-K2C-2J7/home/148763259,"Nov 06, 2025",Price Changed,749900,X12422229
+https://www.redfin.ca/on/ottawa/1034-Riddell-Ave-S-K2C-2J7/home/148763259,"Nov 21, 2025",Sold (MLS),749900,X12422229
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-404/home/148763753,"May 01, 2025",Listed,449000,X12116707
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-404/home/148763753,"May 09, 2025",Sold (MLS),442000,X12116707
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-406/home/148763821,"Feb 13, 2024",Listed,435000,X9430259
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-406/home/148763821,"Jun 05, 2024",Listed,405000,X9441863
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-406/home/148763821,"Aug 15, 2024",Sold (MLS),395000,X9441863
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Oct 15, 2024",Listed,404900,X9522556
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Oct 15, 2024",Listed,404900,X9460600
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Oct 25, 2024",Delisted,,X9460600
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Nov 06, 2024",Price Changed,399000,X9522556
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Nov 11, 2024",Listed,389000,X10442329
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Nov 28, 2024",Delisted,,X10442329
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Dec 03, 2024",Relisted,,X10442329
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-906/home/148764697,"Dec 06, 2024",Sold (MLS),383000,X10442329
+https://www.redfin.ca/on/ottawa/1493-Morisset-Ave-K1Z-8H2/home/148765701,"Aug 21, 2024",Listed,495000,X9518031
+https://www.redfin.ca/on/ottawa/1493-Morisset-Ave-K1Z-8H2/home/148765701,"Nov 06, 2024",Delisted,,X9518031
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1011/home/148772003,"May 07, 2024",Listed,355000,X9427152
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1011/home/148772003,"Jul 02, 2024",Sold (MLS),357000,X9427152
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1212/home/148774215,"Sep 06, 2024",Listed,449900,X9518939
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1212/home/148774215,"Nov 04, 2024",Sold (MLS),432500,X9518939
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-104/home/148775042,"Jul 31, 2024",Listed,319900,X9517558
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-104/home/148775042,"Nov 20, 2024",Sold (MLS),310000,X9517558
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-311/home/148775134,"Nov 28, 2024",Listed,329900,X11430981
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-311/home/148775134,"Jan 14, 2025",Sold (MLS),325000,X11430981
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-712/home/148775233,"Jun 15, 2024",Listed,275900,X9437623
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-712/home/148775233,"Aug 01, 2024",Sold (MLS),275900,X9437623
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-303/home/148775266,"Mar 29, 2023",Listed,549900,X9470552
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-303/home/148775266,"Aug 17, 2023",Sold (MLS),561000,X9470552
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Jun 25, 2024",Listed,374900,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 25, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 25, 2024",Relisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 26, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 26, 2024",Relisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 27, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 27, 2024",Relisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 29, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 29, 2024",Relisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 30, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Oct 30, 2024",Relisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Nov 01, 2024",Listed,374900,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Nov 04, 2024",Delisted,,X9445479
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Nov 08, 2024",Listed,364900,X10419171
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Jan 31, 2025",Price Changed,359900,X10419171
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Feb 18, 2025",Sold (MLS),350000,X10419171
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Feb 21, 2025",Listed,359900,X10419171
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-1110/home/148775267,"Feb 26, 2025",Sold (MLS),350000,X10419171
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-701/home/148775268,"Apr 03, 2025",Listed,675000,X12060398
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-701/home/148775268,"Apr 11, 2025",Sold (MLS),695100,X12060398
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-307/home/148775387,"Jul 25, 2024",Listed,329900,X9443508
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-307/home/148775387,"Sep 26, 2024",Sold (MLS),327500,X9443508
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-914/home/148775540,"Jul 03, 2025",Listed,335000,X12259156
+https://www.redfin.ca/on/ottawa/1505-Baseline-Rd-K2C-3L4/unit-914/home/148775540,"Aug 01, 2025",Sold (MLS),320000,X12259156
+https://www.redfin.ca/on/ottawa/429-Somerset-St-W-K2P-2P5/unit-607/home/148775803,"Jun 05, 2024",Listed,429900,X9438908
+https://www.redfin.ca/on/ottawa/429-Somerset-St-W-K2P-2P5/unit-607/home/148775803,"Jul 16, 2024",Sold (MLS),408000,X9438908
+https://www.redfin.ca/on/ottawa/429-Somerset-St-W-K2P-2P5/unit-301/home/148776112,"Feb 26, 2024",Listed,375000,X9433875
+https://www.redfin.ca/on/ottawa/429-Somerset-St-W-K2P-2P5/unit-301/home/148776112,"Apr 22, 2024",Sold (MLS),370000,X9433875
+https://www.redfin.ca/on/ottawa/317-Metcalfe-St-K2P-1S1/unit-202/home/148778838,"Oct 11, 2025",Listed,619900,X12458199
+https://www.redfin.ca/on/ottawa/317-Metcalfe-St-K2P-1S1/unit-202/home/148778838,"Oct 17, 2025",Sold (MLS),610000,X12458199
+https://www.redfin.ca/on/ottawa/317-Metcalfe-St-K2P-1S1/unit-202/home/148778838,"Oct 17, 2025",Delisted,,X12458199
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-1215/home/148778908,"May 16, 2024",Listed,289900,X9434931
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-1215/home/148778908,"Jun 21, 2024",Sold (MLS),298000,X9434931
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-716/home/148778931,"Jan 17, 2022",Listed,334900,X5474051
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-716/home/148778931,"Jan 25, 2022",Sold (MLS),334000,X5474051
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-711/home/148778961,"Apr 08, 2025",Listed,409900,X12070078
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-711/home/148778961,"Jul 12, 2025",Pending,,X12070078
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-711/home/148778961,"Jul 12, 2025",Delisted,,X12070078
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-711/home/148778961,"Aug 14, 2025",Sold (MLS),395000,X12070078
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-713/home/148779113,"Feb 01, 2024",Listed,320000,X9443893
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-713/home/148779113,"Mar 27, 2024",Sold (MLS),318000,X9443893
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-115/home/148779128,"Mar 20, 2024",Listed,284900,X9423832
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-115/home/148779128,"Jun 07, 2024",Sold (MLS),277000,X9423832
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-604/home/148781547,"Mar 04, 2024",Listed,309900,X9428349
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-604/home/148781547,"Apr 17, 2024",Sold (MLS),290000,X9428349
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-802/home/148781640,"Mar 31, 2025",Listed,299000,X12053992
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-802/home/148781640,"Apr 28, 2025",Sold (MLS),285000,X12053992
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-106/home/148781719,"Feb 27, 2025",Listed,304900,X11990891
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-106/home/148781719,"Mar 07, 2025",Sold (MLS),296000,X11990891
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-807/home/148781726,"Apr 04, 2024",Listed,296000,X9421039
+https://www.redfin.ca/on/ottawa/1465-Baseline-Rd-K2C-3L9/unit-807/home/148781726,"Jul 22, 2024",Sold (MLS),290000,X9421039
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-307/home/148782110,"May 15, 2025",Listed,349900,X12150547
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-307/home/148782110,"Jun 12, 2025",Price Changed,339900,X12150547
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-307/home/148782110,"Jul 25, 2025",Price Changed,335000,X12150547
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-307/home/148782110,"Aug 06, 2025",Price Changed,329900,X12150547
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-307/home/148782110,"Aug 20, 2025",Sold (MLS),324900,X12150547
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1015/home/148782139,"Jan 26, 2024",Listed,274888,X9432753
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1015/home/148782139,"Feb 26, 2024",Sold (MLS),272000,X9432753
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-305/home/148782191,"May 27, 2025",Listed,405000,X12175702
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-305/home/148782191,"Jul 03, 2025",Listed,395000,X12260214
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-305/home/148782191,"Jul 16, 2025",Sold (MLS),390000,X12260214
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Aug 02, 2024",Listed,299900,X9518636
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Aug 02, 2024",Listed,299900,X9453056
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Oct 25, 2024",Delisted,,X9453056
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Nov 01, 2024",Listed,299900,X9518636
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Nov 01, 2024",Delisted,,X9518636
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Nov 23, 2024",Price Changed,289900,X9518636
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Dec 09, 2024",Listed,288000,X11886946
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Dec 10, 2024",Delisted,,X9518636
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1016/home/148782252,"Dec 25, 2024",Sold (MLS),282500,X11886946
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-508/home/148782385,"Mar 23, 2023",Listed,289900,X9468143
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-508/home/148782385,"Apr 20, 2023",Sold (MLS),285500,X9468143
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-515/home/148782452,"Jul 15, 2025",Listed,279900,X12285900
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-515/home/148782452,"Aug 05, 2025",Sold (MLS),278000,X12285900
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-407/home/148782499,"Aug 01, 2024",Listed,359900,X9453163
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-407/home/148782499,"Nov 27, 2024",Sold (MLS),340000,X9453163
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-615/home/148782593,"May 05, 2025",Listed,279900,X12125908
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-615/home/148782593,"May 24, 2025",Sold (MLS),275000,X12125908
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Sep 30, 2025",Listed,360000,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Nov 11, 2025",Price Changed,349900,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Dec 08, 2025",Delisted,,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Dec 08, 2025",Sold (MLS),340000,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Dec 08, 2025",Sold (MLS),340000,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-1004/home/148782602,"Dec 08, 2025",Listed,349900,X12433607
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-213/home/148782649,"Sep 26, 2024",Listed,314900,X9458833
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-213/home/148782649,"Oct 09, 2024",Sold (MLS),310525,X9458833
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-403/home/148783395,"Sep 17, 2025",Listed,438000,X12410225
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-403/home/148783395,"Sep 30, 2025",Sold (MLS),435000,X12410225
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-406/home/148783522,"May 27, 2025",Listed,434900,X12177290
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-406/home/148783522,"Jun 06, 2025",Sold (MLS),432900,X12177290
+https://www.redfin.ca/on/ottawa/1751-Baseline-Rd-K2C-0C1/home/148783580,"Dec 04, 2025",Listed,425000,X12600358
+https://www.redfin.ca/on/ottawa/1751-Baseline-Rd-K2C-0C1/home/148783580,"Feb 05, 2026",Listed,399900,X12760534
+https://www.redfin.ca/on/ottawa/1751-Baseline-Rd-K2C-0C1/home/148783580,"Feb 13, 2026",Sold (MLS),399900,X12760534
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-101/home/148783863,"Jan 02, 2023",Listed,329900,X9474255
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-101/home/148783863,"Apr 12, 2023",Sold (MLS),332000,X9474255
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-101/home/148783863,"Mar 03, 2025",Listed,379900,X11996817
+https://www.redfin.ca/on/ottawa/1485-Baseline-Rd-K2C-3L8/unit-101/home/148783863,"Mar 06, 2025",Sold (MLS),390000,X11996817
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"Nov 08, 2024",Listed,850000,X10419360
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"Dec 11, 2024",Price Changed,825000,X10419360
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"Jan 23, 2025",Listed,825000,X11937360
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"May 01, 2025",Listed,750000,X12117770
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"May 07, 2025",Delisted,,X11937360
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"May 11, 2025",Delisted,,X12117770
+https://www.redfin.ca/on/ottawa/364-Cooper-St-K2P-2P3/unit-403/home/148784138,"May 12, 2025",Sold (MLS),778000,X12117770
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Sep 25, 2024",Listed,1350000,X9520622
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Sep 25, 2024",Listed,1350000,X9457918
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Oct 25, 2024",Delisted,,X9457918
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Nov 01, 2024",Listed,1350000,X9520622
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Nov 01, 2024",Delisted,,X9520622
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Apr 08, 2025",Listed,1325000,X12069696
+https://www.redfin.ca/on/ottawa/10-Grenwich-Cir-K2C-4C6/home/148784542,"Apr 16, 2025",Sold (MLS),1305000,X12069696
+https://www.redfin.ca/on/ottawa/1260-Henry-Farm-Dr-K2C-2E2/home/148785153,"Nov 14, 2025",Listed,779000,X12546592
+https://www.redfin.ca/on/ottawa/1260-Henry-Farm-Dr-K2C-2E2/home/148785153,"Nov 27, 2025",Sold (MLS),765000,X12546592
+https://www.redfin.ca/on/ottawa/260-Scout-St-K2C-4E6/home/148785448,"Aug 07, 2025",Listed,975000,X12331916
+https://www.redfin.ca/on/ottawa/260-Scout-St-K2C-4E6/home/148785448,"Sep 05, 2025",Sold (MLS),960000,X12331916
+https://www.redfin.ca/on/ottawa/130-Scout-St-K2C-4C9/home/148785509,"Oct 17, 2025",Listed,624900,X12469591
+https://www.redfin.ca/on/ottawa/130-Scout-St-K2C-4C9/home/148785509,"Oct 30, 2025",Sold (MLS),620000,X12469591
+https://www.redfin.ca/on/ottawa/1347-Erindale-Dr-K2C-2G5/home/148786423,"Apr 24, 2024",Listed,619900,X9422331
+https://www.redfin.ca/on/ottawa/1347-Erindale-Dr-K2C-2G5/home/148786423,"Jul 04, 2024",Sold (MLS),619900,X9422331
+https://www.redfin.ca/on/ottawa/1199-Clyde-Ave-K2C-1Y3/home/148786588,"Apr 16, 2025",Listed,729900,X12086860
+https://www.redfin.ca/on/ottawa/1199-Clyde-Ave-K2C-1Y3/home/148786588,"May 01, 2025",Sold (MLS),715000,X12086860
+https://www.redfin.ca/on/ottawa/1150-Cameo-Dr-K2C-1Y7/home/148786910,"Apr 13, 2023",Listed,789000,X9482359
+https://www.redfin.ca/on/ottawa/1150-Cameo-Dr-K2C-1Y7/home/148786910,"Jun 01, 2023",Sold (MLS),857000,X9482359
+https://www.redfin.ca/on/ottawa/1286-Albany-Dr-K2C-2L7/home/148787912,"Feb 06, 2025",Listed,799000,X11961443
+https://www.redfin.ca/on/ottawa/1286-Albany-Dr-K2C-2L7/home/148787912,"Mar 08, 2025",Sold (MLS),793000,X11961443
+https://www.redfin.ca/on/ottawa/1214-Castle-Hill-Cres-K2C-2B3/home/148788037,"May 27, 2025",Listed,689900,X12175580
+https://www.redfin.ca/on/ottawa/1214-Castle-Hill-Cres-K2C-2B3/home/148788037,"Jun 04, 2025",Sold (MLS),705000,X12175580
+https://www.redfin.ca/on/ottawa/1288-Kilborn-Ave-K1H-6L3/home/148788495,"Mar 11, 2024",Listed,1299900,X9428178
+https://www.redfin.ca/on/ottawa/1288-Kilborn-Ave-K1H-6L3/home/148788495,"Apr 02, 2024",Listed,1249900,X9430875
+https://www.redfin.ca/on/ottawa/1288-Kilborn-Ave-K1H-6L3/home/148788495,"Jul 19, 2024",Sold (MLS),1100000,X9430875
+https://www.redfin.ca/on/ottawa/2282-Braeside-Ave-K1H-7J6/home/148788521,"May 31, 2019",Sold (MLS),1200000,X9099080
+https://www.redfin.ca/on/ottawa/2282-Braeside-Ave-K1H-7J6/home/148788521,"Apr 19, 2023",Listed,1480000,X9469550
+https://www.redfin.ca/on/ottawa/2282-Braeside-Ave-K1H-7J6/home/148788521,"Jun 28, 2023",Sold (MLS),1580000,X9469550
+https://www.redfin.ca/on/ottawa/1207-Woodside-Dr-K2C-2G7/home/148788588,"May 23, 2025",Listed,739000,X12169035
+https://www.redfin.ca/on/ottawa/1207-Woodside-Dr-K2C-2G7/home/148788588,"Jun 04, 2025",Sold (MLS),751500,X12169035
+https://www.redfin.ca/on/ottawa/1201-Ohio-St-K1H-0A1/unit-108/home/148788727,"Apr 24, 2024",Listed,499900,X9422365
+https://www.redfin.ca/on/ottawa/1201-Ohio-St-K1H-0A1/unit-108/home/148788727,"Jul 31, 2024",Sold (MLS),499600,X9422365
+https://www.redfin.ca/on/ottawa/1286-Kilborn-Ave-K1H-6L3/home/148788808,"Mar 16, 2024",Listed,1299900,X9428537
+https://www.redfin.ca/on/ottawa/1286-Kilborn-Ave-K1H-6L3/home/148788808,"Apr 02, 2024",Listed,1249900,X9430876
+https://www.redfin.ca/on/ottawa/1286-Kilborn-Ave-K1H-6L3/home/148788808,"Jul 19, 2024",Sold (MLS),1100000,X9430876
+https://www.redfin.ca/on/ottawa/1129-Rockingham-Ave-K1H-8E9/home/148788841,"Mar 27, 2025",Listed,669000,X12045024
+https://www.redfin.ca/on/ottawa/1129-Rockingham-Ave-K1H-8E9/home/148788841,"Apr 15, 2025",Sold (MLS),655000,X12045024
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Feb 24, 2025",Listed,724900,X11984783
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Mar 05, 2025",Sold (MLS),735000,X11984783
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Mar 05, 2025",Listed,724900,X11984783
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Mar 06, 2025",Sold (MLS),735000,X11984783
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Mar 10, 2025",Listed,724900,X11984783
+https://www.redfin.ca/on/ottawa/1231-Agincourt-Rd-K2C-2J3/home/148788966,"Mar 17, 2025",Sold (MLS),735000,X11984783
+https://www.redfin.ca/on/ottawa/1695-Gage-Cres-K2C-0Z7/home/148789132,"May 20, 2025",Listed,699000,X12164435
+https://www.redfin.ca/on/ottawa/1695-Gage-Cres-K2C-0Z7/home/148789132,"May 31, 2025",Price Changed,749999,X12164435
+https://www.redfin.ca/on/ottawa/1695-Gage-Cres-K2C-0Z7/home/148789132,"Jul 04, 2025",Listed,729900,X12262401
+https://www.redfin.ca/on/ottawa/1695-Gage-Cres-K2C-0Z7/home/148789132,"Aug 14, 2025",Listed,699900,X12344949
+https://www.redfin.ca/on/ottawa/1695-Gage-Cres-K2C-0Z7/home/148789132,"Sep 08, 2025",Sold (MLS),694800,X12344949
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-407/home/148791082,"Nov 24, 2023",Listed,699000,X9463634
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-407/home/148791082,"Jun 21, 2024",Sold (MLS),680000,X9463634
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-803/home/148791191,"May 21, 2024",Listed,579900,X9436486
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-803/home/148791191,"Jul 25, 2024",Sold (MLS),575000,X9436486
+https://www.redfin.ca/on/ottawa/61-Pixley-Pvt-K1G-4C9/home/148791303,"Apr 30, 2025",Listed,399900,X12113252
+https://www.redfin.ca/on/ottawa/61-Pixley-Pvt-K1G-4C9/home/148791303,"May 21, 2025",Price Changed,389900,X12113252
+https://www.redfin.ca/on/ottawa/61-Pixley-Pvt-K1G-4C9/home/148791303,"Jun 27, 2025",Price Changed,384900,X12113252
+https://www.redfin.ca/on/ottawa/61-Pixley-Pvt-K1G-4C9/home/148791303,"Jul 15, 2025",Sold (MLS),378000,X12113252
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-704/home/148796758,"Jul 31, 2025",Listed,289900,X12316732
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-704/home/148796758,"Aug 14, 2025",Sold (MLS),282500,X12316732
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-201/home/148796776,"Jun 16, 2014",Listed,215000,X2942442
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-201/home/148796776,"Dec 12, 2014",Delisted,,X2942442
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-201/home/148796776,"May 06, 2024",Listed,299000,X9424734
+https://www.redfin.ca/on/ottawa/1180-Ohio-St-K1H-8N5/unit-201/home/148796776,"Aug 01, 2024",Sold (MLS),290000,X9424734
+https://www.redfin.ca/on/ottawa/100-Roger-Guindon-Ave-K1G-3Z7/unit-604/home/148803583,"Jun 27, 2023",Listed,548800,X6218832
+https://www.redfin.ca/on/ottawa/100-Roger-Guindon-Ave-K1G-3Z7/unit-604/home/148803583,"Jul 07, 2023",Pending,,X6218832
+https://www.redfin.ca/on/ottawa/100-Roger-Guindon-Ave-K1G-3Z7/unit-604/home/148803583,"Jul 14, 2023",Sold (MLS),540000,X6218832
+https://www.redfin.ca/on/ottawa/1297-Erindale-Dr-K2C-2G3/home/148803969,"May 03, 2024",Listed,599900,X9424799
+https://www.redfin.ca/on/ottawa/1297-Erindale-Dr-K2C-2G3/home/148803969,"Jun 13, 2024",Sold (MLS),600000,X9424799
+https://www.redfin.ca/on/ottawa/1005-Castle-Hill-Cres-K2C-2A7/home/148806737,"Apr 14, 2023",Listed,699900,X9469146
+https://www.redfin.ca/on/ottawa/1005-Castle-Hill-Cres-K2C-2A7/home/148806737,"Jun 29, 2023",Sold (MLS),710000,X9469146
+https://www.redfin.ca/on/ottawa/1145-Clyde-Ave-K2C-4B2/home/148807060,"Apr 22, 2025",Listed,679900,X12096323
+https://www.redfin.ca/on/ottawa/1145-Clyde-Ave-K2C-4B2/home/148807060,"May 15, 2025",Sold (MLS),680000,X12096323
+https://www.redfin.ca/on/ottawa/1229-Erindale-Dr-K2C-2G2/home/148807101,"Jun 04, 2025",Listed,819900,X12195340
+https://www.redfin.ca/on/ottawa/1229-Erindale-Dr-K2C-2G2/home/148807101,"Jun 24, 2025",Price Changed,790000,X12195340
+https://www.redfin.ca/on/ottawa/1229-Erindale-Dr-K2C-2G2/home/148807101,"Jul 08, 2025",Price Changed,775000,X12195340
+https://www.redfin.ca/on/ottawa/1229-Erindale-Dr-K2C-2G2/home/148807101,"Jul 30, 2025",Listed,740000,X12314891
+https://www.redfin.ca/on/ottawa/1229-Erindale-Dr-K2C-2G2/home/148807101,"Sep 02, 2025",Sold (MLS),720000,X12314891
+https://www.redfin.ca/on/ottawa/1275-Tara-Dr-K2C-2H6/home/148811636,"Jul 27, 2024",Listed,799900,X9442896
+https://www.redfin.ca/on/ottawa/1275-Tara-Dr-K2C-2H6/home/148811636,"Aug 27, 2024",Sold (MLS),795000,X9442896
+https://www.redfin.ca/on/ottawa/93-Whitestone-Dr-K2C-4C6/home/148812826,"Sep 02, 2025",Listed,1199900,X12373041
+https://www.redfin.ca/on/ottawa/93-Whitestone-Dr-K2C-4C6/home/148812826,"Sep 23, 2025",Price Changed,1174900,X12373041
+https://www.redfin.ca/on/ottawa/93-Whitestone-Dr-K2C-4C6/home/148812826,"Sep 29, 2025",Sold (MLS),1155000,X12373041
+https://www.redfin.ca/on/ottawa/255-Argyle-Ave-K2P-2N7/unit-106/home/148813560,"Jun 11, 2025",Listed,489900,X12212988
+https://www.redfin.ca/on/ottawa/255-Argyle-Ave-K2P-2N7/unit-106/home/148813560,"Jun 18, 2025",Sold (MLS),490500,X12212988
+https://www.redfin.ca/on/ottawa/1268-Sherman-Dr-K2C-2M8/home/148819498,"May 27, 2020",Price Changed,619900,1
+https://www.redfin.ca/on/ottawa/1268-Sherman-Dr-K2C-2M8/home/148819498,"Sep 11, 2024",Listed,834900,X9453744
+https://www.redfin.ca/on/ottawa/1268-Sherman-Dr-K2C-2M8/home/148819498,"Oct 15, 2024",Sold (MLS),820000,X9453744
+https://www.redfin.ca/on/ottawa/66-Grammercy-Pk-K2C-4E4/home/148820682,"Aug 09, 2024",Listed,634900,X9447447
+https://www.redfin.ca/on/ottawa/66-Grammercy-Pk-K2C-4E4/home/148820682,"Oct 21, 2024",Sold (MLS),620000,X9447447
+https://www.redfin.ca/on/ottawa/1221-Amesbrooke-Dr-K2C-2E7/home/148821935,"Oct 25, 2024",Listed,729000,X9524187
+https://www.redfin.ca/on/ottawa/1221-Amesbrooke-Dr-K2C-2E7/home/148821935,"Oct 30, 2024",Pending,,X9524187
+https://www.redfin.ca/on/ottawa/1221-Amesbrooke-Dr-K2C-2E7/home/148821935,"Nov 12, 2024",Sold (MLS),756000,X9524187
+https://www.redfin.ca/on/ottawa/1142-Sherman-Dr-K2C-2M4/home/148822936,"Sep 19, 2024",Listed,774500,X9457481
+https://www.redfin.ca/on/ottawa/1142-Sherman-Dr-K2C-2M4/home/148822936,"Oct 04, 2024",Sold (MLS),769500,X9457481
+https://www.redfin.ca/on/ottawa/1177-Belanger-Ave-K1H-8N7/unit-412/home/148823029,"May 27, 2024",Listed,319000,X9436092
+https://www.redfin.ca/on/ottawa/1177-Belanger-Ave-K1H-8N7/unit-412/home/148823029,"Aug 12, 2024",Sold (MLS),325000,X9436092
+https://www.redfin.ca/on/ottawa/1177-Belanger-Ave-K1H-8N7/unit-201/home/148823052,"Jan 10, 2024",Listed,279900,X9441551
+https://www.redfin.ca/on/ottawa/1177-Belanger-Ave-K1H-8N7/unit-201/home/148823052,"Apr 01, 2024",Sold (MLS),280000,X9441551
+https://www.redfin.ca/on/ottawa/1153-Albany-Dr-K2C-2L1/home/148823191,"Jun 10, 2024",Listed,699900,X9439854
+https://www.redfin.ca/on/ottawa/1153-Albany-Dr-K2C-2L1/home/148823191,"Sep 05, 2024",Sold (MLS),675000,X9439854
+https://www.redfin.ca/on/ottawa/1217-Willowdale-Ave-K1H-7S5/home/148823527,"Aug 29, 2025",Listed,799900,X12370810
+https://www.redfin.ca/on/ottawa/1217-Willowdale-Ave-K1H-7S5/home/148823527,"Sep 10, 2025",Sold (MLS),804500,X12370810
+https://www.redfin.ca/on/ottawa/48-Coleridge-St-K2C-4G2/home/148823571,"Jan 06, 2025",Listed,749900,X11907902
+https://www.redfin.ca/on/ottawa/48-Coleridge-St-K2C-4G2/home/148823571,"Jan 17, 2025",Sold (MLS),756000,X11907902
+https://www.redfin.ca/on/ottawa/48-Coleridge-St-K2C-4G2/home/148823571,"Jan 17, 2025",Listed,749900,X11907902
+https://www.redfin.ca/on/ottawa/48-Coleridge-St-K2C-4G2/home/148823571,"Jan 22, 2025",Sold (MLS),756000,X11907902
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2005/home/148823752,"May 23, 2025",Listed,434900,X12169730
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2005/home/148823752,"Jun 02, 2025",Sold (MLS),420000,X12169730
+https://www.redfin.ca/on/ottawa/1150-Albany-Dr-K2C-2L3/home/148824253,"Jul 17, 2025",Listed,839900,X12292407
+https://www.redfin.ca/on/ottawa/1150-Albany-Dr-K2C-2L3/home/148824253,"Jul 26, 2025",Sold (MLS),851150,X12292407
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2407/home/148824452,"Aug 30, 2024",Listed,899000,X9518864
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2407/home/148824452,"Oct 29, 2024",Delisted,,X9518864
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2407/home/148824452,"Nov 06, 2024",Sold (MLS),882500,X9518864
+https://www.redfin.ca/on/ottawa/199-Kent-St-K2P-2K8/unit-2407/home/148824452,"Nov 06, 2024",Delisted,,X9518864
+https://www.redfin.ca/on/ottawa/1209-Clyde-Ave-K2C-1Y3/home/148825207,"Jul 18, 2024",Listed,639000,X9441322
+https://www.redfin.ca/on/ottawa/1209-Clyde-Ave-K2C-1Y3/home/148825207,"Sep 17, 2024",Sold (MLS),649000,X9441322
+https://www.redfin.ca/on/ottawa/1245-Field-St-K2C-2P9/home/148825446,"Apr 30, 2024",Listed,750000,X9426555
+https://www.redfin.ca/on/ottawa/1245-Field-St-K2C-2P9/home/148825446,"May 10, 2024",Sold (MLS),727500,X9426555
+https://www.redfin.ca/on/ottawa/1245-Field-St-K2C-2P9/home/148825446,"Jul 06, 2024",Sold (MLS),727500,X9426555
+https://www.redfin.ca/on/ottawa/1160-Belanger-Ave-K1H-8A2/unit-14/home/148825654,"May 04, 2024",Listed,479000,X9426497
+https://www.redfin.ca/on/ottawa/1160-Belanger-Ave-K1H-8A2/unit-14/home/148825654,"Jun 06, 2024",Sold (MLS),471000,X9426497
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Jun 24, 2025",Listed,428000,X12242220
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Jul 13, 2025",Price Changed,418000,X12242220
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Jul 31, 2025",Listed,399000,X12316932
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Sep 18, 2025",Relisted,,X12316932
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Oct 04, 2025",Sold (MLS),387000,X12316932
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Oct 04, 2025",Sold (MLS),387000,X12316932
+https://www.redfin.ca/on/ottawa/1121-Bavlie-Ave-K1H-8P3/unit-1/home/148825992,"Oct 04, 2025",Listed,399000,X12316932
+https://www.redfin.ca/on/ottawa/1557-Baseline-Rd-K2C-0B4/home/148827839,"May 31, 2025",Listed,499900,X12186753
+https://www.redfin.ca/on/ottawa/1557-Baseline-Rd-K2C-0B4/home/148827839,"Jun 14, 2025",Sold (MLS),465000,X12186753
+https://www.redfin.ca/on/ottawa/12-Beckington-Pvt-K2P-2N5/home/148830040,"Feb 18, 2024",Listed,765000,X9431511
+https://www.redfin.ca/on/ottawa/12-Beckington-Pvt-K2P-2N5/home/148830040,"May 13, 2024",Sold (MLS),765000,X9431511
+https://www.redfin.ca/on/ottawa/29-Arlington-Ave-K2P-1C1/home/148831265,"May 29, 2023",Listed,1299900,X6059924
+https://www.redfin.ca/on/ottawa/29-Arlington-Ave-K2P-1C1/home/148831265,"Feb 21, 2024",Listed,1050000,X9428229
+https://www.redfin.ca/on/ottawa/29-Arlington-Ave-K2P-1C1/home/148831265,"Aug 06, 2024",Sold (MLS),1040000,X9428229
+https://www.redfin.ca/on/ottawa/2147-Calder-Ave-K2C-0Y1/home/148831474,"Aug 22, 2024",Listed,795000,X9449400
+https://www.redfin.ca/on/ottawa/2147-Calder-Ave-K2C-0Y1/home/148831474,"Oct 30, 2024",Sold (MLS),780000,X9449400
+https://www.redfin.ca/on/ottawa/347-Frost-Ave-K1H-5J1/home/148831697,"May 01, 2019",Price Changed,775000,1
+https://www.redfin.ca/on/ottawa/347-Frost-Ave-K1H-5J1/home/148831697,"May 15, 2019",Price Changed,749000,1
+https://www.redfin.ca/on/ottawa/347-Frost-Ave-K1H-5J1/home/148831697,"Jun 06, 2019",Price Changed,699900,1
+https://www.redfin.ca/on/ottawa/347-Frost-Ave-K1H-5J1/home/148831697,"Mar 19, 2024",Listed,989900,X9429202
+https://www.redfin.ca/on/ottawa/347-Frost-Ave-K1H-5J1/home/148831697,"Jun 20, 2024",Sold (MLS),1010000,X9429202
+https://www.redfin.ca/on/ottawa/2075-Woodcrest-Rd-K1H-6H9/home/148833806,"Mar 19, 2025",Listed,975000,X12029327
+https://www.redfin.ca/on/ottawa/2075-Woodcrest-Rd-K1H-6H9/home/148833806,"Apr 14, 2025",Listed,935000,X12082185
+https://www.redfin.ca/on/ottawa/2075-Woodcrest-Rd-K1H-6H9/home/148833806,"May 22, 2025",Listed,899000,X12170083
+https://www.redfin.ca/on/ottawa/2075-Woodcrest-Rd-K1H-6H9/home/148833806,"Jul 22, 2025",Sold (MLS),858000,X12170083
+https://www.redfin.ca/on/ottawa/1242-Clyde-Ave-K2C-1Y4/home/148835110,"Jun 04, 2025",Listed,598900,X12196890
+https://www.redfin.ca/on/ottawa/1242-Clyde-Ave-K2C-1Y4/home/148835110,"Jun 17, 2025",Sold (MLS),604000,X12196890
+https://www.redfin.ca/on/ottawa/174-Dahlia-Ave-K1H-6G2/home/148835911,"May 29, 2025",Price Changed,775000,X12182723
+https://www.redfin.ca/on/ottawa/174-Dahlia-Ave-K1H-6G2/home/148835911,"May 29, 2025",Price Changed,77500000,X12182723
+https://www.redfin.ca/on/ottawa/174-Dahlia-Ave-K1H-6G2/home/148835911,"May 29, 2025",Listed,775000000,X12182723
+https://www.redfin.ca/on/ottawa/174-Dahlia-Ave-K1H-6G2/home/148835911,"Jun 06, 2025",Sold (MLS),775000,X12182723
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"Nov 22, 2024",Listed,899000,X10441939
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"Feb 04, 2025",Listed,899000,X11956267
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"Apr 17, 2025",Listed,799999,X12091855
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"Apr 17, 2025",Listed,799999,X12091858
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"May 05, 2025",Price Changed,775000,X12091858
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"May 05, 2025",Price Changed,775000,X12091855
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"May 10, 2025",Sold (MLS),760000,X12091855
+https://www.redfin.ca/on/ottawa/1944-Ronald-Ave-K1H-5H9/home/148836820,"May 10, 2025",Sold (MLS),760000,X12091858
+https://www.redfin.ca/on/ottawa/1315-Agincourt-Rd-K2C-2J3/home/148837049,"May 28, 2025",Listed,699999,X12177765
+https://www.redfin.ca/on/ottawa/1315-Agincourt-Rd-K2C-2J3/home/148837049,"Jun 10, 2025",Sold (MLS),725100,X12177765
+https://www.redfin.ca/on/ottawa/2286-Utah-St-K1H-7W8/home/148837210,"Jun 18, 2025",Listed,774900,X12230514
+https://www.redfin.ca/on/ottawa/2286-Utah-St-K1H-7W8/home/148837210,"Jun 27, 2025",Sold (MLS),786000,X12230514
+https://www.redfin.ca/on/ottawa/1759-Ainsley-Dr-K2C-0T3/home/148837563,"Jan 16, 2024",Listed,765000,X9447996
+https://www.redfin.ca/on/ottawa/1759-Ainsley-Dr-K2C-0T3/home/148837563,"Mar 05, 2024",Listed,755000,X9428367
+https://www.redfin.ca/on/ottawa/1759-Ainsley-Dr-K2C-0T3/home/148837563,"Jun 04, 2024",Sold (MLS),727000,X9428367
+https://www.redfin.ca/on/ottawa/1245-Cheverton-Ave-K1H-7P5/home/148838568,"Nov 18, 2024",Listed,875000,X10429575
+https://www.redfin.ca/on/ottawa/1245-Cheverton-Ave-K1H-7P5/home/148838568,"Nov 23, 2024",Sold (MLS),875000,X10429575
+https://www.redfin.ca/on/ottawa/1518-Morisset-Ave-K1Z-8H5/home/148839477,"Jan 12, 2024",Listed,679900,X9432339
+https://www.redfin.ca/on/ottawa/1518-Morisset-Ave-K1Z-8H5/home/148839477,"Mar 21, 2024",Sold (MLS),665000,X9432339
+https://www.redfin.ca/on/ottawa/1315-Kilborn-Ave-K1H-6L2/home/148841292,"Oct 17, 2025",Listed,699900,X12469517
+https://www.redfin.ca/on/ottawa/1315-Kilborn-Ave-K1H-6L2/home/148841292,"Nov 25, 2025",Listed,674900,X12574778
+https://www.redfin.ca/on/ottawa/1315-Kilborn-Ave-K1H-6L2/home/148841292,"Dec 10, 2025",Sold (MLS),650000,X12574778
+https://www.redfin.ca/on/ottawa/1250-Woodside-Dr-K2C-2G9/home/148841861,"Jul 16, 2025",Listed,649900,X12287784
+https://www.redfin.ca/on/ottawa/1250-Woodside-Dr-K2C-2G9/home/148841861,"Jul 25, 2025",Sold (MLS),640000,X12287784
+https://www.redfin.ca/on/ottawa/1038-Secord-Ave-K1H-8C8/home/148843001,"Jan 23, 2025",Listed,815000,X11938343
+https://www.redfin.ca/on/ottawa/1038-Secord-Ave-K1H-8C8/home/148843001,"Apr 03, 2025",Listed,799000,X12059312
+https://www.redfin.ca/on/ottawa/1038-Secord-Ave-K1H-8C8/home/148843001,"May 01, 2025",Sold (MLS),750500,X12059312
+https://www.redfin.ca/on/ottawa/1998-Elmside-Ave-K1H-5N9/home/148843063,"Feb 19, 2024",Listed,949000,X9428098
+https://www.redfin.ca/on/ottawa/1998-Elmside-Ave-K1H-5N9/home/148843063,"Jul 09, 2024",Sold (MLS),949000,X9428098
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Feb 20, 2024",Listed,1599900,X9429148
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Apr 09, 2024",Listed,1549000,X9431030
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Sep 05, 2024",Listed,1390000,X9456090
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Sep 09, 2024",Listed,1390000,X9412239
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Sep 10, 2024",Listed,1450000,X9309152
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Sep 26, 2024",Price Changed,1390000,X9309152
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Oct 01, 2024",Pending,,X9309152
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Oct 17, 2024",Sold (MLS),1265000,X9309152
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Oct 17, 2024",Sold (MLS),,X9412239
+https://www.redfin.ca/on/ottawa/273-Roger-Rd-K1H-5C5/home/148843350,"Nov 26, 2024",Sold (MLS),1265000,X9456090
+https://www.redfin.ca/on/ottawa/1438-Randall-Ave-K1H-7R5/home/148844107,"May 07, 2025",Listed,1099000,X12129996
+https://www.redfin.ca/on/ottawa/1438-Randall-Ave-K1H-7R5/home/148844107,"May 12, 2025",Sold (MLS),1200000,X12129996
+https://www.redfin.ca/on/ottawa/1438-Randall-Ave-K1H-7R5/home/148844107,"May 12, 2025",Sold (MLS),1200000,X12129996
+https://www.redfin.ca/on/ottawa/1438-Randall-Ave-K1H-7R5/home/148844107,"May 12, 2025",Listed,1099000,X12129996
+https://www.redfin.ca/on/ottawa/1135-Cameo-Dr-K2C-1Y6/home/148844594,"Apr 12, 2024",Listed,659900,X9431968
+https://www.redfin.ca/on/ottawa/1135-Cameo-Dr-K2C-1Y6/home/148844594,"Jun 12, 2024",Sold (MLS),689000,X9431968
+https://www.redfin.ca/on/ottawa/1534-Baseline-Rd-K2C-0B3/home/148844903,"Mar 16, 2025",Listed,735000,X12021828
+https://www.redfin.ca/on/ottawa/1534-Baseline-Rd-K2C-0B3/home/148844903,"May 10, 2025",Sold (MLS),723000,X12021828
+https://www.redfin.ca/on/ottawa/1801-Paisley-Ave-K2C-1A7/home/148847305,"May 27, 2024",Listed,699900,X9436094
+https://www.redfin.ca/on/ottawa/1801-Paisley-Ave-K2C-1A7/home/148847305,"Jul 25, 2024",Sold (MLS),678000,X9436094
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-505/home/148847913,"May 06, 2024",Listed,535000,X9424978
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-505/home/148847913,"Jun 24, 2024",Sold (MLS),533000,X9424978
+https://www.redfin.ca/on/ottawa/1866-Beattie-Ave-K1H-5R8/home/148848118,"Jul 12, 2025",Listed,1995000,X12281330
+https://www.redfin.ca/on/ottawa/1866-Beattie-Ave-K1H-5R8/home/148848118,"Aug 07, 2025",Price Changed,1947000,X12281330
+https://www.redfin.ca/on/ottawa/1866-Beattie-Ave-K1H-5R8/home/148848118,"Aug 14, 2025",Listed,1895000,X12344150
+https://www.redfin.ca/on/ottawa/1866-Beattie-Ave-K1H-5R8/home/148848118,"Aug 29, 2025",Price Changed,1845000,X12344150
+https://www.redfin.ca/on/ottawa/1866-Beattie-Ave-K1H-5R8/home/148848118,"Oct 10, 2025",Sold (MLS),1660000,X12344150
+https://www.redfin.ca/on/ottawa/1221-Clyde-Ave-K2C-1Y3/home/148848671,"May 16, 2025",Listed,675000,X12155444
+https://www.redfin.ca/on/ottawa/1221-Clyde-Ave-K2C-1Y3/home/148848671,"May 25, 2025",Sold (MLS),670000,X12155444
+https://www.redfin.ca/on/ottawa/230-Smyth-Rd-K1H-5A2/home/148848678,"Dec 17, 2025",Listed,850000,X12639656
+https://www.redfin.ca/on/ottawa/230-Smyth-Rd-K1H-5A2/home/148848678,"Jan 23, 2026",Sold (MLS),850000,X12639656
+https://www.redfin.ca/on/ottawa/1880-Barnhart-Pl-K1H-5B6/home/148849275,"May 14, 2025",Listed,2700000,X12146826
+https://www.redfin.ca/on/ottawa/1880-Barnhart-Pl-K1H-5B6/home/148849275,"Jul 09, 2025",Pending,,X12146826
+https://www.redfin.ca/on/ottawa/1880-Barnhart-Pl-K1H-5B6/home/148849275,"Jul 23, 2025",Sold (MLS),2350000,X12146826
+https://www.redfin.ca/on/ottawa/2243-Hillary-Ave-K1H-7H7/home/148850225,"Nov 17, 2025",Listed,679900,X12552032
+https://www.redfin.ca/on/ottawa/2243-Hillary-Ave-K1H-7H7/home/148850225,"Nov 21, 2025",Sold (MLS),679900,X12552032
+https://www.redfin.ca/on/ottawa/179-Mountbatten-Ave-K1H-5V6/home/148850339,"Jul 10, 2025",Listed,1699000,X12276148
+https://www.redfin.ca/on/ottawa/179-Mountbatten-Ave-K1H-5V6/home/148850339,"Dec 13, 2025",Sold (MLS),1600000,X12276148
+https://www.redfin.ca/on/ottawa/179-Mountbatten-Ave-K1H-5V6/home/148850339,"Jan 05, 2026",Sold (MLS),1600000,X12276148
+https://www.redfin.ca/on/ottawa/179-Mountbatten-Ave-K1H-5V6/home/148850339,"Jan 05, 2026",Listed,1699000,X12276148
+https://www.redfin.ca/on/ottawa/1245-Randall-Ave-K1H-7P9/home/148850423,"Jun 26, 2025",Listed,785000,X12247816
+https://www.redfin.ca/on/ottawa/1245-Randall-Ave-K1H-7P9/home/148850423,"Jul 19, 2025",Sold (MLS),770000,X12247816
+https://www.redfin.ca/on/ottawa/1245-Randall-Ave-K1H-7P9/home/148850423,"Jul 19, 2025",Sold (MLS),770000,X12247816
+https://www.redfin.ca/on/ottawa/1245-Randall-Ave-K1H-7P9/home/148850423,"Jul 19, 2025",Delisted,,X12247816
+https://www.redfin.ca/on/ottawa/1362-Micmac-St-K1H-7N5/home/148850792,"Apr 23, 2025",Listed,1089000,X12098864
+https://www.redfin.ca/on/ottawa/1362-Micmac-St-K1H-7N5/home/148850792,"Apr 30, 2025",Sold (MLS),1152444,X12098864
+https://www.redfin.ca/on/ottawa/2049-Fairbanks-Ave-K1H-5Y9/home/148851009,"Jun 05, 2024",Listed,899000,X9436210
+https://www.redfin.ca/on/ottawa/2049-Fairbanks-Ave-K1H-5Y9/home/148851009,"Aug 16, 2024",Sold (MLS),899000,X9436210
+https://www.redfin.ca/on/ottawa/167-Dahlia-Ave-K1H-6G1/home/148851184,"Nov 05, 2024",Listed,799900,X10411171
+https://www.redfin.ca/on/ottawa/167-Dahlia-Ave-K1H-6G1/home/148851184,"Nov 19, 2024",Sold (MLS),805000,X10411171
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-4/home/148852426,"Oct 30, 2024",Listed,1150000,X10418814
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-4/home/148852426,"Nov 26, 2024",Sold (MLS),1060000,X10418814
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-4/home/148852426,"Dec 19, 2024",Sold (MLS),1060000,X10418814
+https://www.redfin.ca/on/ottawa/320-McLeod-St-K2P-1A3/unit-603/home/148852634,"Feb 02, 2024",Listed,589900,X9448071
+https://www.redfin.ca/on/ottawa/320-McLeod-St-K2P-1A3/unit-603/home/148852634,"Apr 11, 2024",Sold (MLS),620000,X9448071
+https://www.redfin.ca/on/ottawa/1127-Maitland-Ave-K2C-2B8/home/148852921,"Jul 24, 2025",Listed,529900,X12304793
+https://www.redfin.ca/on/ottawa/1127-Maitland-Ave-K2C-2B8/home/148852921,"Aug 14, 2025",Price Changed,519900,X12304793
+https://www.redfin.ca/on/ottawa/1127-Maitland-Ave-K2C-2B8/home/148852921,"Sep 05, 2025",Sold (MLS),520000,X12304793
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-310/home/148855756,"Mar 02, 2024",Listed,599900,X9449896
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-310/home/148855756,"Jun 27, 2024",Sold (MLS),580000,X9449896
+https://www.redfin.ca/on/ottawa/2169-Woodcrest-Rd-K1H-6J2/home/148855844,"Aug 01, 2025",Listed,1295000,X12319254
+https://www.redfin.ca/on/ottawa/2169-Woodcrest-Rd-K1H-6J2/home/148855844,"Aug 19, 2025",Sold (MLS),1200000,X12319254
+https://www.redfin.ca/on/ottawa/1304-Wesmar-Dr-K1H-7T2/home/148855940,"Jun 05, 2025",Listed,774900,X12198963
+https://www.redfin.ca/on/ottawa/1304-Wesmar-Dr-K1H-7T2/home/148855940,"Jun 13, 2025",Sold (MLS),772500,X12198963
+https://www.redfin.ca/on/ottawa/2209-Utah-St-K1H-7W5/home/148857854,"May 22, 2025",Listed,849900,X12166519
+https://www.redfin.ca/on/ottawa/2209-Utah-St-K1H-7W5/home/148857854,"Jun 04, 2025",Sold (MLS),830000,X12166519
+https://www.redfin.ca/on/ottawa/9-Allendale-Pvt-K2P-2J3/home/148858332,"Apr 25, 2025",Listed,779900,X12103338
+https://www.redfin.ca/on/ottawa/9-Allendale-Pvt-K2P-2J3/home/148858332,"May 05, 2025",Sold (MLS),752000,X12103338
+https://www.redfin.ca/on/ottawa/1815-Paisley-Ave-K2C-1A7/home/148858542,"Aug 29, 2025",Listed,799900,X12371470
+https://www.redfin.ca/on/ottawa/1815-Paisley-Ave-K2C-1A7/home/148858542,"Sep 03, 2025",Sold (MLS),785000,X12371470
+https://www.redfin.ca/on/ottawa/2041-Alta-Vista-Dr-K1H-7L2/home/148859053,"Mar 20, 2024",Listed,989900,X9429490
+https://www.redfin.ca/on/ottawa/2041-Alta-Vista-Dr-K1H-7L2/home/148859053,"Aug 05, 2024",Sold (MLS),980000,X9429490
+https://www.redfin.ca/on/ottawa/1238-Cheverton-Ave-K1H-7P6/home/148859975,"Nov 20, 2025",Listed,814900,X12562422
+https://www.redfin.ca/on/ottawa/1238-Cheverton-Ave-K1H-7P6/home/148859975,"Dec 25, 2025",Sold (MLS),775000,X12562422
+https://www.redfin.ca/on/ottawa/1254-Woodside-Dr-K2C-2G9/home/148860309,"Jan 02, 2025",Listed,669900,X11904346
+https://www.redfin.ca/on/ottawa/1254-Woodside-Dr-K2C-2G9/home/148860309,"Feb 05, 2025",Delisted,,X11904346
+https://www.redfin.ca/on/ottawa/1254-Woodside-Dr-K2C-2G9/home/148860309,"Feb 13, 2025",Sold (MLS),650000,X11904346
+https://www.redfin.ca/on/ottawa/1254-Woodside-Dr-K2C-2G9/home/148860309,"Feb 26, 2025",Sold (MLS),650000,X11904346
+https://www.redfin.ca/on/ottawa/397-McLeod-St-K2P-1A5/home/148860894,"Apr 09, 2025",Listed,650000,X12072761
+https://www.redfin.ca/on/ottawa/397-McLeod-St-K2P-1A5/home/148860894,"Apr 21, 2025",Sold (MLS),656286,X12072761
+https://www.redfin.ca/on/ottawa/1905-Alta-Vista-Dr-K1H-7K4/home/148861204,"Jul 29, 2024",Listed,1100000,X9453082
+https://www.redfin.ca/on/ottawa/1905-Alta-Vista-Dr-K1H-7K4/home/148861204,"Oct 08, 2024",Sold (MLS),995000,X9453082
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/home/148862339,"Apr 27, 2022",Sold (MLS),550000,X5594043
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/home/148862339,"Apr 27, 2022",Listed,549900,X5594043
+https://www.redfin.ca/on/ottawa/1536-Caton-St-K1H-6J4/home/148862430,"Jun 03, 2025",Listed,1099000,X12193668
+https://www.redfin.ca/on/ottawa/1536-Caton-St-K1H-6J4/home/148862430,"Jul 14, 2025",Sold (MLS),1060000,X12193668
+https://www.redfin.ca/on/ottawa/400-Pleasant-Park-Rd-K1H-5N1/home/148863237,"Feb 01, 2019",Price Changed,1279900,1
+https://www.redfin.ca/on/ottawa/400-Pleasant-Park-Rd-K1H-5N1/home/148863237,"Oct 23, 2024",Listed,1499900,X9523628
+https://www.redfin.ca/on/ottawa/400-Pleasant-Park-Rd-K1H-5N1/home/148863237,"Nov 01, 2024",Listed,1499900,X9523628
+https://www.redfin.ca/on/ottawa/400-Pleasant-Park-Rd-K1H-5N1/home/148863237,"Nov 01, 2024",Delisted,,X9523628
+https://www.redfin.ca/on/ottawa/400-Pleasant-Park-Rd-K1H-5N1/home/148863237,"Nov 12, 2024",Sold (MLS),1400000,X9523628
+https://www.redfin.ca/on/ottawa/262-Kent-St-K2P-2A2/home/148863949,"Mar 23, 2023",Listed,699000,X9469004
+https://www.redfin.ca/on/ottawa/262-Kent-St-K2P-2A2/home/148863949,"May 25, 2023",Sold (MLS),640000,X9469004
+https://www.redfin.ca/on/ottawa/2098-Delmar-Dr-K1H-5P6/home/148865252,"Jul 03, 2025",Listed,878000,X12259930
+https://www.redfin.ca/on/ottawa/2098-Delmar-Dr-K1H-5P6/home/148865252,"Jul 11, 2025",Sold (MLS),875000,X12259930
+https://www.redfin.ca/on/ottawa/18-Florence-St-K2P-0W7/home/148866086,"Sep 01, 2023",Listed,449900,X9483654
+https://www.redfin.ca/on/ottawa/18-Florence-St-K2P-0W7/home/148866086,"Nov 08, 2023",Sold (MLS),375000,X9483654
+https://www.redfin.ca/on/ottawa/18-Florence-St-K2P-0W7/home/148866086,"Mar 08, 2024",Listed,649000,X9455167
+https://www.redfin.ca/on/ottawa/18-Florence-St-K2P-0W7/home/148866086,"Apr 18, 2024",Sold (MLS),628000,X9455167
+https://www.redfin.ca/on/ottawa/439-Kent-St-K2P-2B4/home/148866148,"Mar 03, 2025",Listed,575000,X11996980
+https://www.redfin.ca/on/ottawa/439-Kent-St-K2P-2B4/home/148866148,"Mar 10, 2025",Sold (MLS),575100,X11996980
+https://www.redfin.ca/on/ottawa/1431-Cavendish-Rd-K1H-6C1/home/148866309,"May 23, 2025",Listed,948000,X12168542
+https://www.redfin.ca/on/ottawa/1431-Cavendish-Rd-K1H-6C1/home/148866309,"Jul 11, 2025",Sold (MLS),936000,X12168542
+https://www.redfin.ca/on/ottawa/1233-Willowdale-Ave-K1H-7S5/home/148866371,"Mar 25, 2024",Listed,799900,X9429619
+https://www.redfin.ca/on/ottawa/1233-Willowdale-Ave-K1H-7S5/home/148866371,"May 08, 2024",Sold (MLS),799900,X9429619
+https://www.redfin.ca/on/ottawa/1191-Castle-Hill-Cres-K2C-2B1/home/148867099,"Nov 08, 2024",Listed,889000,X10419560
+https://www.redfin.ca/on/ottawa/1191-Castle-Hill-Cres-K2C-2B1/home/148867099,"Nov 15, 2024",Price Changed,829000,X10419560
+https://www.redfin.ca/on/ottawa/1191-Castle-Hill-Cres-K2C-2B1/home/148867099,"Nov 26, 2024",Delisted,,X10419560
+https://www.redfin.ca/on/ottawa/1191-Castle-Hill-Cres-K2C-2B1/home/148867099,"Nov 29, 2024",Sold (MLS),819000,X10419560
+https://www.redfin.ca/on/ottawa/343-Billings-Ave-K1H-5L2/home/148867285,"May 15, 2025",Listed,1499000,X12150062
+https://www.redfin.ca/on/ottawa/343-Billings-Ave-K1H-5L2/home/148867285,"Jun 24, 2025",Price Changed,1424000,X12150062
+https://www.redfin.ca/on/ottawa/343-Billings-Ave-K1H-5L2/home/148867285,"Jul 19, 2025",Sold (MLS),1380000,X12150062
+https://www.redfin.ca/on/ottawa/1774-Gilbert-Ave-K2C-1A4/home/148868459,"Jul 09, 2025",Listed,674900,X12273542
+https://www.redfin.ca/on/ottawa/1774-Gilbert-Ave-K2C-1A4/home/148868459,"Jul 22, 2025",Sold (MLS),701000,X12273542
+https://www.redfin.ca/on/ottawa/2368-Ridgecrest-Pl-K1H-7V7/home/148868693,"Jan 17, 2024",Listed,899900,X9447999
+https://www.redfin.ca/on/ottawa/2368-Ridgecrest-Pl-K1H-7V7/home/148868693,"Apr 15, 2024",Sold (MLS),865000,X9447999
+https://www.redfin.ca/on/ottawa/2170-Berwick-Ave-K2C-0Y3/home/148869973,"Sep 11, 2025",Listed,779900,X12396415
+https://www.redfin.ca/on/ottawa/2170-Berwick-Ave-K2C-0Y3/home/148869973,"Sep 23, 2025",Sold (MLS),775000,X12396415
+https://www.redfin.ca/on/ottawa/466-Pleasant-Park-Rd-K1H-5N1/home/148870246,"Mar 31, 2021",Listed,799000,X5173960
+https://www.redfin.ca/on/ottawa/466-Pleasant-Park-Rd-K1H-5N1/home/148870246,"Apr 12, 2021",Sold (MLS),750000,X5173960
+https://www.redfin.ca/on/ottawa/1921-Navaho-Dr-K2C-0T5/home/148870247,"Aug 15, 2025",Listed,739000,X12346606
+https://www.redfin.ca/on/ottawa/1921-Navaho-Dr-K2C-0T5/home/148870247,"Aug 26, 2025",Price Changed,700000,X12346606
+https://www.redfin.ca/on/ottawa/1921-Navaho-Dr-K2C-0T5/home/148870247,"Sep 09, 2025",Price Changed,689999,X12346606
+https://www.redfin.ca/on/ottawa/1921-Navaho-Dr-K2C-0T5/home/148870247,"Oct 03, 2025",Sold (MLS),669000,X12346606
+https://www.redfin.ca/on/ottawa/458-Roger-Rd-K1H-5B8/home/148871476,"Aug 17, 2022",Listed,2250000,X5735101
+https://www.redfin.ca/on/ottawa/458-Roger-Rd-K1H-5B8/home/148871476,"Jan 26, 2023",Listed,1800000,X9471705
+https://www.redfin.ca/on/ottawa/458-Roger-Rd-K1H-5B8/home/148871476,"Aug 17, 2023",Sold (MLS),1723000,X9471705
+https://www.redfin.ca/on/ottawa/36-Florence-St-K2P-0W7/home/148871605,"Mar 11, 2024",Listed,4250000,X9423228
+https://www.redfin.ca/on/ottawa/36-Florence-St-K2P-0W7/home/148871605,"Apr 30, 2024",Listed,599900,X9423517
+https://www.redfin.ca/on/ottawa/36-Florence-St-K2P-0W7/home/148871605,"Jul 26, 2024",Sold (MLS),540000,X9423517
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-1109/home/148873066,"Feb 29, 2024",Listed,788800,X9433682
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-1109/home/148873066,"Apr 26, 2024",Sold (MLS),790000,X9433682
+https://www.redfin.ca/on/ottawa/151-Fanshaw-Ave-K1H-6C8/home/148873133,"Jun 18, 2025",Listed,649000,X12232234
+https://www.redfin.ca/on/ottawa/151-Fanshaw-Ave-K1H-6C8/home/148873133,"Aug 07, 2025",Price Changed,624900,X12232234
+https://www.redfin.ca/on/ottawa/151-Fanshaw-Ave-K1H-6C8/home/148873133,"Aug 23, 2025",Sold (MLS),600000,X12232234
+https://www.redfin.ca/on/ottawa/311-Mountbatten-Ave-K1H-5W2/home/148873254,"Jan 25, 2024",Listed,726500,X9433525
+https://www.redfin.ca/on/ottawa/311-Mountbatten-Ave-K1H-5W2/home/148873254,"Mar 26, 2024",Listed,729000,X9428714
+https://www.redfin.ca/on/ottawa/311-Mountbatten-Ave-K1H-5W2/home/148873254,"Jul 08, 2024",Sold (MLS),716500,X9428714
+https://www.redfin.ca/on/ottawa/504-Thessaly-Cir-K1H-5W5/home/148873433,"Oct 20, 2025",Listed,1075000,X12471864
+https://www.redfin.ca/on/ottawa/504-Thessaly-Cir-K1H-5W5/home/148873433,"Nov 18, 2025",Pending,,X12471864
+https://www.redfin.ca/on/ottawa/504-Thessaly-Cir-K1H-5W5/home/148873433,"Nov 25, 2025",Relisted,,X12471864
+https://www.redfin.ca/on/ottawa/504-Thessaly-Cir-K1H-5W5/home/148873433,"Nov 26, 2025",Listed,999000,X12579100
+https://www.redfin.ca/on/ottawa/504-Thessaly-Cir-K1H-5W5/home/148873433,"Dec 17, 2025",Sold (MLS),917500,X12579100
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1513/home/148874012,"Jun 14, 2024",Listed,875000,X9439792
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-1513/home/148874012,"Aug 15, 2024",Sold (MLS),870000,X9439792
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-910/home/148874343,"Apr 22, 2024",Listed,599900,X9423398
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-910/home/148874343,"Jul 11, 2024",Sold (MLS),595000,X9423398
+https://www.redfin.ca/on/ottawa/1248-Henry-Farm-Dr-K2C-2E2/home/148874831,"Mar 06, 2024",Listed,924500,X9430402
+https://www.redfin.ca/on/ottawa/1248-Henry-Farm-Dr-K2C-2E2/home/148874831,"May 03, 2024",Sold (MLS),890000,X9430402
+https://www.redfin.ca/on/ottawa/1394-Micmac-St-K1H-7N5/home/148875058,"May 20, 2025",Listed,935000,X12158987
+https://www.redfin.ca/on/ottawa/1394-Micmac-St-K1H-7N5/home/148875058,"May 23, 2025",Sold (MLS),975000,X12158987
+https://www.redfin.ca/on/ottawa/2224-Alta-Vista-Dr-K1H-7M1/home/148876001,"May 24, 2024",Listed,949000,X9436661
+https://www.redfin.ca/on/ottawa/2224-Alta-Vista-Dr-K1H-7M1/home/148876001,"Aug 01, 2024",Sold (MLS),940000,X9436661
+https://www.redfin.ca/on/ottawa/2039-Thorne-Ave-K1H-5X4/home/148876697,"Aug 14, 2025",Listed,1318000,X12344902
+https://www.redfin.ca/on/ottawa/2039-Thorne-Ave-K1H-5X4/home/148876697,"Aug 17, 2025",Sold (MLS),1318000,X12344902
+https://www.redfin.ca/on/ottawa/276-Crocus-Ave-K1H-6E9/home/148878171,"May 30, 2025",Listed,1999000,X12184360
+https://www.redfin.ca/on/ottawa/276-Crocus-Ave-K1H-6E9/home/148878171,"Jun 16, 2025",Price Changed,1860000,X12184360
+https://www.redfin.ca/on/ottawa/276-Crocus-Ave-K1H-6E9/home/148878171,"Jul 08, 2025",Listed,1699000,X12270272
+https://www.redfin.ca/on/ottawa/276-Crocus-Ave-K1H-6E9/home/148878171,"Jul 14, 2025",Sold (MLS),1699000,X12270272
+https://www.redfin.ca/on/ottawa/1295-Kilborn-Ave-K1H-6L2/home/148878227,"May 10, 2024",Listed,874900,X9427706
+https://www.redfin.ca/on/ottawa/1295-Kilborn-Ave-K1H-6L2/home/148878227,"May 10, 2024",Listed,874900,X9426608
+https://www.redfin.ca/on/ottawa/1295-Kilborn-Ave-K1H-6L2/home/148878227,"Jun 04, 2024",Sold (MLS),895000,X9426608
+https://www.redfin.ca/on/ottawa/72-Jenscott-Pvt-K2C-0E4/home/148878312,"May 14, 2025",Listed,615000,X12147317
+https://www.redfin.ca/on/ottawa/72-Jenscott-Pvt-K2C-0E4/home/148878312,"May 26, 2025",Price Changed,599900,X12147317
+https://www.redfin.ca/on/ottawa/72-Jenscott-Pvt-K2C-0E4/home/148878312,"Jun 27, 2025",Sold (MLS),589000,X12147317
+https://www.redfin.ca/on/ottawa/369-Pleasant-Park-Rd-K1H-5M7/home/148878390,"Apr 30, 2025",Listed,899999,X12111875
+https://www.redfin.ca/on/ottawa/369-Pleasant-Park-Rd-K1H-5M7/home/148878390,"May 12, 2025",Sold (MLS),876000,X12111875
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Jul 28, 2025",Listed,1250000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Aug 27, 2025",Price Changed,1175000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Sep 16, 2025",Sold (MLS),1150000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Sep 16, 2025",Listed,1175000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Sep 17, 2025",Sold (MLS),1150000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Sep 17, 2025",Listed,1175000,X12310771
+https://www.redfin.ca/on/ottawa/1952-Fairbanks-Ave-K1H-5Y4/home/148879442,"Sep 18, 2025",Sold (MLS),1150000,X12310771
+https://www.redfin.ca/on/ottawa/2044-Chalmers-Rd-K1H-6K5/home/148879582,"Mar 03, 2025",Listed,1299000,X11997502
+https://www.redfin.ca/on/ottawa/2044-Chalmers-Rd-K1H-6K5/home/148879582,"Mar 08, 2025",Relisted,,X11997502
+https://www.redfin.ca/on/ottawa/2044-Chalmers-Rd-K1H-6K5/home/148879582,"Mar 19, 2025",Sold (MLS),1180000,X11997502
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-410/home/148880139,"Mar 14, 2024",Listed,584900,X9429418
+https://www.redfin.ca/on/ottawa/235-Kent-St-K2P-0A5/unit-410/home/148880139,"May 27, 2024",Sold (MLS),575000,X9429418
+https://www.redfin.ca/on/ottawa/260-Metcalfe-St-K2P-1R6/unit-3E/home/148881831,"Jan 24, 2024",Listed,735000,X9429028
+https://www.redfin.ca/on/ottawa/260-Metcalfe-St-K2P-1R6/unit-3E/home/148881831,"Jun 27, 2024",Sold (MLS),745000,X9429028
+https://www.redfin.ca/on/ottawa/1077-Richard-Ave-K1H-8C3/home/148883867,"May 19, 2025",Listed,925000,X12157655
+https://www.redfin.ca/on/ottawa/1077-Richard-Ave-K1H-8C3/home/148883867,"Jun 13, 2025",Sold (MLS),850000,X12157655
+https://www.redfin.ca/on/ottawa/156-Dahlia-Ave-K1H-6G2/home/148884182,"May 30, 2025",Listed,898000,X12185232
+https://www.redfin.ca/on/ottawa/156-Dahlia-Ave-K1H-6G2/home/148884182,"Jun 06, 2025",Sold (MLS),950000,X12185232
+https://www.redfin.ca/on/ottawa/156-Dahlia-Ave-K1H-6G2/home/148884182,"Jun 06, 2025",Delisted,,X12185232
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-204/home/148884444,"Mar 12, 2024",Listed,439000,X9452304
+https://www.redfin.ca/on/ottawa/245-Kent-St-K2P-0A5/unit-204/home/148884444,"Apr 10, 2024",Sold (MLS),435000,X9452304
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2403/home/148885671,"Mar 06, 2025",Listed,585000,X12004885
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2403/home/148885671,"Mar 28, 2025",Listed,539900,X12048051
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2403/home/148885671,"Apr 01, 2025",Relisted,,X12004885
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2403/home/148885671,"Apr 27, 2025",Sold (MLS),520000,X12048051
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-204/home/148886107,"Jan 20, 2023",Listed,499000,X9466143
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-204/home/148886107,"Mar 30, 2023",Sold (MLS),487000,X9466143
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Sep 18, 2024",Listed,909000,X9519402
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Sep 18, 2024",Listed,909000,X9454862
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Oct 25, 2024",Delisted,,X9454862
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Nov 01, 2024",Listed,909000,X9519402
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Nov 01, 2024",Delisted,,X9519402
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Dec 05, 2024",Price Changed,899000,X9519402
+https://www.redfin.ca/on/ottawa/1290-Snowdon-St-K1H-7P4/home/148886130,"Dec 13, 2024",Sold (MLS),895000,X9519402
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Jun 26, 2024",Listed,407000,X9438510
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-1006/home/148886240,"Aug 30, 2024",Sold (MLS),407000,X9438510
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-907/home/148886322,"Feb 12, 2025",Listed,695000,X11971174
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-907/home/148886322,"Mar 04, 2025",Sold (MLS),705000,X11971174
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2705/home/148886560,"Apr 04, 2025",Listed,699000,X12061960
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2705/home/148886560,"May 04, 2025",Sold (MLS),685000,X12061960
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-807/home/148886786,"Aug 13, 2020",Price Changed,329900,1
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-807/home/148886786,"Apr 03, 2024",Listed,385000,X9431819
+https://www.redfin.ca/on/ottawa/138-Somerset-St-W-K2P-0H9/unit-807/home/148886786,"Jun 28, 2024",Sold (MLS),382500,X9431819
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-602/home/148887047,"Mar 05, 2025",Listed,699900,X12001555
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-602/home/148887047,"Mar 18, 2025",Sold (MLS),700000,X12001555
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2407/home/148887656,"Sep 10, 2025",Listed,725000,X12394046
+https://www.redfin.ca/on/ottawa/1510-Riverside-Dr-K1G-4J4/unit-2407/home/148887656,"Sep 24, 2025",Sold (MLS),720000,X12394046
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1202/home/148887743,"Jun 15, 2024",Listed,898000,X9438964
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1202/home/148887743,"Aug 12, 2024",Sold (MLS),895000,X9438964
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Sep 10, 2023",Listed,1495000,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Sep 15, 2023",Listed,1250000,X9465729
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Oct 01, 2023",Price Changed,1395000,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Apr 21, 2024",Relisted,,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Apr 22, 2024",Price Changed,1250000,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Nov 01, 2024",Listed,1250000,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Nov 01, 2024",Listed,1250000,X9465729
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Nov 01, 2024",Delisted,,X6805492
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Nov 01, 2024",Delisted,,X9465729
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Feb 13, 2025",Listed,1250000,X11971961
+https://www.redfin.ca/on/ottawa/386-Billings-Ave-K1H-5L6/home/148888172,"Apr 08, 2025",Sold (MLS),1251000,X11971961
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-2507/home/148888303,"Jun 10, 2025",Listed,719900,X12209599
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-2507/home/148888303,"Aug 25, 2025",Listed,698900,X12362376
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-2507/home/148888303,"Oct 29, 2025",Listed,649900,X12487618
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-2507/home/148888303,"Dec 16, 2025",Sold (MLS),640000,X12487618
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1407/home/148888662,"Jul 19, 2024",Listed,699900,X9448910
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1407/home/148888662,"Oct 31, 2024",Sold (MLS),690000,X9448910
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Oct 17, 2024",Listed,619900,X9522774
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Oct 17, 2024",Listed,619900,X9460829
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Oct 25, 2024",Delisted,,X9460829
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Feb 05, 2025",Listed,600000,X11957000
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Feb 14, 2025",Sold (MLS),625000,X11957000
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Feb 21, 2025",Listed,600000,X11957000
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-204/home/148889111,"Feb 26, 2025",Sold (MLS),625000,X11957000
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-705/home/148889451,"May 15, 2024",Listed,750000,X9435034
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-705/home/148889451,"Aug 01, 2024",Sold (MLS),745000,X9435034
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-707/home/148889600,"Dec 06, 2020",Price Changed,500000,1
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-707/home/148889600,"Jun 05, 2024",Listed,675000,X9439814
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-707/home/148889600,"Aug 15, 2024",Sold (MLS),668000,X9439814
+https://www.redfin.ca/on/ottawa/1487-Morisset-Ave-K1Z-8H2/home/148889603,"Feb 03, 2025",Listed,525000,X11954946
+https://www.redfin.ca/on/ottawa/1487-Morisset-Ave-K1Z-8H2/home/148889603,"Mar 27, 2025",Sold (MLS),502000,X11954946
+https://www.redfin.ca/on/ottawa/1487-Morisset-Ave-K1Z-8H2/home/148889603,"Oct 20, 2025",Listed,749990,X12472791
+https://www.redfin.ca/on/ottawa/1487-Morisset-Ave-K1Z-8H2/home/148889603,"Nov 26, 2025",Sold (MLS),743500,X12472791
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"May 22, 2025",Listed,1299900,X12166403
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"Jun 03, 2025",Listed,1199900,X12191815
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"Jun 13, 2025",Listed,1130000,X12219912
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"Jul 08, 2025",Listed,998000,X12270088
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"Aug 02, 2025",Pending,,X12270088
+https://www.redfin.ca/on/ottawa/2103-Delmar-Dr-K1H-5P6/home/148890169,"Aug 26, 2025",Sold (MLS),975000,X12270088
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1701/home/148890273,"Feb 27, 2024",Listed,850000,X9434529
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-1701/home/148890273,"Apr 30, 2024",Sold (MLS),830000,X9434529
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-701/home/148890641,"Sep 19, 2024",Listed,845000,X9457332
+https://www.redfin.ca/on/ottawa/1480-Riverside-Dr-K1G-5H2/unit-701/home/148890641,"Nov 06, 2024",Delisted,,X9457332
+https://www.redfin.ca/on/ottawa/1008-Riddell-Ave-S-K2C-2J5/home/148891927,"May 20, 2025",Listed,629900,X12162185
+https://www.redfin.ca/on/ottawa/1008-Riddell-Ave-S-K2C-2J5/home/148891927,"Sep 02, 2025",Listed,579900,X12375506
+https://www.redfin.ca/on/ottawa/1008-Riddell-Ave-S-K2C-2J5/home/148891927,"Sep 23, 2025",Listed,549000,X12422733
+https://www.redfin.ca/on/ottawa/1008-Riddell-Ave-S-K2C-2J5/home/148891927,"Oct 31, 2025",Listed,524000,X12497094
+https://www.redfin.ca/on/ottawa/1008-Riddell-Ave-S-K2C-2J5/home/148891927,"Nov 23, 2025",Sold (MLS),500000,X12497094
+https://www.redfin.ca/on/ottawa/1533-Gilles-St-K1H-8E2/home/148895955,"Jan 06, 2023",Listed,524900,X9466016
+https://www.redfin.ca/on/ottawa/1533-Gilles-St-K1H-8E2/home/148895955,"Mar 30, 2023",Sold (MLS),484900,X9466016
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-307/home/148896609,"May 29, 2024",Listed,469000,X9439689
+https://www.redfin.ca/on/ottawa/108-Lisgar-St-K2P-0C2/unit-307/home/148896609,"Aug 06, 2024",Sold (MLS),457500,X9439689
+https://www.redfin.ca/on/ottawa/75-Armstrong-St-K1Y-2V6/home/148897498,"Apr 05, 2024",Listed,805000,X9430962
+https://www.redfin.ca/on/ottawa/75-Armstrong-St-K1Y-2V6/home/148897498,"Jul 08, 2024",Sold (MLS),795000,X9430962
+https://www.redfin.ca/on/ottawa/429-Kent-St-K2P-0W7/unit-101/home/148898245,"May 16, 2024",Listed,397000,X9444010
+https://www.redfin.ca/on/ottawa/429-Kent-St-K2P-0W7/unit-101/home/148898245,"Oct 01, 2024",Sold (MLS),393000,X9444010
+https://www.redfin.ca/on/ottawa/2212-Utah-St-K1H-7W8/home/148898276,"Jul 15, 2022",Listed,784900,X5698557
+https://www.redfin.ca/on/ottawa/2212-Utah-St-K1H-7W8/home/148898276,"Aug 03, 2022",Price Changed,745600,X5698557
+https://www.redfin.ca/on/ottawa/2212-Utah-St-K1H-7W8/home/148898276,"Aug 12, 2022",Price Changed,699900,X5698557
+https://www.redfin.ca/on/ottawa/2212-Utah-St-K1H-7W8/home/148898276,"Aug 18, 2022",Sold (MLS),645000,X5698557
+https://www.redfin.ca/on/ottawa/42-Sherbrooke-Ave-K1Y-1R7/home/148899068,"Apr 30, 2025",Listed,865000,X12112646
+https://www.redfin.ca/on/ottawa/42-Sherbrooke-Ave-K1Y-1R7/home/148899068,"May 02, 2025",Sold (MLS),860000,X12112646
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Oct 08, 2024",Listed,749900,X9522989
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Oct 08, 2024",Listed,749900,X9461059
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Oct 25, 2024",Delisted,,X9461059
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Nov 12, 2024",Price Changed,719900,X9522989
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Feb 10, 2025",Delisted,,X9522989
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Feb 24, 2025",Listed,699900,X11984947
+https://www.redfin.ca/on/ottawa/400-McLeod-St-K2P-1A6/unit-302/home/148899084,"Mar 08, 2025",Sold (MLS),695000,X11984947
+https://www.redfin.ca/on/ottawa/2264-Utah-St-K1H-7W8/home/148899227,"Nov 08, 2024",Listed,599000,X10419470
+https://www.redfin.ca/on/ottawa/2264-Utah-St-K1H-7W8/home/148899227,"Nov 28, 2024",Sold (MLS),569000,X10419470
+https://www.redfin.ca/on/ottawa/1688-Ainsley-Dr-K2C-0S4/home/148899356,"Apr 09, 2024",Listed,699900,X9431006
+https://www.redfin.ca/on/ottawa/1688-Ainsley-Dr-K2C-0S4/home/148899356,"Jul 16, 2024",Sold (MLS),730000,X9431006
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Mar 13, 2025",Listed,439000,X12017704
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Jun 04, 2025",Listed,375000,X12195358
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Aug 07, 2025",Price Changed,365000,X12195358
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Sep 02, 2025",Delisted,,X12195358
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Sep 29, 2025",Listed,349000,X12433495
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Dec 01, 2025",Delisted,,X12433495
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Dec 17, 2025",Listed,329000,X12639708
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-303/home/148899750,"Jan 13, 2026",Sold (MLS),311750,X12639708
+https://www.redfin.ca/on/ottawa/1090-Agincourt-Rd-K2C-2H7/home/148899918,"Apr 19, 2023",Listed,599000,X9486802
+https://www.redfin.ca/on/ottawa/1090-Agincourt-Rd-K2C-2H7/home/148899918,"Jun 26, 2023",Sold (MLS),590000,X9486802
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-302/home/148899955,"Apr 24, 2023",Listed,735000,X9487722
+https://www.redfin.ca/on/ottawa/375-Lisgar-St-K2P-0E3/unit-302/home/148899955,"Jun 30, 2023",Sold (MLS),710000,X9487722
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Oct 04, 2024",Listed,725000,X9521858
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Oct 04, 2024",Listed,725000,X9459610
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Oct 25, 2024",Delisted,,X9459610
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Nov 22, 2024",Listed,695000,X10441607
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Mar 16, 2025",Delisted,,X10441607
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Jun 08, 2025",Listed,639900,X12205669
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-1608/home/148900115,"Aug 16, 2025",Sold (MLS),612500,X12205669
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Feb 10, 2025",Listed,645000,X11966154
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Feb 22, 2025",Price Changed,625000,X11966154
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"May 09, 2025",Relisted,,X11966154
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"May 09, 2025",Listed,599900,X12138258
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"May 20, 2025",Price Changed,599500,X12138258
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Jun 16, 2025",Relisted,,X12138258
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Jun 17, 2025",Listed,550000,X12225813
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Jul 13, 2025",Sold (MLS),557500,X12225813
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Jul 13, 2025",Listed,550000,X12225813
+https://www.redfin.ca/on/ottawa/4-Sherbrooke-Ave-K1Y-1R7/unit-3/home/148900291,"Jul 14, 2025",Sold (MLS),557500,X12225813
+https://www.redfin.ca/on/ottawa/1316-Kilborn-Ave-K1H-6L3/home/148900562,"Sep 30, 2019",Price Changed,959900,1
+https://www.redfin.ca/on/ottawa/1316-Kilborn-Ave-K1H-6L3/home/148900562,"Mar 27, 2025",Listed,1298000,X12045983
+https://www.redfin.ca/on/ottawa/1316-Kilborn-Ave-K1H-6L3/home/148900562,"Apr 15, 2025",Listed,1298000,X12083135
+https://www.redfin.ca/on/ottawa/1316-Kilborn-Ave-K1H-6L3/home/148900562,"Apr 21, 2025",Sold (MLS),1255000,X12083135
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-606/home/148900779,"Jul 31, 2025",Listed,389000,X12318581
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-606/home/148900779,"Sep 21, 2025",Price Changed,365000,X12318581
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-606/home/148900779,"Oct 29, 2025",Sold (MLS),365000,X12318581
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-2305/home/148901066,"Oct 27, 2025",Listed,725000,X12483963
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-2305/home/148901066,"Jan 15, 2026",Listed,705000,X12701188
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-2305/home/148901066,"Jan 15, 2026",Delisted,,X12483963
+https://www.redfin.ca/on/ottawa/1500-Riverside-Dr-K1G-4J4/unit-2305/home/148901066,"Feb 02, 2026",Sold (MLS),700000,X12701188
+https://www.redfin.ca/on/ottawa/18-Staten-Way-K2C-4E7/home/148901838,"Mar 10, 2025",Listed,950000,X12011638
+https://www.redfin.ca/on/ottawa/18-Staten-Way-K2C-4E7/home/148901838,"Mar 18, 2025",Sold (MLS),945000,X12011638
+https://www.redfin.ca/on/ottawa/68-Stonehurst-Ave-K1Y-1R5/home/148902357,"Mar 14, 2019",Price Changed,748888,1
+https://www.redfin.ca/on/ottawa/68-Stonehurst-Ave-K1Y-1R5/home/148902357,"Jun 26, 2020",Price Changed,942000,2
+https://www.redfin.ca/on/ottawa/68-Stonehurst-Ave-K1Y-1R5/home/148902357,"Jun 04, 2024",Listed,940000,X9436881
+https://www.redfin.ca/on/ottawa/68-Stonehurst-Ave-K1Y-1R5/home/148902357,"Jun 17, 2024",Listed,899900,X9438359
+https://www.redfin.ca/on/ottawa/68-Stonehurst-Ave-K1Y-1R5/home/148902357,"Aug 01, 2024",Sold (MLS),878160,X9438359
+https://www.redfin.ca/on/ottawa/32-Whitestone-Dr-K2C-4A9/home/148902905,"Apr 04, 2024",Listed,1195000,X9431752
+https://www.redfin.ca/on/ottawa/32-Whitestone-Dr-K2C-4A9/home/148902905,"May 28, 2025",Listed,1199000,X12178155
+https://www.redfin.ca/on/ottawa/32-Whitestone-Dr-K2C-4A9/home/148902905,"Jul 03, 2025",Sold (MLS),1165000,X12178155
+https://www.redfin.ca/on/ottawa/1155-Cline-Cres-K2C-2P3/home/148902929,"Jul 29, 2025",Listed,700000,X12313213
+https://www.redfin.ca/on/ottawa/1155-Cline-Cres-K2C-2P3/home/148902929,"Aug 01, 2025",Sold (MLS),690000,X12313213
+https://www.redfin.ca/on/ottawa/1214-Bonnie-Cres-K2C-1Z9/home/148903450,"Jul 02, 2025",Listed,929900,X12257521
+https://www.redfin.ca/on/ottawa/1214-Bonnie-Cres-K2C-1Z9/home/148903450,"Jul 04, 2025",Sold (MLS),930000,X12257521
+https://www.redfin.ca/on/ottawa/1212-Albany-Dr-K2C-2L4/home/148903516,"May 10, 2023",Listed,770000,X9488533
+https://www.redfin.ca/on/ottawa/1212-Albany-Dr-K2C-2L4/home/148903516,"Jul 10, 2023",Sold (MLS),770000,X9488533
+https://www.redfin.ca/on/ottawa/1297-Snowdon-St-K1H-7P3/home/148903779,"Apr 24, 2025",Listed,895000,X12101619
+https://www.redfin.ca/on/ottawa/1297-Snowdon-St-K1H-7P3/home/148903779,"Apr 30, 2025",Sold (MLS),895000,X12101619
+https://www.redfin.ca/on/ottawa/1122-Aldea-Ave-K1H-8C2/home/148905447,"Jun 12, 2025",Listed,383000,X12218359
+https://www.redfin.ca/on/ottawa/1122-Aldea-Ave-K1H-8C2/home/148905447,"Jul 10, 2025",Listed,420000,X12276110
+https://www.redfin.ca/on/ottawa/1122-Aldea-Ave-K1H-8C2/home/148905447,"Sep 10, 2025",Sold (MLS),447800,X12276110
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Oct 08, 2024",Listed,895000,X9523195
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Oct 08, 2024",Listed,895000,X9461304
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Oct 25, 2024",Delisted,,X9461304
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Nov 01, 2024",Listed,895000,X9523195
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Nov 01, 2024",Delisted,,X9523195
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Nov 04, 2024",Listed,895000,X10442327
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Dec 15, 2024",Delisted,,X9523195
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Dec 24, 2024",Delisted,,X10442327
+https://www.redfin.ca/on/ottawa/241-Pleasant-Park-Rd-K1H-5M4/home/148905979,"Jan 06, 2025",Sold (MLS),850000,X10442327
+https://www.redfin.ca/on/ottawa/1731-Baseline-Rd-K2C-0C1/home/148906564,"Aug 15, 2024",Listed,539900,X9447597
+https://www.redfin.ca/on/ottawa/1731-Baseline-Rd-K2C-0C1/home/148906564,"Oct 01, 2024",Sold (MLS),528900,X9447597
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-903/home/148906926,"Apr 25, 2024",Listed,424900,X9422133
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-903/home/148906926,"Jul 09, 2024",Listed,399900,X9447031
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-903/home/148906926,"Aug 28, 2024",Sold (MLS),375000,X9447031
+https://www.redfin.ca/on/ottawa/1896-Bel-Air-Dr-K2C-0W9/home/148906940,"May 09, 2024",Listed,899900,X9426259
+https://www.redfin.ca/on/ottawa/1896-Bel-Air-Dr-K2C-0W9/home/148906940,"Aug 15, 2024",Sold (MLS),871000,X9426259
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-1001/home/148907213,"Aug 06, 2024",Listed,379000,X9455770
+https://www.redfin.ca/on/ottawa/141-Somerset-St-W-K2P-2H1/unit-1001/home/148907213,"Oct 15, 2024",Sold (MLS),360000,X9455770
+https://www.redfin.ca/on/ottawa/1181-Tara-Dr-K2C-2H4/home/148907715,"Apr 22, 2025",Listed,599000,X12095026
+https://www.redfin.ca/on/ottawa/1181-Tara-Dr-K2C-2H4/home/148907715,"May 01, 2025",Sold (MLS),611000,X12095026
+https://www.redfin.ca/on/ottawa/3-Staten-Way-K2C-4C1/home/148908820,"May 21, 2024",Listed,950000,X9436493
+https://www.redfin.ca/on/ottawa/3-Staten-Way-K2C-4C1/home/148908820,"Aug 06, 2024",Sold (MLS),951000,X9436493
+https://www.redfin.ca/on/ottawa/2195-Niagara-Dr-K1H-6H5/home/148908835,"May 17, 2019",Price Changed,839000,1
+https://www.redfin.ca/on/ottawa/2195-Niagara-Dr-K1H-6H5/home/148908835,"May 22, 2025",Listed,1219000,X12167132
+https://www.redfin.ca/on/ottawa/2195-Niagara-Dr-K1H-6H5/home/148908835,"Jun 13, 2025",Price Changed,1199000,X12167132
+https://www.redfin.ca/on/ottawa/2195-Niagara-Dr-K1H-6H5/home/148908835,"Jul 07, 2025",Price Changed,1149000,X12167132
+https://www.redfin.ca/on/ottawa/2195-Niagara-Dr-K1H-6H5/home/148908835,"Jul 27, 2025",Sold (MLS),1090000,X12167132
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Nov 01, 2024",Listed,785000,X10418826
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Nov 22, 2024",Listed,759000,X10442477
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Jan 20, 2025",Listed,759900,X11932866
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Jan 21, 2025",Delisted,,X10442477
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Feb 01, 2025",Sold (MLS),751500,X11932866
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Feb 21, 2025",Listed,759900,X11932866
+https://www.redfin.ca/on/ottawa/17-Coleridge-St-K2C-4C8/home/148909680,"Feb 26, 2025",Sold (MLS),751500,X11932866
+https://www.redfin.ca/on/ottawa/1281-Erindale-Dr-K2C-2G3/home/148909840,"Oct 30, 2025",Listed,649900,X12489360
+https://www.redfin.ca/on/ottawa/1281-Erindale-Dr-K2C-2G3/home/148909840,"Nov 28, 2025",Sold (MLS),645000,X12489360
+https://www.redfin.ca/on/ottawa/425-Roger-Rd-K1H-5B7/home/148910722,"Feb 26, 2024",Listed,1150000,X9425408
+https://www.redfin.ca/on/ottawa/425-Roger-Rd-K1H-5B7/home/148910722,"Dec 03, 2024",Sold (MLS),1000000,X9425408
+https://www.redfin.ca/on/ottawa/1585-Baseline-Rd-K2C-0B4/home/148911471,"Apr 04, 2024",Listed,579000,X9421083
+https://www.redfin.ca/on/ottawa/1585-Baseline-Rd-K2C-0B4/home/148911471,"May 07, 2024",Listed,549000,X9427217
+https://www.redfin.ca/on/ottawa/1585-Baseline-Rd-K2C-0B4/home/148911471,"Jul 10, 2024",Sold (MLS),537500,X9427217
+https://www.redfin.ca/on/ottawa/54-Pleasant-Park-Rd-K1H-5L8/home/148911757,"Feb 21, 2024",Listed,1330000,X9431471
+https://www.redfin.ca/on/ottawa/54-Pleasant-Park-Rd-K1H-5L8/home/148911757,"Apr 24, 2024",Listed,1299000,X9426296
+https://www.redfin.ca/on/ottawa/54-Pleasant-Park-Rd-K1H-5L8/home/148911757,"Aug 07, 2024",Sold (MLS),1250000,X9426296
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Sep 19, 2024",Listed,1150000,X9520386
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Sep 19, 2024",Listed,1150000,X9457522
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Oct 25, 2024",Delisted,,X9457522
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Nov 01, 2024",Listed,1150000,X9520386
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Nov 01, 2024",Delisted,,X9520386
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"Apr 08, 2025",Listed,1099900,X12069482
+https://www.redfin.ca/on/ottawa/2055-Thorne-Ave-K1H-5X4/home/148912336,"May 05, 2025",Sold (MLS),1050000,X12069482
+https://www.redfin.ca/on/ottawa/1310-Tara-Dr-K2C-2H5/home/148912559,"May 22, 2025",Listed,778000,X12166195
+https://www.redfin.ca/on/ottawa/1310-Tara-Dr-K2C-2H5/home/148912559,"May 28, 2025",Sold (MLS),778000,X12166195
+https://www.redfin.ca/on/ottawa/1030-Maitland-Ave-K2C-2B6/home/148913430,"Jan 15, 2023",Listed,439900,X9474340
+https://www.redfin.ca/on/ottawa/1030-Maitland-Ave-K2C-2B6/home/148913430,"Mar 10, 2023",Sold (MLS),415000,X9474340
+https://www.redfin.ca/on/ottawa/1030-Maitland-Ave-K2C-2B6/home/148913430,"Feb 19, 2025",Listed,749000,X11979244
+https://www.redfin.ca/on/ottawa/1030-Maitland-Ave-K2C-2B6/home/148913430,"Mar 17, 2025",Price Changed,729000,X11979244
+https://www.redfin.ca/on/ottawa/1030-Maitland-Ave-K2C-2B6/home/148913430,"Jun 24, 2025",Listed,725000,X12243141
+https://www.redfin.ca/on/ottawa/328-Mountbatten-Ave-K1H-5W3/home/148913439,"Jul 14, 2025",Listed,1649500,X12284490
+https://www.redfin.ca/on/ottawa/328-Mountbatten-Ave-K1H-5W3/home/148913439,"Jul 23, 2025",Sold (MLS),1649500,X12284490
+https://www.redfin.ca/on/ottawa/328-Mountbatten-Ave-K1H-5W3/home/148913439,"Jul 23, 2025",Delisted,,X12284490
+https://www.redfin.ca/on/ottawa/1263-Randall-Ave-K1H-7P9/home/148916108,"Mar 22, 2024",Listed,659000,X9428627
+https://www.redfin.ca/on/ottawa/1263-Randall-Ave-K1H-7P9/home/148916108,"Jun 19, 2024",Sold (MLS),652500,X9428627
+https://www.redfin.ca/on/ottawa/1137-Clyde-Ave-K2C-4B2/home/148917087,"Feb 29, 2024",Listed,699900,X9429219
+https://www.redfin.ca/on/ottawa/1137-Clyde-Ave-K2C-4B2/home/148917087,"Jun 21, 2024",Sold (MLS),679500,X9429219
+https://www.redfin.ca/on/ottawa/1987-Bel-Air-Dr-K2C-0X1/home/148917114,"Aug 25, 2025",Listed,1199900,X12364359
+https://www.redfin.ca/on/ottawa/1987-Bel-Air-Dr-K2C-0X1/home/148917114,"Sep 06, 2025",Sold (MLS),1230000,X12364359

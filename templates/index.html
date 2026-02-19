@@ -5,124 +5,121 @@ Her course / files can be found on this link: https://www.linkedin.com/learning/
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alexis Portfolio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
-    />
-    <link rel="stylesheet" href="/static/css/style.css" />
-    <link rel="stylesheet" href="/static/css/menu_bar.css" />
 
-    <link rel="stylesheet" type="text/css" href="/static/css/carousel.css" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alexis Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Montserrat:wght@400;600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/menu_bar.css" />
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="/static/js/MenuBar.js"></script>
-    <script src="/static/js/Email.js"></script>
-    <script src="/static/js/CarouselTest.js"></script>
-    <script src="/static/js/GreyScale_FileUpload.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  </head>
-  <body>
-    <!-- ***********************  Side Bar  *********************** -->
-    <div id="menu"></div>
+  <link rel="stylesheet" type="text/css" href="/static/css/carousel.css" />
 
-    <main>
-      <!-- ***********************  ABOUT / PROFILE  *********************** -->
-      <header>
-        <div class="content-wrap">
-          <h1>Alexis Bruneau</h1>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script src="/static/js/MenuBar.js"></script>
+  <script src="/static/js/Email.js"></script>
+  <script src="/static/js/CarouselTest.js"></script>
+  <script src="/static/js/GreyScale_FileUpload.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
 
-          <p>
-            Welcome to my portfolio. I'm Alexis Bruneau, a Data Scientist with a
-            specialized Master of Engineering from the University of Toronto.
-            This site is a curated collection of my work in Deep Learning,
-            ML/Analytics, and Robotics.
-          </p>
+<body class="homepage">
+  <!-- ***********************  Side Bar  *********************** -->
+  <div id="menu"></div>
 
-          <p>
-            In this space, you'll discover a range of applications from an
-            automated essay grading system that harnesses NLP to evaluate
-            written content, to a sophisticated analysis tool evaluating
-            classifiers for stock equity performance, and a crowd flow tracker
-            utilizing computer vision to monitor and analyze movements in public
-            spaces. My toolkit—encompassing Python, SQL, and Power BI—enables me
-            to turn complex datasets into strategic insights.
-          </p>
-        </div>
-      </header>
+  <main>
+    <!-- ***********************  ABOUT / PROFILE  *********************** -->
+    <header>
+      <div class="content-wrap">
+        <div class="header-content">
+          <div class="header-text">
+            <h1>Alexis Bruneau</h1>
+            <p class="role-title">Data Architect & Governance Specialist</p>
 
-      <!-- ********************  PROJECTS / PORTFOLIO  ********************* -->
-      <!-- Test -->
-      <h2 class="carousel-title">Project Paper</h2>
-      <div id="carousel">
-        <div
-          class="hideLeft"
-          data-href="Project_PDF_Reports/Motion Planning for Autonomous Vehicles.pdf"
-        >
-          <img src="/static/images/Autonomous_vehicle_paper.png" />
-          <a href="#" class="image-overlay" style="display: none">
-            <div class="image-text">Click to view full report</div>
-          </a>
-        </div>
-        <div
-          class="prev"
-          data-href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf"
-        >
-          <img src="/static/images/Robotic_Arm_Prediction_Paper.png" />
-          <a href="#" class="image-overlay" style="display: none">
-            <div class="image-text">Click to view full report</div>
-          </a>
-        </div>
+            <p>
+              Welcome to my portfolio. I'm Alexis Bruneau, a Data Architect & Governance Specialist with a
+              specialized Master of Engineering from the University of Toronto.
+              This site is a curated collection of my work in Data Governance,
+              AI/ML Analytics, and Enterprise Data Solutions.
+            </p>
 
-        <div
-          class="selected"
-          data-href="Project_PDF_Reports/Evaluating Preprocessing Alternatives for Ore-Waste Classification - Thesis.pdf"
-        >
-          <img
-            src="/static/images/Evaluating Preprocessing Alternatives for Ore-Waste Classification - Thesis.png"
-          />
-          <a href="#" class="image-overlay" style="display: none">
-            <div class="image-text">Click to view full report</div>
-          </a>
-        </div>
-
-        <div class="next" data-href="Project_PDF_Reports/People Tracker.pdf">
-          <img src="/static/images/People_tracker_pdf.png" />
-          <a href="#" class="image-overlay" style="display: none">
-            <div class="image-text">Click to view full report</div>
-          </a>
+            <p>
+              In this space, you'll discover a range of applications from an
+              automated essay grading system that harnesses NLP to evaluate
+              written content, to a sophisticated analysis tool evaluating
+              classifiers for stock equity performance, and a crowd flow tracker
+              utilizing computer vision to monitor and analyze movements in public
+              spaces. My toolkit—encompassing Python, SQL, and Power BI—enables me
+              to turn complex datasets into strategic insights.
+            </p>
+          </div>
+          <div class="header-image">
+            <img src="/static/images/headshot.jpg" alt="Alexis Bruneau Professional Headshot" class="headshot">
+          </div>
         </div>
       </div>
+    </header>
 
-      <!-- ***********************  WORK EXPERIENCE  *********************** -->
+    <!-- ********************  PROJECTS / PORTFOLIO  ********************* -->
+    <!-- Test -->
+    <h2 class="carousel-title">Project Paper</h2>
+    <div id="carousel">
+      <div class="hideLeft" data-href="Project_PDF_Reports/Motion Planning for Autonomous Vehicles.pdf">
+        <img src="/static/images/Autonomous_vehicle_paper.png" />
+        <a href="#" class="image-overlay" style="display: none">
+          <div class="image-text">Click to view full report</div>
+        </a>
+      </div>
+      <div class="prev" data-href="Project_PDF_Reports/Autonomous Robotic Dishwasher Arm.pdf">
+        <img src="/static/images/Robotic_Arm_Prediction_Paper.png" />
+        <a href="#" class="image-overlay" style="display: none">
+          <div class="image-text">Click to view full report</div>
+        </a>
+      </div>
 
-      <div id="Experience_Work"></div>
+      <div class="selected"
+        data-href="Project_PDF_Reports/Evaluating Preprocessing Alternatives for Ore-Waste Classification - Thesis.pdf">
+        <img src="/static/images/Evaluating Preprocessing Alternatives for Ore-Waste Classification - Thesis.png" />
+        <a href="#" class="image-overlay" style="display: none">
+          <div class="image-text">Click to view full report</div>
+        </a>
+      </div>
 
-      <!-- ******************  EDUCATION & CERTIFICATIONS ****************** -->
+      <div class="next" data-href="Project_PDF_Reports/People Tracker.pdf">
+        <img src="/static/images/People_tracker_pdf.png" />
+        <a href="#" class="image-overlay" style="display: none">
+          <div class="image-text">Click to view full report</div>
+        </a>
+      </div>
+    </div>
 
-      <!-- *****************  CONTACT INFO / SOCIAL MEDIA  ***************** -->
-      <footer>
-        <div id="contact"></div>
-      </footer>
-    </main>
+    <!-- ***********************  WORK EXPERIENCE  *********************** -->
 
-    <script>
-      $(document).ready(function () {
-        $("#menu").load("/menu_bar.html");
-        $("#contact").load("/Contact.html");
-        $("#Experience_Work").load("/WorkExperience.html");
-        $("#Carousel_main_page").load("/Carousel_JQuerry.html");
-      });
-    </script>
-  </body>
+    <div id="Experience_Work"></div>
+
+    <!-- ******************  EDUCATION & CERTIFICATIONS ****************** -->
+
+    <!-- *****************  CONTACT INFO / SOCIAL MEDIA  ***************** -->
+    <footer>
+      <div id="contact"></div>
+    </footer>
+  </main>
+
+  <script>
+    $(document).ready(function () {
+      $("#menu").load("/menu_bar.html");
+      $("#contact").load("/Contact.html");
+      $("#Experience_Work").load("/WorkExperience.html");
+      $("#Carousel_main_page").load("/Carousel_JQuerry.html");
+    });
+  </script>
+</body>
+
 </html>

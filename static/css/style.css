@@ -2,20 +2,24 @@
 -------------------------------------*/
 html {
     box-sizing: border-box;
-  }
-  *, *:before, *:after {
-    box-sizing: inherit;
-  }
+    scroll-behavior: smooth;
+}
 
-body{
-    color:#343434; 
-    background-color: #f7f7f7;
-    margin: 0;   
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+body {
+    color: #2c3e50;
+    background-color: #f8f9fa;
+    margin: 0;
     padding: 0;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 18px;
-    line-height: 1.25;
-    
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+
 }
 
 
@@ -24,32 +28,38 @@ img {
 }
 
 a {
-    color: #FFE66D;
+    color: #0077b6;
 }
 
 a:hover {
     text-decoration: none;
+    color: #005f8f;
 }
+
 h1 {
-    font-size: 64px;
-    line-height: 1;
-    margin-bottom: 20px !important;
+    font-size: 56px;
+    line-height: 1.2;
+    margin-bottom: 10px !important;
+    font-weight: 700;
 }
 
 header h1 {
-    margin-top: 30px;
-  }
-  
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
 
 h2 {
-  font-size: 32px;
+    font-size: 32px;
+    font-weight: 600;
 }
 
-h1, h2 {
-    font-family: "Caveat", cursive;
-    font-weight: 400;
+h1,
+h2 {
+    font-family: 'Inter', sans-serif;
     margin: 0;
 }
+
 .content-wrap {
     max-width: 800px;
     width: 85%;
@@ -66,63 +76,101 @@ h1, h2 {
 
 h3 {
     margin-bottom: 0;
+    font-weight: 600;
 }
 
-.item-details h3 + p {
+.item-details h3+p {
     font-style: italic
 }
 
-.item-details h3 ~ p {
+.item-details h3~p {
     margin: 0;
 }
 
-.divider > section {
-    border-bottom: 1px dashed #343434;
-    padding: 25px 0 ;
+.divider>section {
+    border-bottom: 1px dashed #cbd5e0;
+    padding: 25px 0;
 }
 
-.divider > section:last-of-type {
-    border-bottom:none;
+.divider>section:last-of-type {
+    border-bottom: none;
 }
+
 /* Profile
 -------------------------------------*/
-header{
-    background: #2f3061;
-    color: #f7f7f7;    
+header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2c5f7f 100%);
+    color: #f8f9fa;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.header-text {
+    flex: 1;
+    min-width: 300px;
+}
+
+.header-image {
+    flex-shrink: 0;
+}
+
+.headshot {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #f8f9fa;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.role-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #90caf9;
+    margin-top: 5px;
+    margin-bottom: 20px;
 }
 
 header h1 {
     margin-top: 0;
-    padding-top: 30px; /* Adjust the padding-top value as needed */
-  }
+    padding-top: 30px;
+    /* Adjust the padding-top value as needed */
+}
 
 h2.centered-heading {
-text-align: center;
-margin-bottom: 30px;
+    text-align: center;
+    margin-bottom: 30px;
 }
 
 /* Projects
 -------------------------------------*/
-.projects{
-    background: #f7f7f7;
+.projects {
+    background: #ffffff;
 }
+
 .projects a {
-    color: #2F0361
+    color: #0077b6
 }
 
 .projects .btn {
-    color: #f7f7f7;
-    background: #2f3061 ;
-    text-decoration: none ;
+    color: #f8f9fa;
+    background: #1e3a5f;
+    text-decoration: none;
     padding: 8px;
     border-radius: 4px;
     display: inline-block;
 
 }
 
-.projects .btn:hover{
-    background: rgba(47, 48, 97, 80%);
+.projects .btn:hover {
+    background: #0077b6;
 }
+
 .projects-item {
     overflow: hidden;
     background-color: transparent;
@@ -130,13 +178,103 @@ margin-bottom: 30px;
 
 
 
-.projects-item h3{
+.projects-item h3 {
     margin-top: 0;
 }
+
 /* Work Experience
 -------------------------------------*/
-.work-experience{
+.work-experience {
     background: #A1C6D7;
+}
+
+/* Technical Skills Section
+-------------------------------------*/
+.technical-skills-section {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    padding: 20px 15px;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    /* Override the content-wrap width for this section */
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.skills-row-full {
+    margin-bottom: 15px;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .skills-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Job Summary Paragraphs and Subheadings */
+.job-summary>p {
+    font-weight: bold;
+    margin-top: 0;
+}
+
+.job-summary h4 {
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.skill-category-box {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.skill-category-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.skill-category-box h4 {
+    color: #2f3061;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+    border-bottom: 2px solid #2f3061;
+    padding-bottom: 6px;
+    text-align: center;
+}
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.skill-tag {
+    background: #1e3a5f;
+    color: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.skill-tag:hover {
+    background: #0077b6;
+    transform: scale(1.05);
 }
 
 
@@ -144,7 +282,7 @@ margin-bottom: 30px;
 -------------------------------------*/
 .education {
     background-image: url(../images//joanna-kosinska-unsplash.jpg);
-    background-size: cover ;
+    background-size: cover;
     background-position: top right;
     padding-bottom: 100px;
 }
@@ -158,13 +296,15 @@ margin-bottom: 30px;
 -------------------------------------*/
 footer {
     background: #343434;
-    color: #f7f7f7;   
+    color: #f7f7f7;
 }
-.contact-list{
+
+.contact-list {
     list-style-type: none;
     padding: 0;
 }
-.contact-list a{
+
+.contact-list a {
     padding: 15px;
     display: inline-block;
 }
@@ -173,7 +313,7 @@ footer {
 -------------------------------------*/
 .carousel-control {
     background-color: transparent;
-    
+
 }
 
 .carousel-inner {
@@ -190,127 +330,143 @@ footer {
 .grayscale-results {
     text-align: center;
     background: #ffffff;
-  }
-  
-  .grayscale-results h2 {
+}
+
+.grayscale-results h2 {
     font-size: 32px;
     margin-bottom: 20px;
-  }
-  
-  .grayscale-results .image-container {
+}
+
+.grayscale-results .image-container {
     display: flex;
     justify-content: center;
-  }
-  
-  .grayscale-results img {
+}
+
+.grayscale-results img {
     width: 100%;
     max-width: 800px;
     height: auto;
-  }
+}
+
 /* Essay Grading Video ----------------------- */
 .video-responsive {
     position: relative;
-    padding-bottom: 56.25%; /* Aspect ratio for 16:9 */
-    padding-top: 30px; /* IE6 workaround*/
+    padding-bottom: 56.25%;
+    /* Aspect ratio for 16:9 */
+    padding-top: 30px;
+    /* IE6 workaround*/
     height: 0;
     overflow: hidden;
 }
 
 .video-responsive iframe {
     position: absolute;
-    top: 0; 
+    top: 0;
     left: 0;
     width: 100%;
     height: 100%;
 }
+
 /* Robotic Arm
 -------------------------------------*/
 .Robot_Arm_YOLO {
     text-align: center;
     background: #a8b1e4;
-  }
-  
-  .Robot_Arm_YOLO .image-container {
+}
+
+.Robot_Arm_YOLO .image-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
     margin-top: 20px;
-  }
-  
-  .Robot_Arm_YOLO .image-wrapper {
+}
+
+.Robot_Arm_YOLO .image-wrapper {
     flex-basis: calc(50% - 10px);
     margin-bottom: 20px;
-    max-height: 350px; /* Adjust the maximum height as needed */
-  }
-  
-  .Robot_Arm_YOLO .image-wrapper img {
+    max-height: 350px;
+    /* Adjust the maximum height as needed */
+}
+
+.Robot_Arm_YOLO .image-wrapper img {
     width: 100%;
     height: auto;
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
     display: block;
-  }
-.Robot_Arm_Highest_Object{
+}
+
+.Robot_Arm_Highest_Object {
     text-align: center;
     background: #9b88db;
 }
-  
+
 .Robot_Arm_Highest_Object .image-container {
     display: flex;
     justify-content: space-between;
-    align-items: stretch; /* Added alignment for vertical stretching */
+    align-items: stretch;
+    /* Added alignment for vertical stretching */
     margin-top: 20px;
-  }
-  
-  .Robot_Arm_Highest_Object .image-wrapper {
-    flex: 1 1 calc(50% - 10px); /* Updated flex property for equal width */
+}
+
+.Robot_Arm_Highest_Object .image-wrapper {
+    flex: 1 1 calc(50% - 10px);
+    /* Updated flex property for equal width */
     margin-bottom: 20px;
-    max-height: 350px; /* Adjust the maximum height as needed */
+    max-height: 350px;
+    /* Adjust the maximum height as needed */
     display: flex;
     justify-content: center;
-    align-items: center; /* Added vertical alignment */
-  }
+    align-items: center;
+    /* Added vertical alignment */
+}
 
-  .image-container {
+.image-container {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
     flex-wrap: wrap;
     margin-top: 20px;
-  }
-  
-  .Robot_Arm_Grasping .image-container {
+}
+
+.Robot_Arm_Grasping .image-container {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
-  }
-  
-  .Robot_Arm_Grasping .image-container img {
+}
+
+.Robot_Arm_Grasping .image-container img {
     width: 100%;
     height: auto;
     max-width: 100%;
-    max-height: 300px; /* Adjust the maximum height as desired */
+    max-height: 300px;
+    /* Adjust the maximum height as desired */
     object-fit: contain;
     display: block;
-  }
-  
-  
-  .image-container-2-image {
+}
+
+
+.image-container-2-image {
     display: flex;
     justify-content: space-between;
     align-items: stretch;
-    flex-wrap: wrap; /* Allow the images to wrap */
-    margin-top: 20px; /* Adjust the margin as needed */
+    flex-wrap: wrap;
+    /* Allow the images to wrap */
+    margin-top: 20px;
+    /* Adjust the margin as needed */
 }
 
 .image-wrapper-edge {
-    flex: 1 1 calc(50% - 10px); /* Specify the flex property for equal width */
+    flex: 1 1 calc(50% - 10px);
+    /* Specify the flex property for equal width */
     margin-bottom: 20px;
-    max-height: 350px; /* Adjust the maximum height as needed */
+    max-height: 350px;
+    /* Adjust the maximum height as needed */
     display: flex;
     justify-content: center;
-    align-items: center; /* Added vertical alignment */
+    align-items: center;
+    /* Added vertical alignment */
 }
 
 .image-wrapper-edge img {
@@ -319,9 +475,10 @@ footer {
 }
 
 
-  
+
 .Robot_Arm_Grasping_Dark_Blue {
-    background-color: #5eb0d0;  /* Or any other color you'd like */
+    background-color: #5eb0d0;
+    /* Or any other color you'd like */
 }
 
 .image-container-single {
@@ -330,7 +487,7 @@ footer {
     align-items: center;
     flex-wrap: wrap;
     margin-top: 20px;
-  }
+}
 
 .sub-menu {
     display: none;
@@ -338,9 +495,9 @@ footer {
     left: 100%;
     top: 0;
     /* other styles to fit your design */
-  }
-  
-  .gif-container {
+}
+
+.gif-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -352,7 +509,7 @@ footer {
     max-width: 100%;
 }
 
-  
+
 .image-wrapper-edge {
     display: flex;
     flex-direction: column;
@@ -365,41 +522,45 @@ footer {
     font-size: 18px;
 }
 
-  
 
-  
-  
-  
 
-  
-  
 
-  
-  
 
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* Responsive
 -------------------------------------*/
 
 @media screen and (min-width:750px) {
-    header, footer {
+
+    header,
+    footer {
         text-align: center;
     }
 
     .projects-item img {
         float: left;
-        margin-right: 20px ;
+        margin-right: 20px;
     }
 
     .job-item {
         display: grid;
         grid-template-columns: 1fr 2fr;
         column-gap: 20px;
+        align-items: start;
     }
+
     .contact-list {
         display: flex;
         justify-content: center;
@@ -412,9 +573,12 @@ footer {
         font-size: 48px;
         line-height: 1;
     }
-    h1,h2 {
+
+    h1,
+    h2 {
         line-height: 1;
     }
+
     .contact-list a {
         padding: 5px;
     }

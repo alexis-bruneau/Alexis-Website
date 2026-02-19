@@ -9,13 +9,13 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------------- config --------------------------------------------------
-test = True
-MAX_URLS = 40
+test = True  # False = scrape all URLs in file
+MAX_URLS = 250 # Will not scrape all properties if test=True
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
 OUT_CSV = Path("app/Redfin/Output/redfin_data.csv")
 OUT_HISTORY = Path("app/Redfin/Output/redfin_sale_history.csv")
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-WAIT_SEC = 0.5
+WAIT_SEC = 3  # Increased to avoid rate limiting
 IMAGES_DIR = Path("app/Redfin/Output/images")
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 
@@ -61,27 +61,54 @@ def money_to_int(s):
 
 
 def parse_sale_history(html, url):
-    soup = BeautifulSoup(html, "lxml")
-    rows = []
-    for div in soup.select("div.PropertyHistoryEventRow"):
-        date = div.select_one("div.col-4 p")
-        desc = div.select_one(".description-col div")
-        price = div.select_one(".price-col")
-        mls = div.select_one(".description-col p.subtext")
+    # Try to find the events JSON in the script tag
+    # Looking for "events":[{ ... }]
+    # Only simple string search + unescape + JSON parse
+    
+    start_marker = r'\"events\":[{'
+    end_marker = r'}]'
+    
+    start_idx = html.find(start_marker)
+    if start_idx == -1:
+        start_marker = r'"events":[{'
+        start_idx = html.find(start_marker)
+    
+    if start_idx == -1:
+        # Fallback for some pages?
+        return []
 
-        rows.append(
-            {
-                "url": url,
-                "eventDate": date.get_text(strip=True) if date else "",
-                "eventType": desc.get_text(strip=True) if desc else "",
-                "price": (
-                    price.get_text(strip=True).replace("\xa0", " ") if price else ""
-                ),
-                "MLS": (
-                    re.sub(r"^\s*TREB\s+#", "", mls.get_text(strip=True)) if mls else ""
-                ),
-            }
-        )
+    # Point to [
+    array_start_idx = start_idx + len(start_marker) - 2
+    
+    # Grab a large chunk
+    candidate = html[array_start_idx : array_start_idx + 25000]
+    
+    # Unescape
+    unescaped = candidate.replace(r'\"', '"').replace(r'\\', '\\')
+    
+    # Parse
+    decoder = json.JSONDecoder()
+    try:
+        events_list, _ = decoder.raw_decode(unescaped)
+    except json.JSONDecodeError:
+        return []
+        
+    rows = []
+    for e in events_list:
+        # Convert timestamp to "%b %d, %Y" for compatibility
+        ts = e.get("eventDate")
+        date_str = ""
+        if isinstance(ts, int):
+            date_str = datetime.fromtimestamp(ts / 1000).strftime("%b %d, %Y")
+            
+        rows.append({
+            "url": url,
+            "eventDate": date_str,
+            "eventType": e.get("eventDescription", ""),
+            "price": str(e.get("price", "")),
+            "MLS": e.get("sourceId", "")
+        })
+        
     return rows
 
 
@@ -101,6 +128,55 @@ def download_images(image_urls, mls):
             except Exception:
                 continue
 
+
+
+def extract_price_from_json(html):
+    """
+    Scans all <script> tags for JSON-LD containing 'offers' -> 'price'.
+    Returns the first valid integer price found, or None.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    for script in soup.find_all("script"):
+        if not script.string:
+            continue
+        try:
+            data = json.loads(script.string)
+            # Recursive search for "offers" -> "price"
+            # or data['offers']['price'] directly
+            
+            stack = [data]
+            while stack:
+                curr = stack.pop()
+                if isinstance(curr, dict):
+                    # Check if this dict matches the Offer schema with price
+                    if "price" in curr and "priceCurrency" in curr:
+                         return int(curr["price"])
+                    
+                    # Also check if it has an 'offers' key that is a dict/list
+                    if "offers" in curr:
+                        stack.append(curr["offers"])
+                    
+                    # Add all values to stack
+                    for v in curr.values():
+                        if isinstance(v, (dict, list)):
+                            stack.append(v)
+                            
+                elif isinstance(curr, list):
+                    for item in curr:
+                         if isinstance(item, (dict, list)):
+                             stack.append(item)
+        except:
+            continue
+    return None
+
+
+def safe_float(val):
+    try:
+        if isinstance(val, (float, int)):
+            return float(val)
+        return float(val) if val and val != "N/A" else None
+    except:
+        return None
 
 def scrape_single(url):
     with sync_playwright() as p:
@@ -130,33 +206,64 @@ def scrape_single(url):
     download_images(image_urls, mls)
 
     history = parse_sale_history(html, url)
-    sold_evt = next((h for h in history if "sold" in h["eventType"].lower()), None)
-    earliest_evt = min(
-        (h for h in history if h["eventDate"]),
-        key=lambda h: parse_date(h["eventDate"]) or datetime.max,
-        default=None,
-    )
+    
+    # Sort history by date to be safe
+    history.sort(key=lambda h: parse_date(h["eventDate"]) or datetime.min)
+    
+    # 1. Find Sold Event (latest one)
+    # Filter for 'sold', take the last one (latest date)
+    sold_evts = [h for h in history if "sold" in h["eventType"].lower()]
+    sold_evt = sold_evts[-1] if sold_evts else None
+    
+    # 2. Find First Listed Event
+    # Filter for 'listed', take the first one (earliest date)
+    listed_evts = [h for h in history if "listed" in h["eventType"].lower() and "delisted" not in h["eventType"].lower()]
+    first_listed_evt = listed_evts[0] if listed_evts else None
+    
+    # Fallback: if no specific listed event, use absolute earliest event?
+    # User specifically asked for "First Listed Date".
+    earliest_evt = history[0] if history else None
 
     try:
+        # Try to get price from history first
         sold_price = money_to_int(sold_evt["price"]) if sold_evt else None
-        first_price = money_to_int(earliest_evt["price"]) if earliest_evt else None
-        days_on_market = (
-            (
-                parse_date(sold_evt["eventDate"])
-                - parse_date(earliest_evt["eventDate"])
-            ).days
-            if sold_evt and earliest_evt
-            else None
-        )
+        
+        # Fallback/Primary: JSON-LD extraction
+        if not sold_price:
+             json_price = extract_price_from_json(html)
+             if json_price:
+                 sold_price = json_price
+        
+        first_list_price = money_to_int(first_listed_evt["price"]) if first_listed_evt else None
+        
+        # Safe float conversions
+        beds = safe_float(extract_between(html, '"latestListingInfo":{"beds":', ","))
+        baths = safe_float(extract_between(html, '"baths":', ","))
+        lat = safe_float(extract_between(html, 'latitude":', ","))
+        lon = safe_float(extract_between(html, 'longitude":', "}"))
+        
+        # Days On Market & Sold Price Difference
+        days_on_market = None
+        sold_price_diff = None
+        
+        if sold_evt and first_listed_evt:
+            d_sold = parse_date(sold_evt["eventDate"])
+            d_listed = parse_date(first_listed_evt["eventDate"])
+            if d_sold and d_listed:
+                days_on_market = (d_sold - d_listed).days
+                
+        if sold_price and first_list_price:
+            sold_price_diff = sold_price - first_list_price
 
+        # Get first image filename for photo_blob column
+        first_image = f"{mls}_1.jpg" if image_filenames else None
+        
         return {
             "url": url,
             "MLS": mls,
             "Sold Price": sold_price,
-            "Number Beds": float(
-                extract_between(html, '"latestListingInfo":{"beds":', ",")
-            ),
-            "Number Baths": float(extract_between(html, '"baths":', ",")),
+            "Number Beds": beds,
+            "Number Baths": baths,
             "Sold Date": (
                 sold_evt["eventDate"]
                 if sold_evt
@@ -168,13 +275,12 @@ def scrape_single(url):
             "Square Foot": extract_between(html, 'Lot Size","content":"', " "),
             "Parking": extract_between(html, 'Parking","content":"', " "),
             "Association Fee": extract_between(html, "Association Fee: <span>$", "<"),
-            "latitude": float(extract_between(html, 'latitude":', ",")),
-            "longitude": float(extract_between(html, 'longitude":', "}")),
-            "First Listed Date": earliest_evt["eventDate"] if earliest_evt else None,
+            "latitude": lat,
+            "longitude": lon,
+            "First Listed Date": first_listed_evt["eventDate"] if first_listed_evt else None,
             "Days On Market": days_on_market,
-            "Sold Price Difference": (
-                sold_price - first_price if sold_price and first_price else None
-            ),
+            "Sold Price Difference": sold_price_diff,
+            "photo_blob": first_image,  # First image for local serving
         }, history
     except Exception as e:
         print(f"❌ Error for {mls}: {e}")
@@ -195,7 +301,7 @@ def main():
     # --- scrape in parallel ----------------------------------------------
     summary, history = [], []
     completed = 0
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=1) as pool:  # Reduced to 1 to avoid 403
         futures = {pool.submit(scrape_single, url): url for url in urls}
 
         for fut in as_completed(futures):
