@@ -28,6 +28,10 @@ jobs:
         run: |
           playwright install chromium
 
+      - name: Discover New Properties
+        run: |
+          python app/Redfin/get_properties.py
+
       - name: Run Scraper
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
