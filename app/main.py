@@ -18,25 +18,52 @@ ACCOUNT_NAME = "stredfinprod"
 BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 
 # DuckDB Setup
-# We use an in-memory database that can read from Azure
 con = duckdb.connect(database=":memory:")
-con.execute("INSTALL azure;")
-con.execute("LOAD azure;")
-con.execute(f"SET azure_storage_connection_string = '{AZURE_CONN_STR}';")
 
-# Note: We do NOT set http_ca_cert here anymore. We rely on SSL_CERT_FILE env var.
-
-# The view or query we will run against. 
-# We target the Silver layer Parquet files.
-# Using a glob pattern to read ALL silver folders (e.g. silver/*/*.parquet)
-PARQUET_SOURCE = f"azure://{CONTAINER_NAME}/silver/*/*.parquet"
-
-# Create a View for easier querying
 try:
-    con.execute(f"CREATE OR REPLACE VIEW properties AS SELECT * FROM '{PARQUET_SOURCE}'")
-    print("✅ DuckDB View 'properties' created successfully.")
+    from azure.storage.blob import BlobServiceClient
+    import io
+    
+    # 1. Connect to Azure using Python SDK (Reliable on Heroku)
+    blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
+    container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+    
+    # 2. Iterate to find the latest 'listed_properties.parquet'
+    latest_blob = None
+    latest_time = None
+    
+    # Optimization: Only list blobs in 'silver/'
+    blobs = container_client.list_blobs(name_starts_with="silver/")
+    for blob in blobs:
+        if blob.name.endswith("listed_properties.parquet"):
+            if latest_time is None or blob.last_modified > latest_time:
+                latest_time = blob.last_modified
+                latest_blob = blob.name
+                
+    if latest_blob:
+        print(f"✅ Found latest data: {latest_blob}")
+        blob_client = container_client.get_blob_client(latest_blob)
+        data = blob_client.download_blob().readall()
+        
+        # 3. Load into Pandas
+        # Requires pyarrow/fastparquet engine
+        df_parquet = pd.read_parquet(io.BytesIO(data))
+        
+        # 4. Register as DuckDB View
+        con.register('properties', df_parquet)
+        print(f"✅ Registered 'properties' view with {len(df_parquet)} rows.")
+    else:
+        print("⚠️ No parquet files found in Azure 'silver/' folder.")
+        # Create empty table to prevent crash
+        con.execute("CREATE TABLE properties (latitude DOUBLE, longitude DOUBLE, \"Sold Price\" DOUBLE, \"Sold Date\" VARCHAR, \"Address\" VARCHAR, MLS VARCHAR, \"Number Beds\" DOUBLE, \"Number Baths\" DOUBLE, url VARCHAR, photo_blob VARCHAR, \"Days On Market\" DOUBLE, \"Sold Price Difference\" DOUBLE)")
+
 except Exception as e:
-    sys.stderr.write(f"⚠️ Failed to create DuckDB view (Data might be missing in Azure): {e}\n")
+    sys.stderr.write(f"CRITICAL ERROR loading data from Azure: {e}\n{traceback.format_exc()}\n")
+    # Create empty table as fallback so app doesn't hard crash on import
+    try:
+         con.execute("CREATE TABLE properties (latitude DOUBLE, longitude DOUBLE, \"Sold Price\" DOUBLE, \"Sold Date\" VARCHAR, \"Address\" VARCHAR, MLS VARCHAR, \"Number Beds\" DOUBLE, \"Number Baths\" DOUBLE, url VARCHAR, photo_blob VARCHAR, \"Days On Market\" DOUBLE, \"Sold Price Difference\" DOUBLE)")
+    except:
+        pass
 
 # ---------------- App -----------------------------------------------------
 
