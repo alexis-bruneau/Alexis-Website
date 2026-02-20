@@ -14,7 +14,7 @@ load_dotenv()
 # Azure Storage Helper Config
 AZURE_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 CONTAINER_NAME = "redfin-data"
-ACCOUNT_NAME = "stredfinprod" # extracted or hardcoded from known setup
+ACCOUNT_NAME = "stredfinprod" 
 BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 
 # DuckDB Setup
@@ -24,9 +24,7 @@ con.execute("INSTALL azure;")
 con.execute("LOAD azure;")
 con.execute(f"SET azure_storage_connection_string = '{AZURE_CONN_STR}';")
 
-# Fix for Heroku/Linux SSL issue
-if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
-    con.execute("SET http_ca_cert = '/etc/ssl/certs/ca-certificates.crt';")
+# Note: We do NOT set http_ca_cert here anymore. We rely on SSL_CERT_FILE env var.
 
 # The view or query we will run against. 
 # We target the Silver layer Parquet files.
@@ -38,7 +36,7 @@ try:
     con.execute(f"CREATE OR REPLACE VIEW properties AS SELECT * FROM '{PARQUET_SOURCE}'")
     print("✅ DuckDB View 'properties' created successfully.")
 except Exception as e:
-    print(f"⚠️ Failed to create DuckDB view (Data might be missing in Azure): {e}")
+    sys.stderr.write(f"⚠️ Failed to create DuckDB view (Data might be missing in Azure): {e}\n")
 
 # ---------------- App -----------------------------------------------------
 
@@ -51,7 +49,7 @@ def home():
 @app.route("/points.json")
 def points():
     try:
-        # Fetch all properties with valid coordinates
+        # 1. Query DuckDB for ALL points (with valid coords)
         query = """
             SELECT 
                 latitude, longitude, "Sold Price" as price, 
@@ -67,16 +65,19 @@ def points():
             FROM properties
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
         """
+        # Return as Pandas DataFrame for easy manipulation
         df = con.execute(query).fetchdf()
-
-        # Numeric conversion
-        numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
-        for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-        # Calculations
+        
+        # 2. Add calculated fields
+        # List Price = Sold - Diff
         df["list_price"] = df["price"] - df["price_diff"]
-        df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
+        
+        # Avoid division by zero
+        df["price_diff_pct"] = np.where(
+            df["list_price"] != 0, 
+            (df["price_diff"] / df["list_price"]) * 100, 
+            0
+        )
 
         # Construct Image URL
         if "photo_blob" in df.columns:
@@ -89,11 +90,26 @@ def points():
         # Clean NaNs for JSON - Convert to object type first to handle Nones
         df = df.astype(object).where(pd.notnull(df), None)
         points_data = df.to_dict(orient="records")
+        
+        # Sanitize output
+        def sanitize(obj):
+            if isinstance(obj, (np.integer, int)):
+                return int(obj)
+            if isinstance(obj, (np.floating, float)):
+                if np.isnan(obj) or np.isinf(obj):
+                    return None
+                return float(obj)
+            if isinstance(obj, dict):
+                return {k: sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [sanitize(v) for v in obj]
+            return obj
+            
+        points_data = sanitize(points_data)
         return jsonify(points_data)
 
     except Exception as e:
-        import sys
-        sys.stderr.write(f"ERROR in filtered_points: {str(e)}\n{traceback.format_exc()}\n")
+        sys.stderr.write(f"ERROR in points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/ottawa_map")
@@ -105,8 +121,6 @@ def ottawa_map():
 def serve_static_html(filename):
     return send_from_directory("../templates", filename)
 
-# Note: We REMOVED correct/serve_redfin_image because images are now direct Azure links.
-
 @app.route("/filtered-points", methods=["POST"])
 def filtered_points():
     try:
@@ -116,17 +130,8 @@ def filtered_points():
         filters = data.get("filters", {})
 
         # ---------------- Query Construction ------------------------------
-        # We push filters DOWN to DuckDB for speed
-        
         where_clauses = ["latitude IS NOT NULL", "longitude IS NOT NULL"]
-        params = []
-
-        # 1. Radius Filter (Haversine approximation in SQL)
-        # DuckDB has a haversine function in valid spatial extensions, but simple math works too.
-        # Or we can just select all and filter in Python if dataset is small (<100k).
-        # Let's try to filter in SQL for "Box" then refined in Python, or just Python for now if dataset is small.
-        # Given 10k rows, Python filtering is fine. But let's basic filters in SQL.
-
+        
         if "min_price" in filters:
             price = int(filters["min_price"])
             where_clauses.append(f"try_cast(\"Sold Price\" as INTEGER) >= {price}")
@@ -134,13 +139,6 @@ def filtered_points():
         if "max_price" in filters:
             price = int(filters["max_price"])
             where_clauses.append(f"try_cast(\"Sold Price\" as INTEGER) <= {price}")
-            
-        if "beds" in filters and filters["beds"]:
-            # beds is a list like [1, 2, "3+"]
-            # Simplified: just checking exact matches or >= if 3+ logic used?
-            # For now, let's skip complex bed logic in SQL and do it in Pandas if needed, 
-            # Or assume beds are integers.
-            pass 
 
         where_str = " AND ".join(where_clauses)
         
@@ -165,7 +163,6 @@ def filtered_points():
         df = con.execute(query).fetchdf()
 
         # ---------------- Python Post-Processing --------------------------
-        # Some things are still easier in Python/Pandas for now (Haversine, Custom Stats)
         
         # numeric conversion
         numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
@@ -205,10 +202,6 @@ def filtered_points():
         df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
 
         # Construct Image URL
-        # silver 'photo_blob' column is "images/mls_1.jpg"
-        # We need "https://host/container/images/mls_1.jpg"
-        # Actually in scrape_prod we saved "images/mls_1.jpg" in the column.
-        # So we just prepend BASE_IMG_URL.
         if "photo_blob" in df.columns:
             df["photo"] = df["photo_blob"].apply(
                 lambda x: f"{BASE_IMG_URL}{x}" if pd.notna(x) and x else None
@@ -279,16 +272,9 @@ def filtered_points():
         return jsonify({"points": points, "summary": summary})
 
     except Exception as e:
-        import traceback
         import sys
-        sys.stderr.write(f"ERROR in points: {str(e)}\n{traceback.format_exc()}\n")
+        sys.stderr.write(f"ERROR in filtered_points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
-@app.route("/update-coordinates", methods=["POST"])
-def update_coordinates():
-    data = request.get_json()
-    print("Received coordinates:", data)
-    return jsonify(success=True, received=data)
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
