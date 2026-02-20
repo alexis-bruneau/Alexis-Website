@@ -4,6 +4,8 @@ import os
 import duckdb
 import pandas as pd
 import numpy as np
+import sys
+import traceback
 from dotenv import load_dotenv
 
 # ---------------- Config --------------------------------------------------
@@ -86,6 +88,8 @@ def points():
         return jsonify(points_data)
 
     except Exception as e:
+        import sys
+        sys.stderr.write(f"ERROR in filtered_points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/ottawa_map")
@@ -272,7 +276,8 @@ def filtered_points():
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        import sys
+        sys.stderr.write(f"ERROR in points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/update-coordinates", methods=["POST"])
