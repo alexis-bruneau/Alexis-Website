@@ -29,9 +29,10 @@ CONTAINER_NAME = "redfin-data"
 
 # Test configurations
 TEST_MODE = False
-MAX_URLS = 250 
+MAX_URLS = 500
 
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
+QUEUE_BLOB_NAME = "queue/pending_urls.txt"
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
 WAIT_SEC = 2
@@ -99,6 +100,57 @@ def upload_image(mls, image_url):
             # print(f"   -> Saved Image: {blob_name}")
     except Exception as e:
         print(f"   -> Failed Image {mls}: {e}")
+
+def get_existing_silver_urls():
+    """Fetches already scraped URLs from the latest Silver Parquet."""
+    try:
+        # Find latest parquet in silver/
+        blobs = container_client.list_blobs(name_starts_with="silver/")
+        latest_blob = None
+        latest_time = None
+        
+        for blob in blobs:
+            if blob.name.endswith("listed_properties.parquet"):
+                if latest_time is None or blob.last_modified > latest_time:
+                    latest_time = blob.last_modified
+                    latest_blob = blob.name
+                    
+        if latest_blob:
+            print(f"✅ Found existing Silver data: {latest_blob}")
+            data = container_client.get_blob_client(latest_blob).download_blob().readall()
+            df = pd.read_parquet(io.BytesIO(data))
+            if "url" in df.columns:
+                return set(df["url"].dropna().tolist()), latest_blob
+        return set(), None
+    except Exception as e:
+        print(f"⚠️ Error checking existing Silver URLs: {e}")
+        return set(), None
+
+def get_pending_queue():
+    """Fetches the current pending queue from Azure."""
+    blob_client = container_client.get_blob_client(QUEUE_BLOB_NAME)
+    if not blob_client.exists():
+        return []
+    try:
+        data = blob_client.download_blob().readall().decode("utf-8")
+        return [line.strip() for line in data.splitlines() if line.strip()]
+    except Exception as e:
+        print(f"⚠️ Error fetching pending queue: {e}")
+        return []
+
+def update_pending_queue(completed_urls):
+    """Removes completed URLs from the Azure pending queue."""
+    current_queue = get_pending_queue()
+    updated_queue = [u for u in current_queue if u not in completed_urls]
+    
+    blob_client = container_client.get_blob_client(QUEUE_BLOB_NAME)
+    if updated_queue:
+        blob_client.upload_blob("\n".join(updated_queue), overwrite=True)
+    else:
+        # If queue is empty, we keep it as empty file or delete? 
+        # Uploading empty string is fine.
+        blob_client.upload_blob("", overwrite=True)
+    print(f"🧹 Updated Azure queue: Removed {len(completed_urls)} URLs. Remaining: {len(updated_queue)}")
 
 # ---------------- Parsing Logic (Copied from scrape_properties.py) --------
 
@@ -318,25 +370,37 @@ def process_property(url, context):
 def main():
     start_time = time.time()
     
-    # Load URLs
-    if not URLS_FILE.exists():
-        print("URL File not found!")
+    # 1. Fetch State from Azure
+    scraped_urls, silver_blob_path = get_existing_silver_urls()
+    pending_queue = get_pending_queue()
+    
+    if not pending_queue:
+        print("ℹ️ Azure queue is empty. Checking local file as fallback...")
+        if URLS_FILE.exists():
+            with URLS_FILE.open("r", encoding="utf-8") as f:
+                pending_queue = [u.strip() for u in f if u.strip()]
+        else:
+            print("No URLs found in Azure or locally.")
+            return
+
+    # 2. Filter Queue (Only those NOT already scraped)
+    to_scrape = [u for u in pending_queue if u not in scraped_urls]
+    skipped_count = len(pending_queue) - len(to_scrape)
+    if skipped_count > 0:
+        print(f"ℹ️ Skipping {skipped_count} URLs (Already in Azure Silver).")
+
+    if not to_scrape:
+        print("🎉 All properties in queue have already been scraped!")
         return
 
-    with URLS_FILE.open("r", encoding="utf-8") as f:
-        urls = [u.strip() for u in f if u.strip()]
-    
-    print(f"🚀 Found {len(urls)} total URLs.")
-    
-    # LIMIT BATCH SIZE (Prevent timeouts)
+    # 3. Batching
     MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", 10))
-    if len(urls) > MAX_SCRAPE_COUNT:
-        print(f"⚠️ Limiting scrape to last {MAX_SCRAPE_COUNT} URLs (Configured by MAX_SCRAPE_COUNT)")
-        urls = urls[-MAX_SCRAPE_COUNT:]
-        
-    print(f"🚀 Starting scrape for {len(urls)} properties...")
+    urls_this_run = to_scrape[:MAX_SCRAPE_COUNT]
+    
+    print(f"🚀 Starting scrape for {len(urls_this_run)} properties (out of {len(to_scrape)} pending)...")
 
     results = []
+    processed_urls = []
     
     # Single Browser Instance for ALL URLs (Much Faster)
     with sync_playwright() as p:
@@ -344,11 +408,16 @@ def main():
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
         context.add_cookies(load_redfin_cookies())
         
-        for url in urls:
+        for url in urls_this_run:
             res = process_property(url, context)
             if res:
                 results.append(res)
+                processed_urls.append(url)
                 print(f"✅ Processed {res.get('MLS', 'Unknown')}")
+            else:
+                # If it failed (timeout/login), we might want to keep it in queue
+                # For now, we only remove it if res is returned.
+                pass
         
         browser.close()
     
@@ -387,6 +456,10 @@ def main():
             print(f"⚠️ Error merging with existing blob: {e}")
             print("   -> Falling back to saving ONLY new data to avoid total loss.")
             final_df = new_df
+
+        # Update Queue in Azure (Remove successfully processed URLs)
+        if processed_urls:
+            update_pending_queue(processed_urls)
 
         # Save locally first
         local_parquet = "temp_silver.parquet"

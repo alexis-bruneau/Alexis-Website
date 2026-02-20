@@ -21,7 +21,8 @@ CONTAINER_NAME = "redfin-data"
 # "Sold 3yr, Sort by Sale Date (High to Low)"
 START_URL = "https://www.redfin.ca/on/ottawa/filter/sort=hi-sale-date,include=sold-3yr"
 OUTPUT_FILE = Path("app/Redfin/Output/property_urls.txt")
-MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", 500)) 
+QUEUE_BLOB_NAME = "queue/pending_urls.txt"
+MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", 1000)) 
 WAIT_SEC = 2
 
 # ---------------- Helpers -------------------------------------------------
@@ -68,6 +69,25 @@ def get_latest_azure_urls():
         print(f"❌ Error fetching Azure data: {e}")
         return set()
 
+def get_pending_azure_urls():
+    """Fetches the current queue of pending URLs from Azure."""
+    if not AZURE_CONN_STR:
+        return set()
+    try:
+        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
+        container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+        blob_client = container_client.get_blob_client(QUEUE_BLOB_NAME)
+        
+        if blob_client.exists():
+            data = blob_client.download_blob().readall().decode("utf-8")
+            urls = set(line.strip() for line in data.splitlines() if line.strip())
+            print(f"ℹ️ Loaded {len(urls)} pending URLs from Azure queue.")
+            return urls
+        return set()
+    except Exception as e:
+        print(f"⚠️ Error fetching pending queue: {e}")
+        return set()
+
 def get_local_urls():
     if not OUTPUT_FILE.exists():
         return set()
@@ -75,11 +95,28 @@ def get_local_urls():
         return set(line.strip() for line in f if line.strip())
 
 def save_urls(new_urls):
-    # Append to file
+    """Saves new URLs to BOTH local file and Azure pending queue."""
+    # 1. Local Backup
     with OUTPUT_FILE.open("a", encoding="utf-8") as f:
         for url in new_urls:
             f.write(f"{url}\n")
     print(f"✅ Saved {len(new_urls)} new URLs to {OUTPUT_FILE}")
+
+    # 2. Azure Queue Push
+    if AZURE_CONN_STR:
+        try:
+            existing_pending = get_pending_azure_urls()
+            updated_pending = existing_pending.union(set(new_urls))
+            
+            blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
+            container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+            blob_client = container_client.get_blob_client(QUEUE_BLOB_NAME)
+            
+            queue_content = "\n".join(sorted(list(updated_pending)))
+            blob_client.upload_blob(queue_content, overwrite=True)
+            print(f"🚀 Pushed {len(updated_pending)} total pending URLs to Azure ({len(new_urls)} new).")
+        except Exception as e:
+            print(f"❌ Failed to push to Azure queue: {e}")
 
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
 
@@ -99,10 +136,12 @@ def load_redfin_cookies():
 
 def main():
     # 1. Load Ignore List
-    azure_urls = get_latest_azure_urls()
+    azure_scraped_urls = get_latest_azure_urls()
+    azure_pending_urls = get_pending_azure_urls()
     local_urls = get_local_urls()
     
-    known_urls = azure_urls.union(local_urls)
+    # We ignore anything already scraped OR already in the queue
+    known_urls = azure_scraped_urls.union(azure_pending_urls).union(local_urls)
     print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
     
     new_found = []
