@@ -20,50 +20,63 @@ BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 # DuckDB Setup
 con = duckdb.connect(database=":memory:")
 
-try:
-    from azure.storage.blob import BlobServiceClient
-    import io
-    
-    # 1. Connect to Azure using Python SDK (Reliable on Heroku)
-    blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
-    container_client = blob_service_client.get_container_client(CONTAINER_NAME)
-    
-    # 2. Iterate to find the latest 'listed_properties.parquet'
-    latest_blob = None
-    latest_time = None
-    
-    # Optimization: Only list blobs in 'silver/'
-    blobs = container_client.list_blobs(name_starts_with="silver/")
-    for blob in blobs:
-        if blob.name.endswith("listed_properties.parquet"):
-            if latest_time is None or blob.last_modified > latest_time:
-                latest_time = blob.last_modified
-                latest_blob = blob.name
-                
-    if latest_blob:
-        print(f"✅ Found latest data: {latest_blob}")
-        blob_client = container_client.get_blob_client(latest_blob)
-        data = blob_client.download_blob().readall()
-        
-        # 3. Load into Pandas
-        # Requires pyarrow/fastparquet engine
-        df_parquet = pd.read_parquet(io.BytesIO(data))
-        
-        # 4. Register as DuckDB View
-        con.register('properties', df_parquet)
-        print(f"✅ Registered 'properties' view with {len(df_parquet)} rows.")
-    else:
-        print("⚠️ No parquet files found in Azure 'silver/' folder.")
-        # Create empty table to prevent crash
-        con.execute("CREATE TABLE properties (latitude DOUBLE, longitude DOUBLE, \"Sold Price\" DOUBLE, \"Sold Date\" VARCHAR, \"Address\" VARCHAR, MLS VARCHAR, \"Number Beds\" DOUBLE, \"Number Baths\" DOUBLE, url VARCHAR, photo_blob VARCHAR, \"Days On Market\" DOUBLE, \"Sold Price Difference\" DOUBLE)")
-
-except Exception as e:
-    sys.stderr.write(f"CRITICAL ERROR loading data from Azure: {e}\n{traceback.format_exc()}\n")
-    # Create empty table as fallback so app doesn't hard crash on import
+def load_data():
+    global con
     try:
-         con.execute("CREATE TABLE properties (latitude DOUBLE, longitude DOUBLE, \"Sold Price\" DOUBLE, \"Sold Date\" VARCHAR, \"Address\" VARCHAR, MLS VARCHAR, \"Number Beds\" DOUBLE, \"Number Baths\" DOUBLE, url VARCHAR, photo_blob VARCHAR, \"Days On Market\" DOUBLE, \"Sold Price Difference\" DOUBLE)")
-    except:
-        pass
+        from azure.storage.blob import BlobServiceClient
+        import io
+        
+        # 1. Connect to Azure using Python SDK (Reliable on Heroku)
+        if not AZURE_CONN_STR:
+             print("⚠️ AZURE_STORAGE_CONNECTION_STRING not found. Running in offline/empty mode.")
+             return False, "Missing Connection String"
+
+        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
+        container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+        
+        # 2. Iterate to find the latest 'listed_properties.parquet'
+        latest_blob = None
+        latest_time = None
+        
+        # Optimization: Only list blobs in 'silver/'
+        blobs = container_client.list_blobs(name_starts_with="silver/")
+        for blob in blobs:
+            if blob.name.endswith("listed_properties.parquet"):
+                if latest_time is None or blob.last_modified > latest_time:
+                    latest_time = blob.last_modified
+                    latest_blob = blob.name
+                    
+        if latest_blob:
+            print(f"✅ Found latest data: {latest_blob}")
+            blob_client = container_client.get_blob_client(latest_blob)
+            data = blob_client.download_blob().readall()
+            
+            # 3. Load into Pandas
+            # Requires pyarrow/fastparquet engine
+            df_parquet = pd.read_parquet(io.BytesIO(data))
+            
+            # 4. Register as DuckDB View
+            # Use CREATE OR REPLACE so we can update it later
+            con.register('df_parquet_view', df_parquet)
+            con.execute("CREATE OR REPLACE VIEW properties AS SELECT * FROM df_parquet_view")
+            print(f"✅ Registered 'properties' view with {len(df_parquet)} rows.")
+            return True, f"Loaded {len(df_parquet)} rows from {latest_blob}"
+        else:
+            print("⚠️ No parquet files found in Azure 'silver/' folder.")
+            con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\" WHERE 1=0")
+            return False, "No parquet files found"
+
+    except Exception as e:
+        sys.stderr.write(f"CRITICAL ERROR loading data from Azure: {e}\n{traceback.format_exc()}\n")
+        # Create empty table as fallback
+        try:
+             con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\" WHERE 1=0")
+        except:
+            pass
+        return False, str(e)
+
+# Initial Load
+load_data()
 
 # ---------------- App -----------------------------------------------------
 
@@ -72,6 +85,12 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 @app.route("/")
 def home():
     return render_template("index.html")
+
+@app.route("/refresh-data", methods=["POST"])
+def refresh_data():
+    """Trigger a data reload from Azure without restarting"""
+    success, msg = load_data()
+    return jsonify({"success": success, "message": msg})
 
 @app.route("/points.json")
 def points():
@@ -148,6 +167,13 @@ def ottawa_map():
 def serve_static_html(filename):
     return send_from_directory("../templates", filename)
 
+@app.route("/update-coordinates", methods=["POST"])
+def update_coordinates():
+    # Placeholder for coordinate updates
+    data = request.get_json()
+    print("Received coordinates:", data)
+    return jsonify(success=True, received=data)
+
 @app.route("/filtered-points", methods=["POST"])
 def filtered_points():
     try:
@@ -194,7 +220,8 @@ def filtered_points():
         # numeric conversion
         numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
         for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
 
         # Distance Filter
         # Simple Haversine

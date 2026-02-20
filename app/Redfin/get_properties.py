@@ -7,10 +7,11 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 # ---------------- Config --------------------------------------------------
-OTTAWA_URL = "https://www.redfin.ca/city/15044/ON/Ottawa/filter/sort=lo-days"
+# Updated to Sold 3 Years as requested
+OTTAWA_URL = "https://www.redfin.ca/city/15044/ON/Ottawa/filter/include=sold-3yr,sort=lo-days"
 OUTPUT_FILE = Path("app/Redfin/Output/property_urls.txt")
 MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", 10))
-WAIT_SEC = 5
+WAIT_SEC = 2 # Optimized wait time
 
 # ---------------- Logic ---------------------------------------------------
 
@@ -50,7 +51,7 @@ def main():
         
         try:
             page.goto(OTTAWA_URL, wait_until="domcontentloaded", timeout=60000)
-            time.sleep(2) # Reduced from 5s
+            time.sleep(WAIT_SEC) 
             
             # Scroll to load more
             for _ in range(3):
