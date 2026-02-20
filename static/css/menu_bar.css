@@ -13,8 +13,9 @@
 }
 
 .sticky-nav {
-  position: sticky;
+  position: fixed !important;
   top: 0;
+  width: 100%;
 }
 
 .brand {

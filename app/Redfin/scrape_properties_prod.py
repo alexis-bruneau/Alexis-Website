@@ -313,9 +313,14 @@ def main():
     with URLS_FILE.open("r", encoding="utf-8") as f:
         urls = [u.strip() for u in f if u.strip()]
     
-    if TEST_MODE:
-        urls = urls[:MAX_URLS]
+    print(f"🚀 Found {len(urls)} total URLs.")
     
+    # LIMIT BATCH SIZE (Prevent timeouts)
+    MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", 10))
+    if len(urls) > MAX_SCRAPE_COUNT:
+        print(f"⚠️ Limiting scrape to last {MAX_SCRAPE_COUNT} URLs (Configured by MAX_SCRAPE_COUNT)")
+        urls = urls[-MAX_SCRAPE_COUNT:]
+        
     print(f"🚀 Starting scrape for {len(urls)} properties...")
 
     results = []
