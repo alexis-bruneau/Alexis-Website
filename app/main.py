@@ -34,33 +34,33 @@ def load_data():
         blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
         container_client = blob_service_client.get_container_client(CONTAINER_NAME)
         
-        # 2. Iterate to find the latest 'listed_properties.parquet'
-        latest_blob = None
-        latest_time = None
-        
-        # Optimization: Only list blobs in 'silver/'
+        # 2. Iterate to find ALL 'listed_properties.parquet' files in silver/
+        print("🔍 Searching for parquet files in 'silver/'...")
         blobs = container_client.list_blobs(name_starts_with="silver/")
+        
+        dfs = []
         for blob in blobs:
             if blob.name.endswith("listed_properties.parquet"):
-                if latest_time is None or blob.last_modified > latest_time:
-                    latest_time = blob.last_modified
-                    latest_blob = blob.name
+                print(f"   -> Found: {blob.name}")
+                blob_client = container_client.get_blob_client(blob.name)
+                data = blob_client.download_blob().readall()
+                
+                # Load into Pandas (BytesIO)
+                df_chunk = pd.read_parquet(io.BytesIO(data))
+                dfs.append(df_chunk)
                     
-        if latest_blob:
-            print(f"✅ Found latest data: {latest_blob}")
-            blob_client = container_client.get_blob_client(latest_blob)
-            data = blob_client.download_blob().readall()
+        if dfs:
+            # 3. Combine all dataframes
+            full_df = pd.concat(dfs, ignore_index=True)
             
-            # 3. Load into Pandas
-            # Requires pyarrow/fastparquet engine
-            df_parquet = pd.read_parquet(io.BytesIO(data))
+            # Deduplicate just in case (e.g. same MLS in multiple months - shouldn't happen but good safety)
+            full_df = full_df.drop_duplicates(subset=["MLS"], keep="last")
             
             # 4. Register as DuckDB View
-            # Use CREATE OR REPLACE so we can update it later
-            con.register('df_parquet_view', df_parquet)
+            con.register('df_parquet_view', full_df)
             con.execute("CREATE OR REPLACE VIEW properties AS SELECT * FROM df_parquet_view")
-            print(f"✅ Registered 'properties' view with {len(df_parquet)} rows.")
-            return True, f"Loaded {len(df_parquet)} rows from {latest_blob}"
+            print(f"✅ Registered 'properties' view with {len(full_df)} rows (merged from {len(dfs)} files).")
+            return True, f"Loaded {len(full_df)} rows from {len(dfs)} files"
         else:
             print("⚠️ No parquet files found in Azure 'silver/' folder.")
             con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\" WHERE 1=0")

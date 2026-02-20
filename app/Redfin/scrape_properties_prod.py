@@ -34,7 +34,7 @@ MAX_URLS = 250
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-WAIT_SEC = 3
+WAIT_SEC = 2
 
 # ---------------- Azure Client --------------------------------------------
 if not CONN_STR:
@@ -353,23 +353,52 @@ def main():
         browser.close()
     
     # 7. Save Silver (Parquet) to Azure
+    # 7. Save Silver (Parquet) to Azure
     if results:
         # Resolve FutureWarning: Wrap string in StringIO
-        df = pd.read_json(io.StringIO(json.dumps(results))) # Ensure types
+        new_df = pd.read_json(io.StringIO(json.dumps(results))) # Ensure types
         
-        # Save locally first
-        local_parquet = "temp_silver.parquet"
-        df.to_parquet(local_parquet, index=False)
-        
-        # Upload to Azure Silver
+        # Determine target blob name
         today_month = datetime.now().strftime("%Y-%m")
         blob_name = f"silver/{today_month}/listed_properties.parquet"
         
+        # Check if blob exists and merge
+        try:
+            print(f"Checking for existing data in {blob_name}...")
+            blob_client = container_client.get_blob_client(blob_name)
+            
+            if blob_client.exists():
+                print("   -> Found existing file. Downloading to merge...")
+                existing_data = blob_client.download_blob().readall()
+                existing_df = pd.read_parquet(io.BytesIO(existing_data))
+                
+                # Combine and Deduplicate (Keep latest scrape for same MLS)
+                combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+                # Drop duplicates based on MLS, keeping the LAST occurrence (newest scrape)
+                combined_df = combined_df.drop_duplicates(subset=["MLS"], keep="last")
+                
+                print(f"   -> Merged {len(new_df)} new rows with {len(existing_df)} existing rows. Total: {len(combined_df)}")
+                final_df = combined_df
+            else:
+                print("   -> No existing file. Creating new.")
+                final_df = new_df
+                
+        except Exception as e:
+            print(f"⚠️ Error merging with existing blob: {e}")
+            print("   -> Falling back to saving ONLY new data to avoid total loss.")
+            final_df = new_df
+
+        # Save locally first
+        local_parquet = "temp_silver.parquet"
+        final_df.to_parquet(local_parquet, index=False)
+        
+        # Upload to Azure Silver
         with open(local_parquet, "rb") as data:
             container_client.upload_blob(name=blob_name, data=data, overwrite=True)
             
-        print(f"\n🎉 Success! Uploaded {len(results)} rows to {blob_name}")
-        os.remove(local_parquet)
+        print(f"\n🎉 Success! Uploaded {len(final_df)} rows to {blob_name}")
+        if os.path.exists(local_parquet):
+            os.remove(local_parquet)
     else:
         print("No valid results found.")
 
