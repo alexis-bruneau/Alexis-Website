@@ -24,6 +24,10 @@ con.execute("INSTALL azure;")
 con.execute("LOAD azure;")
 con.execute(f"SET azure_storage_connection_string = '{AZURE_CONN_STR}';")
 
+# Fix for Heroku/Linux SSL issue
+if os.path.exists("/etc/ssl/certs/ca-certificates.crt"):
+    con.execute("SET http_ca_cert = '/etc/ssl/certs/ca-certificates.crt';")
+
 # The view or query we will run against. 
 # We target the Silver layer Parquet files.
 # Using a glob pattern to read ALL silver folders (e.g. silver/*/*.parquet)
