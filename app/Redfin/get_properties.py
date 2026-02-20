@@ -39,9 +39,18 @@ def main():
         page = context.new_page()
         
         print(f"🔍 Searching Redfin Ottawa: {OTTAWA_URL}")
+        
+        # Optimization: Block images for faster loading
+        def block_heavy(route):
+            if route.request.resource_type in ["image", "media", "font"]:
+                route.abort()
+            else:
+                route.continue_()
+        page.route("**/*", block_heavy)
+        
         try:
-            page.goto(OTTAWA_URL, wait_until="networkidle", timeout=60000)
-            time.sleep(WAIT_SEC)
+            page.goto(OTTAWA_URL, wait_until="domcontentloaded", timeout=60000)
+            time.sleep(2) # Reduced from 5s
             
             # Scroll to load more
             for _ in range(3):

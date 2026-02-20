@@ -200,26 +200,39 @@ def safe_float(val):
 
 # ---------------- Core Logic ----------------------------------------------
 
-def process_property(url):
-    # 1. Scrape HTML
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 ... Chrome/125 Safari/537")
-        context.add_cookies(load_redfin_cookies())
-        page = context.new_page()
-        try:
-            page.goto(url, wait_until="load", timeout=60000)
-            time.sleep(WAIT_SEC)
-            if "/login" in page.url:
-                print(f"🔒 Login page encountered at {url}")
-                browser.close()
-                return None
-            html = page.content()
-        except TimeoutError:
-            print(f"⚠️ Timeout at {url}")
-            browser.close()
+# ---------------- Core Logic ----------------------------------------------
+
+def process_property(url, context):
+    # 1. Scrape HTML using existing context
+    page = context.new_page()
+    
+    # Block heavy resources
+    def block_heavy(route):
+        if route.request.resource_type in ["image", "media", "font"]:
+            route.abort()
+        else:
+            route.continue_()
+            
+    page.route("**/*", block_heavy)
+
+    try:
+        # domcontentloaded is much faster than load (doesn't wait for all assets)
+        page.goto(url, wait_until="domcontentloaded", timeout=45000)
+        
+        # Short sleep to let JS hydrate (Redfin needs this)
+        time.sleep(1.5) 
+        
+        if "/login" in page.url:
+            print(f"🔒 Login page encountered at {url}")
+            page.close()
             return None
-        browser.close()
+        html = page.content()
+    except Exception as e:
+        print(f"⚠️ Error/Timeout at {url}: {e}")
+        page.close()
+        return None
+    
+    page.close()
 
     # 2. Extract MLS
     mls = extract_between(html, "TREB #", "<")
@@ -324,14 +337,20 @@ def main():
     print(f"🚀 Starting scrape for {len(urls)} properties...")
 
     results = []
-    with ThreadPoolExecutor(max_workers=1) as pool:
-        futures = {pool.submit(process_property, url): url for url in urls}
+    
+    # Single Browser Instance for ALL URLs (Much Faster)
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+        context.add_cookies(load_redfin_cookies())
         
-        for fut in as_completed(futures):
-            res = fut.result()
+        for url in urls:
+            res = process_property(url, context)
             if res:
                 results.append(res)
                 print(f"✅ Processed {res.get('MLS', 'Unknown')}")
+        
+        browser.close()
     
     # 7. Save Silver (Parquet) to Azure
     if results:
