@@ -1,296 +1,285 @@
-from flask import Flask, render_template, send_from_directory, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import json
-from math import radians, cos, sin, asin, sqrt
-import os, numpy as np, pandas as pd
+import os
+import duckdb
+import pandas as pd
+import numpy as np
+from dotenv import load_dotenv
 
-# Email Used alexis17azure@gmail.com
+# ---------------- Config --------------------------------------------------
+load_dotenv()
 
-# ──────────────────────────────────────────────────────────────────────────
-# 1.  ONE place that defines where the master CSV lives
-#     (override with AZURE_CSV_URL env-var when you rotate the SAS token)
-# ──────────────────────────────────────────────────────────────────────────
-AZURE_CSV_URL = os.getenv("AZURE_CSV_URL")
+# Azure Storage Helper Config
+AZURE_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+CONTAINER_NAME = "redfin-data"
+ACCOUNT_NAME = "stredfinprod" # extracted or hardcoded from known setup
+BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 
+# DuckDB Setup
+# We use an in-memory database that can read from Azure
+con = duckdb.connect(database=":memory:")
+con.execute("INSTALL azure;")
+con.execute("LOAD azure;")
+con.execute(f"SET azure_storage_connection_string = '{AZURE_CONN_STR}';")
 
-# Local image URL for development (serve from Flask static route)
-BASE_IMG_URL = os.getenv(
-    "AZURE_IMG_URL",  # Use Azure in production
-    "/redfin-images/",  # Local development: Flask route
-)
+# The view or query we will run against. 
+# We target the Silver layer Parquet files.
+# Using a glob pattern to read ALL silver folders (e.g. silver/*/*.parquet)
+PARQUET_SOURCE = f"azure://{CONTAINER_NAME}/silver/*/*.parquet"
 
+# Create a View for easier querying
+try:
+    con.execute(f"CREATE OR REPLACE VIEW properties AS SELECT * FROM '{PARQUET_SOURCE}'")
+    print("✅ DuckDB View 'properties' created successfully.")
+except Exception as e:
+    print(f"⚠️ Failed to create DuckDB view (Data might be missing in Azure): {e}")
 
-"""
-from scrape import scrape_page
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-"""
+# ---------------- App -----------------------------------------------------
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
-
-@app.route("/points.json")
-def points():
-    try:
-        # Use local CSV file
-        csv_path = os.path.join(os.path.dirname(__file__), "Redfin", "Output", "redfin_data.csv")
-        df = pd.read_csv(csv_path, usecols=["latitude", "longitude"])
-
-        # Ensure lat/lng are numeric
-        df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
-        df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
-
-        # Drop rows with missing coordinates
-        df = df.dropna(subset=["latitude", "longitude"])
-
-        pts = df.to_dict(orient="records")
-        # Use simplejson/pandas handling via round-trip if needed, but manual clean is safer if done right.
-        # Let's use the explicit replacement strategy on the dataframe itself before dict conversion if possible, 
-        # but here we already have dicts.
-        
-        # Round-trip through pandas JSON serialization to handle NaT/NaN
-        return jsonify(json.loads(pd.Series(pts).to_json(orient="records")))
-
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
-
-# Commented out to allow local development without Azure access
-# df = pd.read_csv(AZURE_CSV_URL, usecols=["latitude", "longitude"])
-
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+@app.route("/points.json")
+def points():
+    try:
+        # Fetch all properties with valid coordinates
+        query = """
+            SELECT 
+                latitude, longitude, "Sold Price" as price, 
+                "Sold Date" as sold_date, 
+                "Address" as address, 
+                MLS as mls, 
+                "Number Beds" as beds, 
+                "Number Baths" as baths, 
+                url, 
+                photo_blob, 
+                "Days On Market" as dom,
+                "Sold Price Difference" as price_diff
+            FROM properties
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        """
+        df = con.execute(query).fetchdf()
 
-# This optional route if you want to serve other template files by path
-@app.route("/<path:filename>", methods=["GET"])
-def serve_static_html(filename):
-    return send_from_directory("../templates", filename)
+        # Numeric conversion
+        numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
+        for col in numeric_cols:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
+        # Calculations
+        df["list_price"] = df["price"] - df["price_diff"]
+        df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
+
+        # Construct Image URL
+        if "photo_blob" in df.columns:
+            df["photo"] = df["photo_blob"].apply(
+                lambda x: f"{BASE_IMG_URL}{x}" if pd.notna(x) and x else None
+            )
+        else:
+            df["photo"] = None
+
+        # Clean NaNs for JSON - Convert to object type first to handle Nones
+        df = df.astype(object).where(pd.notnull(df), None)
+        points_data = df.to_dict(orient="records")
+        return jsonify(points_data)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/ottawa_map")
 def ottawa_map():
     return render_template("ottawa_map.html")
 
+# Restoring: Serve other HTML files (menu_bar, Contact, etc.)
+@app.route("/<path:filename>", methods=["GET"])
+def serve_static_html(filename):
+    return send_from_directory("../templates", filename)
 
-@app.route("/redfin-images/<path:filename>")
-def serve_redfin_image(filename):
-    """Serve local Redfin property images"""
-    image_dir = os.path.join(os.path.dirname(__file__), "Redfin", "Output", "images")
-    return send_from_directory(image_dir, filename)
-
-
-@app.route("/update-coordinates", methods=["POST"])
-def update_coordinates():
-    data = request.get_json()
-    # Process the coordinates as needed
-    print("Received coordinates:", data)
-    # Return a valid JSON response
-    return jsonify(success=True, received=data)
-
-
-def haversine(lon1, lat1, lon2, lat2):
-    # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    return 6371 * 2 * asin(sqrt(a))  # Radius of Earth in km
-
+# Note: We REMOVED correct/serve_redfin_image because images are now direct Azure links.
 
 @app.route("/filtered-points", methods=["POST"])
 def filtered_points():
     try:
         data = request.get_json()
-        center_lat, center_lng = data.get("center", [0, 0])
+        center_lat, center_lng = data.get("center", [45.4215, -75.6972]) # Default Ottawa
         radius_km = data.get("radius_km", 5)
         filters = data.get("filters", {})
 
-        # Use local CSV file
-        csv_path = os.path.join(os.path.dirname(__file__), "Redfin", "Output", "redfin_data.csv")
-        df = pd.read_csv(csv_path)
+        # ---------------- Query Construction ------------------------------
+        # We push filters DOWN to DuckDB for speed
+        
+        where_clauses = ["latitude IS NOT NULL", "longitude IS NOT NULL"]
+        params = []
 
-        # Rename for consistency
-        df = df.rename(
-            columns={
-                "Sold Price": "price",
-                "Sold Date": "sold_date",
-                "Number Beds": "beds",
-                "Number Baths": "baths",
-                "MLS": "mls",
-                "Address": "address",
-            }
-        )
+        # 1. Radius Filter (Haversine approximation in SQL)
+        # DuckDB has a haversine function in valid spatial extensions, but simple math works too.
+        # Or we can just select all and filter in Python if dataset is small (<100k).
+        # Let's try to filter in SQL for "Box" then refined in Python, or just Python for now if dataset is small.
+        # Given 10k rows, Python filtering is fine. But let's basic filters in SQL.
 
-        # Ensure all relevant columns are numeric
-        numeric_cols = ["price", "beds", "baths", "latitude", "longitude"]
+        if "min_price" in filters:
+            price = int(filters["min_price"])
+            where_clauses.append(f"try_cast(\"Sold Price\" as INTEGER) >= {price}")
+            
+        if "max_price" in filters:
+            price = int(filters["max_price"])
+            where_clauses.append(f"try_cast(\"Sold Price\" as INTEGER) <= {price}")
+            
+        if "beds" in filters and filters["beds"]:
+            # beds is a list like [1, 2, "3+"]
+            # Simplified: just checking exact matches or >= if 3+ logic used?
+            # For now, let's skip complex bed logic in SQL and do it in Pandas if needed, 
+            # Or assume beds are integers.
+            pass 
+
+        where_str = " AND ".join(where_clauses)
+        
+        # 2. Execute Query
+        query = f"""
+            SELECT 
+                latitude, longitude, "Sold Price" as price, 
+                "Sold Date" as sold_date, 
+                "Address" as address, 
+                MLS as mls, 
+                "Number Beds" as beds, 
+                "Number Baths" as baths, 
+                url, 
+                photo_blob, 
+                "Days On Market" as dom,
+                "Sold Price Difference" as price_diff
+            FROM properties
+            WHERE {where_str}
+        """
+        
+        # return as Pandas DataFrame
+        df = con.execute(query).fetchdf()
+
+        # ---------------- Python Post-Processing --------------------------
+        # Some things are still easier in Python/Pandas for now (Haversine, Custom Stats)
+        
+        # numeric conversion
+        numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
         for col in numeric_cols:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-        df = df.dropna(subset=["latitude", "longitude"])
-        # print(f"DEBUG: Count after dropna lat/lng: {len(df)}", flush=True)
+        # Distance Filter
+        # Simple Haversine
+        def haversine_np(lon1, lat1, lon2, lat2):
+            lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+            dlon = lon2 - lon1
+            dlat = lat2 - lat1
+            a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+            c = 2 * np.arcsin(np.sqrt(a))
+            km = 6371 * c
+            return km
 
-        df["distance_km"] = df.apply(
-            lambda row: haversine(
-                center_lng, center_lat, row["longitude"], row["latitude"]
-            ),
-            axis=1,
-        )
-        # print(f"DEBUG: center={center_lat},{center_lng} radius={radius_km}", flush=True)
-        
-        df = df[df["distance_km"] <= radius_km]
-        
-        print(f"DEBUG: Count after distance filter: {len(df)}", flush=True)
-
-        # DEBUG: Check columns
-        # print("Columns:", df.columns.tolist(), flush=True)
-        
-        if "Days On Market" in df.columns:
-            df["dom"] = pd.to_numeric(df["Days On Market"], errors="coerce")
-            # print("DOM head:", df["dom"].head(), flush=True)
+        if not df.empty:
+            df["distance_km"] = haversine_np(center_lng, center_lat, df["longitude"], df["latitude"])
+            df = df[df["distance_km"] <= radius_km]
         else:
-            print("Days On Market column MISSING")
-            df["dom"] = np.nan
+            df["distance_km"] = []
 
-        if "Sold Price Difference" in df.columns:
-            df["price_diff"] = pd.to_numeric(df["Sold Price Difference"], errors="coerce")
-        else:
-            print("Sold Price Difference column MISSING")
-            df["price_diff"] = np.nan
-
-        # sold_date parsing
+        # Additional Filters (Date, etc)
         df["sold_date"] = pd.to_datetime(df["sold_date"], errors="coerce")
-
-        # Calculate % difference
-        # price_diff = Sold - List
-        # List = Sold - price_diff
-        # % diff = (price_diff / List) * 100
-        df["list_price"] = df["price"] - df["price_diff"]
-        df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
-
-        # Optional filters
+        
         if "sold_start" in filters:
             df = df[df["sold_date"] >= pd.to_datetime(filters["sold_start"])]
         if "sold_end" in filters:
             df = df[df["sold_date"] <= pd.to_datetime(filters["sold_end"])]
-        if "min_price" in filters:
-            df = df[df["price"] >= filters["min_price"]]
-        if "max_price" in filters:
-            df = df[df["price"] <= filters["max_price"]]
-        if "beds" in filters:
-            df = df[df["beds"].isin(filters["beds"])]
+        if "beds" in filters and filters["beds"]:
+             df = df[df["beds"].isin(filters["beds"])]
 
-        # Build a public HTTPS link for the first photo of each listing
-        if "photo_blob" in df.columns:  # <-- whatever you named it
+        # Calculations
+        # List Price = Sold - Diff
+        df["list_price"] = df["price"] - df["price_diff"]
+        df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
+
+        # Construct Image URL
+        # silver 'photo_blob' column is "images/mls_1.jpg"
+        # We need "https://host/container/images/mls_1.jpg"
+        # Actually in scrape_prod we saved "images/mls_1.jpg" in the column.
+        # So we just prepend BASE_IMG_URL.
+        if "photo_blob" in df.columns:
             df["photo"] = df["photo_blob"].apply(
-                lambda b: f"{BASE_IMG_URL}{b}" if pd.notna(b) and b else None
+                lambda x: f"{BASE_IMG_URL}{x}" if pd.notna(x) and x else None
             )
         else:
-            df["photo"] = None  # safety if the column is missing
+            df["photo"] = None
 
-        # Prepare data for response
-        # Prepare data for response
-        points_df = (
-            df[
-                [
-                    "latitude",
-                    "longitude",
-                    "price",
-                    "sold_date",
-                    "address",
-                    "mls",
-                    "beds",
-                    "baths",
-                    "url",
-                    "photo",
-                    "dom",
-                    "price_diff_pct",
-                ]
-            ]
-            .dropna(subset=["latitude", "longitude"])
-        )
-        # Handle NaNs effectively for JSON
-        points = points_df.where(pd.notnull(points_df), None).to_dict(orient="records")
+        # ---------------- Response Preparation ----------------------------
+        
+        # Select Output Columns
+        out_cols = [
+            "latitude", "longitude", "price", "sold_date", "address", "mls",
+            "beds", "baths", "url", "photo", "dom", "price_diff_pct"
+        ]
+        # Valid columns only
+        out_cols = [c for c in out_cols if c in df.columns]
+        
+        points_df = df[out_cols].dropna(subset=["latitude", "longitude"])
+        
+        # Clean NaNs for JSON (Must cast to object to hold None)
+        points_df = points_df.astype(object).where(pd.notnull(points_df), None)
+        points = points_df.to_dict(orient="records")
 
+        # Summary Stats (By Month)
         if not df["sold_date"].isna().all():
             df["month"] = df["sold_date"].dt.to_period("M").astype(str)
             grouped = df.groupby("month")
             by_month = (
-                grouped.size()
-                .to_frame("count")
+                grouped.size().to_frame("count")
                 .join(grouped["price"].mean().to_frame("avg_price"))
                 .join(grouped["dom"].mean().to_frame("avg_dom"))
                 .join(grouped["price_diff_pct"].mean().to_frame("avg_diff_pct"))
                 .reset_index()
-                .fillna(0)  # Ensure no NaNs in JSON
+                .fillna(0)
                 .to_dict(orient="records")
             )
-            # Ensure no NaT/NaNs remain in by_month (e.g. from mean() on all-NaN slice)
-            for item in by_month:
-                for k, v in item.items():
-                    if pd.isna(v):
-                        item[k] = None
         else:
             by_month = []
 
-        # Calculate metrics explicitly for debugging
-        dom_sum = df["dom"].sum()
-        total_count = len(df)
-        avg_dom_val = (dom_sum / total_count) if total_count > 0 else 0
-        
-        # Write to debug file
-        try:
-            with open("debug_log.txt", "w") as f:
-                f.write(f"Columns: {df.columns.tolist()}\n")
-                if "Days On Market" in df.columns:
-                    f.write(f"Raw DOM head: {df['Days On Market'].head().tolist()}\n")
-                f.write(f"DOM column head: {df['dom'].head().tolist()}\n")
-                f.write(f"DOM Sum: {dom_sum}, Count: {total_count}, Avg: {avg_dom_val}\n")
-        except Exception as e:
-            print(f"Failed to write debug log: {e}")
-
-        print(f"DEBUG: DOM Sum: {dom_sum}, Count: {total_count}, Avg: {avg_dom_val}", flush=True)
-        
-        avg_diff_pct_val = df["price_diff_pct"].mean()
-        
         summary = {
-            "count": total_count,
+            "count": int(len(df)), # ensure int
             "average_price": round(df["price"].mean(), 2) if not df.empty else None,
-            "avg_dom": round(avg_dom_val, 1) if total_count > 0 else None,
-            "avg_diff_pct": round(avg_diff_pct_val, 2)
-            if not pd.isna(avg_diff_pct_val)
-            else None,
+            "avg_dom": round(df["dom"].mean(), 1) if not df.empty else None,
+            "avg_diff_pct": round(df["price_diff_pct"].mean(), 2) if not df.empty else None,
             "min_price": df["price"].min() if not df.empty else None,
             "max_price": df["price"].max() if not df.empty else None,
             "by_month": by_month,
         }
+        
+        # Sanitize summary for NaNs as well
+        # Simple helper to sanitize a dict
+        def sanitize(obj):
+            if isinstance(obj, (np.integer, int)):
+                return int(obj)
+            if isinstance(obj, (np.floating, float)):
+                if np.isnan(obj) or np.isinf(obj):
+                    return None
+                return float(obj)
+            if isinstance(obj, dict):
+                return {k: sanitize(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [sanitize(v) for v in obj]
+            return obj
+            
+        summary = sanitize(summary)
+        points = sanitize(points)
 
-        if points:
-            print(f"DEBUG: First point: {points[0]}", flush=True)
-
-        # Sanitize using pandas JSON serialization (handles NaT/NaN automatically)
-        payload = {"points": points, "summary": summary}
-        return jsonify(json.loads(pd.Series([payload]).to_json(orient="records"))[0])
+        return jsonify({"points": points, "summary": summary})
 
     except Exception as e:
         import traceback
-        error_msg = traceback.format_exc()
-        try:
-            with open(os.path.join(os.path.dirname(__file__), "server_error.log"), "w") as f:
-                f.write(error_msg)
-        except:
-            pass
-        print(error_msg)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/update-coordinates", methods=["POST"])
+def update_coordinates():
+    data = request.get_json()
+    print("Received coordinates:", data)
+    return jsonify(success=True, received=data)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=5000)

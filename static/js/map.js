@@ -342,7 +342,7 @@ function updateListingsSidebar(points) {
     row.innerHTML = `
       <div class="image-wrapper">
         <img
-          src="${IMG_BASE}${pt.mls}_1.jpg"
+          src="${pt.photo || ''}"
           onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
           alt=""
         />
