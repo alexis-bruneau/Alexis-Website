@@ -126,14 +126,22 @@ let currentRadius = parseFloat(radiusInput.value) || 5;
 
 const handleIcon = L.divIcon({
   className: "drag-handle",
-  iconSize: [14, 14],
-  iconAnchor: [7, 7]
+  iconSize: [24, 24],
+  iconAnchor: [12, 12]
 });
 
 const handle = L.marker([45.4215, -75.6972], {
   draggable: true,
-  icon: handleIcon
+  icon: handleIcon,
+  zIndexOffset: 10000, // Stay on top of clustered markers
+  title: "Drag to move search area"
 }).addTo(map);
+
+handle.bindTooltip("Drag to move search area", {
+  permanent: false,
+  direction: "right",
+  offset: [15, 0]
+});
 
 let circle = L.circle(handle.getLatLng(), {
   radius: currentRadius * 1000,
@@ -147,7 +155,7 @@ handle.on("drag", () => circle.setLatLng(handle.getLatLng()));
 handle.on("dragend", () => fetchFilteredPoints());
 
 radiusInput.addEventListener("change", () => {
-  const r = Math.min(parseFloat(radiusInput.value) || 0, 15);
+  const r = Math.min(parseFloat(radiusInput.value) || 0, 40);
   radiusInput.value = r;
   circle.setRadius(r * 1000);
   fetchFilteredPoints();
@@ -156,9 +164,23 @@ radiusInput.addEventListener("change", () => {
 
 
 /************** 4. FILTER HANDLERS **************/
-document.getElementById("filterToggle").addEventListener("click", () => {
+document.getElementById("filterToggle").addEventListener("click", (e) => {
+  L.DomEvent.stopPropagation(e); // Prevent map click from firing immediately
   const panel = document.getElementById("filterPanel");
-  panel.style.display = panel.style.display === "none" ? "block" : "none";
+
+  if (panel.classList.contains("show")) {
+    panel.classList.remove("show");
+    // We don't need to set display: none here if the map click does it, 
+    // but for consistency let's ensure it's hidden.
+    setTimeout(() => { if (!panel.classList.contains("show")) panel.style.display = "none"; }, 200);
+  } else {
+    // Opening: Clear inline display and add class
+    panel.style.display = "block";
+    // We need a tiny delay for the transition to work if it was just display: none
+    requestAnimationFrame(() => {
+      panel.classList.add("show");
+    });
+  }
 });
 
 // Clear All button
@@ -266,10 +288,27 @@ function clearLocationSelection() {
   updateListingsSidebar(currentPoints);
 }
 
-// Click on map background clears selection
-map.on("click", () => {
+// Click on map background clears selection, hides filter panel, and returns to insights view
+map.on("click", (e) => {
+  console.log("DEBUG: Map background clicked", e);
+
   if (selectedLocationKey) {
     clearLocationSelection();
+  }
+
+  // Hide filter panel forcefully
+  const panel = document.getElementById("filterPanel");
+  if (panel) {
+    console.log("DEBUG: Hiding filter panel");
+    panel.classList.remove("show");
+    // Also explicitly hide it in case CSS hasn't loaded properly
+    panel.style.display = "none";
+  }
+
+  // If sidebar is open, close it (returning to insights)
+  if (currentView === "listings") {
+    console.log("DEBUG: Closing sidebar");
+    setView("insights");
   }
 });
 
