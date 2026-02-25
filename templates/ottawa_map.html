@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ottawa Map with Draggable Circle</title>
 
   <!-- ─── Vendor styles ─────────────────────────────────── -->
@@ -94,6 +95,30 @@
     <!-- Map + insights column -->
     <div id="mainPanel">
       <div id="map"></div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- MOBILE TAB BAR (Insights | Listings)                     -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div class="mobile-tab-bar" id="mobileTabBar" style="display:none;">
+        <button class="mobile-tab active" data-tab="insights">📊 Insights</button>
+        <button class="mobile-tab" data-tab="listings">🏠 Listings</button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- MOBILE LISTINGS (inline below map, not overlay)          -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div id="mobileListingsPanel" class="mobile-listings-panel" style="display:none;">
+        <div class="sort-container">
+          <label for="mobileSortSelect">Sort By:</label>
+          <select id="mobileSortSelect">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="desc-price">Highest Price</option>
+            <option value="asc-price">Lowest Price</option>
+          </select>
+        </div>
+        <div id="mobileListingRows" class="listing-rows"></div>
+      </div>
 
       <!-- ═══════════════════════════════════════════════════════ -->
       <!-- INSIGHTS FOOTER (expandable)                            -->

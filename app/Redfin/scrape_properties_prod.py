@@ -29,7 +29,7 @@ CONTAINER_NAME = "redfin-data"
 
 # Test configurations
 TEST_MODE = False
-MAX_URLS = 250 
+MAX_URLS = 1000
 
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"

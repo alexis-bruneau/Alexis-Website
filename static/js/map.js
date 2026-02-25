@@ -31,7 +31,7 @@ function setView(view) {
 
 // Global function for onclick handlers in HTML
 function toggleView() {
-  setView(currentView === "insights" ? "listings" : "insights");
+  (window.setView || setView)(currentView === "insights" ? "listings" : "insights");
 }
 
 document.getElementById("toggleListings")
@@ -528,6 +528,7 @@ async function fetchFilteredPoints() {
     selectedLocationKey = null; // Clear location selection
     selectedMarkerRef = null;
     updateListingsSidebar(points); // Only filtered points in sidebar
+    if (window._refreshMobileListings) window._refreshMobileListings(); // Also refresh mobile
 
   } catch (err) {
     console.error("Failed to fetch filtered points:", err);
@@ -883,3 +884,220 @@ function offsetToDateStr(offset) {
   const d = new Date(dateOrigin.getTime() + offset * msPerDay);
   return d.toISOString().split("T")[0];
 }
+
+// ═══════════════════════════════════════════════════════════
+// MOBILE: TABBED BOTTOM PANEL (Insights / Listings)
+// ═══════════════════════════════════════════════════════════
+(function initMobileTabs() {
+  const tabBar = document.getElementById("mobileTabBar");
+  const mobileListingsPanel = document.getElementById("mobileListingsPanel");
+  const mobileListingRows = document.getElementById("mobileListingRows");
+  const mobileSortSelect = document.getElementById("mobileSortSelect");
+  if (!tabBar || !mobileListingsPanel) return;
+
+  let activeMobileTab = "insights"; // default
+
+  function isMobile() {
+    // Portrait phone
+    if (window.innerWidth <= 768) return true;
+    // Landscape phone (short height, wider than tall)
+    if (window.innerHeight <= 500 && window.innerWidth > window.innerHeight) return true;
+    return false;
+  }
+
+  function applyMobileTab() {
+    if (!isMobile()) {
+      // Desktop: hide mobile elements, restore desktop insights
+      tabBar.style.display = "none";
+      mobileListingsPanel.style.display = "none";
+      insightsEl.classList.remove("mobile-hidden");
+      return;
+    }
+
+    // Show tab bar
+    tabBar.style.display = "flex";
+
+    // Update tab active states
+    tabBar.querySelectorAll(".mobile-tab").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === activeMobileTab);
+    });
+
+    if (activeMobileTab === "insights") {
+      insightsEl.classList.remove("mobile-hidden");
+      insightsEl.style.display = "flex";
+      mobileListingsPanel.style.display = "none";
+    } else {
+      insightsEl.classList.add("mobile-hidden");
+      insightsEl.style.display = "none";
+      mobileListingsPanel.style.display = "flex";
+      renderMobileListings();
+    }
+
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+
+  // Render listings into the mobile panel
+  function renderMobileListings() {
+    if (!mobileListingRows) return;
+
+    let list = currentPoints.slice();
+
+    // If a location is selected, filter
+    if (selectedLocationKey) {
+      list = list.filter(pt => {
+        const key = `${Number(pt.latitude).toFixed(7)},${Number(pt.longitude).toFixed(7)}`;
+        return key === selectedLocationKey;
+      });
+    }
+
+    // Sort using mobile sort select
+    const sortVal = mobileSortSelect ? mobileSortSelect.value : "newest";
+    switch (sortVal) {
+      case 'asc-price': list.sort((a, b) => a.price - b.price); break;
+      case 'desc-price': list.sort((a, b) => b.price - a.price); break;
+      case 'newest': list.sort((a, b) => new Date(b.sold_date) - new Date(a.sold_date)); break;
+      case 'oldest': list.sort((a, b) => new Date(a.sold_date) - new Date(b.sold_date)); break;
+      default:
+        const center = circle.getLatLng();
+        list.sort((a, b) => {
+          const da = center.distanceTo(L.latLng(a.latitude, a.longitude));
+          const db = center.distanceTo(L.latLng(b.latitude, b.longitude));
+          return da - db;
+        });
+    }
+
+    // Pagination
+    const MOBILE_PER_PAGE = 20;
+    const totalItems = list.length;
+    const totalPages = Math.min(Math.ceil(totalItems / MOBILE_PER_PAGE), 5);
+    if (window._mobileCurrentPage > totalPages) window._mobileCurrentPage = 1;
+    if (!window._mobileCurrentPage) window._mobileCurrentPage = 1;
+    const startIdx = (window._mobileCurrentPage - 1) * MOBILE_PER_PAGE;
+    const pageItems = list.slice(startIdx, startIdx + MOBILE_PER_PAGE);
+
+    mobileListingRows.innerHTML = "";
+
+    // Selection banner
+    if (selectedLocationKey) {
+      const banner = document.createElement("div");
+      banner.className = "selection-banner";
+      banner.innerHTML = `
+        <span>Showing ${list.length} listing${list.length !== 1 ? 's' : ''} at this address</span>
+        <button onclick="clearLocationSelection()">✕ Show All</button>
+      `;
+      mobileListingRows.appendChild(banner);
+    }
+
+    pageItems.forEach(pt => {
+      const row = document.createElement("div");
+      row.className = "listing-row";
+      row.innerHTML = `
+        <div class="image-wrapper">
+          <img
+            src="${pt.photo || ''}"
+            onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
+            alt=""
+          />
+        </div>
+        <div class="listing-info">
+          <strong>$${parseInt(pt.price).toLocaleString()}</strong>
+          <p>${pt.address}</p>
+          <p>${pt.beds} 🛏 | ${pt.baths} 🛁</p>
+          <p>${getTimeSinceSold(pt.sold_date)}</p>
+        </div>
+      `;
+      row.style.cursor = 'pointer';
+      row.addEventListener('click', () => {
+        window.open(pt.url, '_blank', 'noopener,noreferrer');
+      });
+      mobileListingRows.appendChild(row);
+    });
+
+    // Pagination controls
+    if (totalPages > 1) {
+      const paginationDiv = document.createElement("div");
+      paginationDiv.className = "pagination-controls";
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.className = `page-btn${i === window._mobileCurrentPage ? ' active' : ''}`;
+        btn.addEventListener("click", () => {
+          window._mobileCurrentPage = i;
+          renderMobileListings();
+          mobileListingsPanel.scrollTop = 0;
+        });
+        paginationDiv.appendChild(btn);
+      }
+      const info = document.createElement("span");
+      info.className = "pagination-info";
+      info.textContent = `${totalItems} total`;
+      paginationDiv.appendChild(info);
+
+      // Remove old pagination if any
+      const oldPag = mobileListingsPanel.querySelector(".pagination-controls");
+      if (oldPag) oldPag.remove();
+      mobileListingsPanel.appendChild(paginationDiv);
+    } else {
+      // Remove pagination when not needed
+      const oldPag = mobileListingsPanel.querySelector(".pagination-controls");
+      if (oldPag) oldPag.remove();
+    }
+  }
+
+  // Tab clicks
+  tabBar.querySelectorAll(".mobile-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activeMobileTab = btn.dataset.tab;
+      applyMobileTab();
+    });
+  });
+
+  // Mobile sort select change
+  if (mobileSortSelect) {
+    mobileSortSelect.addEventListener("change", () => {
+      window._mobileCurrentPage = 1;
+      renderMobileListings();
+    });
+  }
+
+  // When data updates, refresh mobile listings if visible
+  const origUpdateListingsSidebar = window.updateListingsSidebar || updateListingsSidebar;
+  // We expose a hook: after desktop sidebar updates, also refresh mobile
+  window._refreshMobileListings = function () {
+    if (isMobile() && activeMobileTab === "listings") {
+      renderMobileListings();
+    }
+  };
+
+  // When a marker is clicked and view switches to listings on desktop,
+  // also switch the mobile tab
+  const origSetView = setView;
+  window.setView = function (view) {
+    origSetView(view);
+    if (isMobile()) {
+      activeMobileTab = view === "listings" ? "listings" : "insights";
+      applyMobileTab();
+    }
+  };
+
+  // Re-evaluate on resize & orientation change
+  window.addEventListener("resize", () => {
+    applyMobileTab();
+    setTimeout(() => map.invalidateSize(), 100);
+  });
+
+  // Handle phone rotation specifically
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      applyMobileTab();
+      map.invalidateSize();
+    }, 300); // Delay for browser to complete rotation
+  });
+
+  // Initial setup
+  applyMobileTab();
+
+  // Expose renderMobileListings so it can be called after data loads
+  window._renderMobileListings = renderMobileListings;
+})();
+

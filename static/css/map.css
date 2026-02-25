@@ -781,7 +781,7 @@ body {
 
 /* ─── 12. RESPONSIVE DESIGN ─────────────────────────────── */
 
-/* When there's not enough space for side-by-side, stack vertically */
+/* ── Tablet / narrow desktop ── */
 @media (max-width: 1100px) {
   .summary-cards {
     grid-template-columns: repeat(2, 1fr);
@@ -812,35 +812,274 @@ body {
   }
 }
 
-/* Mobile */
+/* ── Mobile ── */
 @media (max-width: 768px) {
+
+  /* Body: full-height, no overflow so bottom panel fills space */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Controls bar: full-width, compact */
   #controls {
     flex-wrap: wrap;
-    width: calc(100% - 32px);
-    left: 16px;
+    justify-content: center;
+    width: calc(100% - 24px);
+    left: 12px;
     transform: none;
+    padding: 8px 12px;
+    gap: 8px;
+    top: 8px;
   }
 
-  .summary-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+  #controls label {
+    font-size: 13px;
   }
 
-  .card {
-    padding: 12px;
+  #controls input[type="number"] {
+    width: 55px;
+    padding: 5px 8px;
+    font-size: 13px;
   }
 
-  .card span {
-    font-size: 20px;
+  #controls button:not(.bed-btn):not(.clear-filters-btn) {
+    padding: 6px 12px;
+    font-size: 13px;
   }
 
+  /* Leaflet zoom: below controls bar, not overlapping */
+  .leaflet-top.leaflet-left {
+    top: 60px;
+  }
+
+  /* Filter panel: full width, compact */
+  #filterPanel {
+    left: 12px !important;
+    right: 12px;
+    width: auto;
+    transform: translateY(10px);
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+
+  #filterPanel.show {
+    transform: translateY(0);
+  }
+
+  /* Compact filter sections on mobile */
+  .filter-header {
+    padding: 10px 12px;
+  }
+
+  .filter-header h3 {
+    font-size: 14px;
+  }
+
+  .filter-section {
+    padding: 10px 12px;
+  }
+
+  .filter-section legend {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .range-labels {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .bed-btn {
+    min-width: 40px;
+    padding: 7px 10px;
+    font-size: 13px;
+    border-width: 1.5px;
+  }
+
+  #bedFilter {
+    gap: 5px;
+  }
+
+  .filter-hint {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .clear-filters-btn {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  /* App container: stack vertically, fill height */
+  #appContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 0;
+    min-height: 0;
+  }
+
+  /* Main panel: flex column, fill all space */
+  #mainPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 0;
+    min-height: 0;
+  }
+
+  /* Map: fixed height on mobile */
+  #map {
+    height: 55vh;
+    min-height: 250px;
+    flex: none;
+  }
+
+  /* Hide desktop sidebar on mobile — we use inline panel instead */
   #listingsPanel {
+    display: none !important;
+  }
+
+  /* ── Mobile Tab Bar ── */
+  .mobile-tab-bar {
+    display: flex !important;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    flex: none;
+  }
+
+  .mobile-tab {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 3px solid transparent;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab:active {
+    background: #e2e8f0;
+  }
+
+  .mobile-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    background: white;
+  }
+
+  /* ── Mobile Listings Panel (inline) ── */
+  .mobile-listings-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: white;
+    min-height: 0;
+  }
+
+  .mobile-listings-panel .sort-container {
+    position: sticky;
+    top: 0;
+    flex: none;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .mobile-listings-panel .listing-rows {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+  }
+
+  .mobile-listings-panel .pagination-controls {
+    flex: none;
+    position: sticky;
+    bottom: 0;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* ── Insights footer: stack cards + chart vertically, fills bottom ── */
+  #insights {
+    height: auto;
+    min-height: auto;
+    flex: 1;
+    flex-direction: column;
+    padding: 12px;
+    gap: 12px;
+    overflow-y: auto;
+  }
+
+  /* When insights is hidden on mobile */
+  #insights.mobile-hidden {
+    display: none;
+  }
+
+  /* Cards: 3 columns on mobile */
+  .insights-left {
+    flex: none;
     width: 100%;
   }
 
-  #insights {
-    height: 50vh;
-    padding: 12px;
+  .summary-cards {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .card {
+    padding: 10px 8px;
+  }
+
+  .card strong {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+
+  .card span {
+    font-size: 16px;
+  }
+
+  /* Chart: full width */
+  .insights-right {
+    flex: none;
+    width: 100%;
+    min-height: 200px;
+  }
+
+  .chart-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Listing rows: slightly more compact */
+  .listing-row img,
+  .no-image-placeholder {
+    width: 100px;
+    height: 70px;
+  }
+
+  .image-wrapper {
+    width: 100px;
+    height: 70px;
+  }
+
+  .listing-info strong {
+    font-size: 16px;
+  }
+
+  .listing-info p {
+    font-size: 12px;
   }
 
   .image-carousel {
@@ -848,21 +1087,300 @@ body {
   }
 }
 
+/* ── Extra-small mobile ── */
 @media (max-width: 480px) {
-  .summary-cards {
-    grid-template-columns: 1fr;
-  }
 
   #controls {
-    font-size: 13px;
+    font-size: 12px;
+    gap: 6px;
+    padding: 6px 10px;
   }
 
-  #controls button {
-    padding: 6px 12px;
-    font-size: 13px;
+  #controls button:not(.bed-btn):not(.clear-filters-btn) {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  /* Cards: 2 columns on very small screens */
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .card span {
+    font-size: 14px;
+  }
+
+  #map {
+    height: 50vh;
+    min-height: 250px;
   }
 
   .property-info-section strong {
     font-size: 20px;
+  }
+
+  .listing-row img,
+  .no-image-placeholder {
+    width: 80px;
+    height: 60px;
+  }
+
+  .image-wrapper {
+    width: 80px;
+    height: 60px;
+  }
+}
+
+/* ── Desktop: hide mobile-only elements ── */
+.mobile-tab-bar {
+  display: none;
+}
+
+.mobile-listings-panel {
+  display: none;
+}
+
+/* ── Landscape phone: side-by-side layout ── */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* Full height, no scroll */
+  html,
+  body {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  body {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* App container */
+  #appContainer {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 0 !important;
+    min-height: 0 !important;
+  }
+
+  /* Controls: centered over the map (map is 60% width, center = 30%) */
+  #controls {
+    padding: 4px 10px !important;
+    gap: 6px !important;
+    top: 4px !important;
+    left: 30% !important;
+    width: auto !important;
+    max-width: 55% !important;
+    transform: translateX(-50%) !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  #controls label {
+    font-size: 11px !important;
+  }
+
+  #controls input[type="number"] {
+    width: 40px !important;
+    padding: 2px 4px !important;
+    font-size: 11px !important;
+  }
+
+  #controls button:not(.bed-btn):not(.clear-filters-btn) {
+    padding: 3px 8px !important;
+    font-size: 11px !important;
+  }
+
+  /* Zoom controls: bottom-left of map */
+  .leaflet-top.leaflet-left {
+    top: auto !important;
+    bottom: 10px !important;
+    left: 8px !important;
+  }
+
+  /* Hide desktop sidebar */
+  #listingsPanel {
+    display: none !important;
+  }
+
+  /* ── Grid: map left 60%, content right 40% ── */
+  #mainPanel {
+    display: grid !important;
+    grid-template-columns: 60% 40% !important;
+    grid-template-rows: auto 1fr !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    flex: 1 !important;
+  }
+
+  /* Map: full left column */
+  #map {
+    grid-column: 1 !important;
+    grid-row: 1 / -1 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: none !important;
+  }
+
+  /* ── Tab bar: styled, centered, at top of right column ── */
+  .mobile-tab-bar {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 6px 12px !important;
+    background: #f1f5f9 !important;
+    border-left: 1px solid #e2e8f0;
+    border-top: none !important;
+    border-bottom: 1px solid #e2e8f0;
+    flex: none !important;
+  }
+
+  .mobile-tab {
+    flex: none !important;
+    padding: 5px 16px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: white !important;
+    color: #64748b !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .mobile-tab.active {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3) !important;
+  }
+
+  /* Insights: right column content, scrollable */
+  #insights {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto !important;
+    padding: 8px !important;
+    gap: 8px !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .insights-left {
+    flex: none !important;
+    width: 100% !important;
+  }
+
+  .insights-right {
+    flex: none !important;
+    width: 100% !important;
+    min-height: 150px !important;
+  }
+
+  /* Mobile listings: right column — NO display:none so JS inline style works */
+  .mobile-listings-panel {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    border-left: 1px solid #e2e8f0;
+    overflow: hidden !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  .mobile-listings-panel .sort-container {
+    position: sticky !important;
+    top: 0 !important;
+  }
+
+  .mobile-listings-panel .listing-rows {
+    padding: 6px 8px;
+    overflow-y: auto !important;
+  }
+
+  /* Stat cards: 2 columns for narrow panel */
+  .summary-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .card {
+    padding: 5px 4px;
+  }
+
+  .card strong {
+    font-size: 9px;
+  }
+
+  .card span {
+    font-size: 12px;
+  }
+
+  .chart-header {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .chart-header h3 {
+    font-size: 13px;
+  }
+
+  .chart-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  /* Filter panel: drop centered below controls */
+  #filterPanel {
+    max-height: 85vh !important;
+    width: 260px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(10px) !important;
+  }
+
+  #filterPanel.show {
+    transform: translateX(-50%) translateY(0) !important;
+  }
+
+  .filter-section {
+    padding: 6px 10px;
+  }
+
+  .filter-section legend {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .bed-btn {
+    padding: 4px 6px !important;
+    font-size: 11px !important;
+    min-width: 36px !important;
+  }
+
+  /* Listing images: compact */
+  .listing-row img,
+  .no-image-placeholder {
+    width: 60px !important;
+    height: 44px !important;
+  }
+
+  .image-wrapper {
+    width: 60px !important;
+    height: 44px !important;
+  }
+
+  .listing-info strong {
+    font-size: 13px !important;
+  }
+
+  .listing-info p {
+    font-size: 10px !important;
   }
 }
