@@ -251,7 +251,6 @@ function highlightSidebarListing(mls) {
     const idx = getSortedList().findIndex(pt => pt.mls === mls);
     if (idx === -1) return;
     const targetPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
-    if (targetPage > MAX_PAGES) return; // Beyond max pages
     currentPage = targetPage;
     updateListingsSidebar(currentPoints);
     row = document.getElementById(`listing-${mls}`);
@@ -331,8 +330,86 @@ map.on("click", (e) => {
 
 // ─── Pagination state ───────────────────────────────────────────
 const ITEMS_PER_PAGE = 20;
-const MAX_PAGES = 5;
 let currentPage = 1;
+
+/**
+ * Generate smart pagination into a target container.
+ * Shows: « 1 2 3 ... N » with window around current page.
+ */
+function renderPagination(container, currentPg, totalPages, totalItems, onPageClick) {
+  container.innerHTML = "";
+  if (totalPages <= 1) return;
+
+  // Prev button
+  const prevBtn = document.createElement("button");
+  prevBtn.textContent = "«";
+  prevBtn.className = "page-btn nav-btn";
+  prevBtn.disabled = currentPg === 1;
+  prevBtn.addEventListener("click", () => onPageClick(currentPg - 1));
+  container.appendChild(prevBtn);
+
+  // Determine which page numbers to show
+  const pages = getPageNumbers(currentPg, totalPages);
+  pages.forEach(p => {
+    if (p === "...") {
+      const ellipsis = document.createElement("span");
+      ellipsis.className = "page-ellipsis";
+      ellipsis.textContent = "…";
+      container.appendChild(ellipsis);
+    } else {
+      const btn = document.createElement("button");
+      btn.textContent = p;
+      btn.className = `page-btn${p === currentPg ? ' active' : ''}`;
+      btn.addEventListener("click", () => onPageClick(p));
+      container.appendChild(btn);
+    }
+  });
+
+  // Next button
+  const nextBtn = document.createElement("button");
+  nextBtn.textContent = "»";
+  nextBtn.className = "page-btn nav-btn";
+  nextBtn.disabled = currentPg === totalPages;
+  nextBtn.addEventListener("click", () => onPageClick(currentPg + 1));
+  container.appendChild(nextBtn);
+
+  // Total count
+  const info = document.createElement("span");
+  info.className = "pagination-info";
+  info.textContent = `${totalItems.toLocaleString()} total`;
+  container.appendChild(info);
+}
+
+/**
+ * Returns array of page numbers and "..." ellipsis markers.
+ * Always shows first, last, and a window around current page.
+ */
+function getPageNumbers(current, total) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = [];
+  // Always show page 1
+  pages.push(1);
+
+  // Start of window around current
+  const windowStart = Math.max(2, current - 1);
+  const windowEnd = Math.min(total - 1, current + 1);
+
+  if (windowStart > 2) pages.push("...");
+
+  for (let i = windowStart; i <= windowEnd; i++) {
+    pages.push(i);
+  }
+
+  if (windowEnd < total - 1) pages.push("...");
+
+  // Always show last page
+  pages.push(total);
+
+  return pages;
+}
 
 function updateListingsSidebar(points) {
   let list = points.slice();
@@ -379,7 +456,7 @@ function updateListingsSidebar(points) {
 
   // Pagination
   const totalItems = list.length;
-  const totalPages = Math.min(Math.ceil(totalItems / ITEMS_PER_PAGE), MAX_PAGES);
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   if (currentPage > totalPages) currentPage = 1;
   const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
   const pageItems = list.slice(startIdx, startIdx + ITEMS_PER_PAGE);
@@ -440,31 +517,13 @@ function updateListingsSidebar(points) {
     container.appendChild(row);
   });
 
-  // Render pagination controls
-  if (totalPages > 1) {
-    const paginationDiv = document.createElement("div");
-    paginationDiv.className = "pagination-controls";
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      btn.className = `page-btn${i === currentPage ? ' active' : ''}`;
-      btn.addEventListener("click", () => {
-        currentPage = i;
-        updateListingsSidebar(currentPoints);
-        // Scroll to top of listings
-        container.scrollTop = 0;
-      });
-      paginationDiv.appendChild(btn);
-    }
-
-    const info = document.createElement("span");
-    info.className = "pagination-info";
-    info.textContent = `${totalItems} total`;
-    paginationDiv.appendChild(info);
-
-    container.appendChild(paginationDiv);
-  }
+  // Render pagination into the dedicated sticky container
+  const paginationContainer = document.getElementById("paginationControls");
+  renderPagination(paginationContainer, currentPage, totalPages, totalItems, (page) => {
+    currentPage = page;
+    updateListingsSidebar(currentPoints);
+    container.scrollTop = 0;
+  });
 }
 
 
@@ -1005,7 +1064,7 @@ function offsetToDateStr(offset) {
     // Pagination
     const MOBILE_PER_PAGE = 20;
     const totalItems = list.length;
-    const totalPages = Math.min(Math.ceil(totalItems / MOBILE_PER_PAGE), 5);
+    const totalPages = Math.ceil(totalItems / MOBILE_PER_PAGE);
     if (window._mobileCurrentPage > totalPages) window._mobileCurrentPage = 1;
     if (!window._mobileCurrentPage) window._mobileCurrentPage = 1;
     const startIdx = (window._mobileCurrentPage - 1) * MOBILE_PER_PAGE;
@@ -1049,35 +1108,14 @@ function offsetToDateStr(offset) {
       mobileListingRows.appendChild(row);
     });
 
-    // Pagination controls
-    if (totalPages > 1) {
-      const paginationDiv = document.createElement("div");
-      paginationDiv.className = "pagination-controls";
-      for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        btn.className = `page-btn${i === window._mobileCurrentPage ? ' active' : ''}`;
-        btn.addEventListener("click", () => {
-          window._mobileCurrentPage = i;
-          renderMobileListings();
-          mobileListingsPanel.scrollTop = 0;
-        });
-        paginationDiv.appendChild(btn);
-      }
-      const info = document.createElement("span");
-      info.className = "pagination-info";
-      info.textContent = `${totalItems} total`;
-      paginationDiv.appendChild(info);
+    // Render pagination into the dedicated sticky container
+    const mobilePagContainer = document.getElementById("mobilePaginationControls");
+    renderPagination(mobilePagContainer, window._mobileCurrentPage, totalPages, totalItems, (page) => {
+      window._mobileCurrentPage = page;
+      renderMobileListings();
+      mobileListingRows.scrollTop = 0;
+    });
 
-      // Remove old pagination if any
-      const oldPag = mobileListingsPanel.querySelector(".pagination-controls");
-      if (oldPag) oldPag.remove();
-      mobileListingsPanel.appendChild(paginationDiv);
-    } else {
-      // Remove pagination when not needed
-      const oldPag = mobileListingsPanel.querySelector(".pagination-controls");
-      if (oldPag) oldPag.remove();
-    }
   }
 
   // Tab clicks

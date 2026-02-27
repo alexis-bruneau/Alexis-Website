@@ -100,7 +100,9 @@ body {
   max-width: 90vw;
   background: #ffffff;
   box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   transform: translateX(-100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1001;
@@ -538,6 +540,9 @@ body {
 /* ─── 10. LISTING ROWS (SIDEBAR) ────────────────────────────── */
 .listing-rows {
   padding: 12px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .listing-row {
@@ -642,10 +647,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 14px 16px;
+  gap: 4px;
+  padding: 10px 12px;
   border-top: 1px solid #e2e8f0;
   background: #f8fafc;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.pagination-controls:empty {
+  display: none;
 }
 
 .page-btn {
@@ -674,6 +685,32 @@ body {
   color: white;
   border-color: #2563eb;
   font-weight: 600;
+}
+
+.page-btn.nav-btn {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2563eb;
+  border-color: #2563eb;
+}
+
+.page-btn.nav-btn:disabled {
+  color: #cbd5e1;
+  border-color: #e2e8f0;
+  cursor: default;
+  background: #f8fafc;
+}
+
+.page-ellipsis {
+  width: 24px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+  user-select: none;
 }
 
 .pagination-info {
