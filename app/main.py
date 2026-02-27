@@ -158,6 +158,7 @@ def points():
         sys.stderr.write(f"ERROR in points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/ottawa_map")
 def ottawa_map():
     return render_template("ottawa_map.html")

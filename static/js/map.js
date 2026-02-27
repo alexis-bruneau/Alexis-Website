@@ -7,6 +7,23 @@ sortSelect.addEventListener("change", () => {
 
 const IMG_BASE = "/redfin-images/";   // Local Flask route for development
 
+// ─── Search state ───────────────────────────────────────────────
+let searchQuery = "";
+const listingSearchInput = document.getElementById("listingSearch");
+const mobileSearchInput = document.getElementById("mobileListingSearch");
+
+function handleSearchInput(e) {
+  searchQuery = e.target.value.toLowerCase();
+  // Keep both inputs in sync
+  if (listingSearchInput && listingSearchInput !== e.target) listingSearchInput.value = e.target.value;
+  if (mobileSearchInput && mobileSearchInput !== e.target) mobileSearchInput.value = e.target.value;
+  currentPage = 1;
+  updateListingsSidebar(currentPoints);
+}
+
+if (listingSearchInput) listingSearchInput.addEventListener("input", handleSearchInput);
+if (mobileSearchInput) mobileSearchInput.addEventListener("input", handleSearchInput);
+
 // ─── view-state helpers ─────────────────────────────────────────
 const listingsPanel = document.getElementById("listingsPanel");
 const insightsEl = document.getElementById("insights");
@@ -328,6 +345,15 @@ function updateListingsSidebar(points) {
     });
   }
 
+  // Search filter
+  if (searchQuery) {
+    list = list.filter(pt => {
+      const addr = (pt.address || "").toLowerCase();
+      const price = `$${parseInt(pt.price).toLocaleString()}`;
+      return addr.includes(searchQuery) || price.includes(searchQuery);
+    });
+  }
+
   // sort
   switch (sortSelect.value) {
     case 'asc-price':
@@ -468,6 +494,7 @@ noUiSlider.create(slider, {
 slider.noUiSlider.on("update", updateDateLabels);
 slider.noUiSlider.on("change", () => fetchFilteredPoints());
 updateDateLabels();
+
 
 const priceSlider = document.getElementById("priceRangeSlider");
 const labelPriceMin = document.getElementById("labelPriceMin");
@@ -950,6 +977,15 @@ function offsetToDateStr(offset) {
       });
     }
 
+    // Search filter (uses shared searchQuery variable)
+    if (searchQuery) {
+      list = list.filter(pt => {
+        const addr = (pt.address || "").toLowerCase();
+        const price = `$${parseInt(pt.price).toLocaleString()}`;
+        return addr.includes(searchQuery) || price.includes(searchQuery);
+      });
+    }
+
     // Sort using mobile sort select
     const sortVal = mobileSortSelect ? mobileSortSelect.value : "newest";
     switch (sortVal) {
@@ -1055,6 +1091,18 @@ function offsetToDateStr(offset) {
   // Mobile sort select change
   if (mobileSortSelect) {
     mobileSortSelect.addEventListener("change", () => {
+      window._mobileCurrentPage = 1;
+      renderMobileListings();
+    });
+  }
+
+  // Mobile search input
+  const mobileSearch = document.getElementById("mobileListingSearch");
+  if (mobileSearch) {
+    mobileSearch.addEventListener("input", (e) => {
+      searchQuery = e.target.value.toLowerCase();
+      // Keep desktop search in sync
+      if (listingSearchInput) listingSearchInput.value = e.target.value;
       window._mobileCurrentPage = 1;
       renderMobileListings();
     });

@@ -79,6 +79,11 @@
         📊 View Insights
       </button>
 
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="listingSearch" placeholder="Search by address, price…" autocomplete="off" />
+      </div>
+
       <div class="sort-container">
         <label for="sortSelect">Sort By:</label>
         <select id="sortSelect" onchange="sortListings(this.value)">
@@ -108,6 +113,10 @@
       <!-- MOBILE LISTINGS (inline below map, not overlay)          -->
       <!-- ═══════════════════════════════════════════════════════ -->
       <div id="mobileListingsPanel" class="mobile-listings-panel" style="display:none;">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="mobileListingSearch" placeholder="Search by address, price…" autocomplete="off" />
+        </div>
         <div class="sort-container">
           <label for="mobileSortSelect">Sort By:</label>
           <select id="mobileSortSelect">
