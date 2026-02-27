@@ -447,12 +447,63 @@ body {
   padding: 0;
 }
 
+/* ─── noUiSlider Customization ──────────────────────────────── */
+#filterPanel .noUi-target {
+  background: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.06);
+  height: 6px;
+}
+
+#filterPanel .noUi-connect {
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 6px;
+}
+
+#filterPanel .noUi-handle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  border: 2.5px solid #2563eb;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  cursor: grab;
+  top: -8px;
+  right: -10px;
+}
+
+#filterPanel .noUi-handle:active {
+  cursor: grabbing;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), 0 2px 6px rgba(37, 99, 235, 0.25);
+  transform: scale(1.1);
+}
+
+#filterPanel .noUi-handle::before,
+#filterPanel .noUi-handle::after {
+  display: none;
+}
+
+/* ─── Range Value Labels ────────────────────────────────────── */
 .range-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
-  margin-top: 8px;
-  color: #64748b;
+  margin-top: 10px;
+  gap: 8px;
+}
+
+.range-labels span {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 .filter-mode-indicator {

@@ -104,7 +104,22 @@ const locationMarkersMap = new Map(); // Map "lat,lng" to marker
 
 fetch("/points.json")
   .then(r => r.json())
-  .then(points => {
+  .then(data => {
+    // Support both {points: [...], date_range: {...}} and flat array
+    const points = data.points || data;
+
+    // Update date slider with actual data range
+    if (data.date_range && data.date_range.min_date) {
+      dateOrigin = new Date(data.date_range.min_date);
+      const maxDate = data.date_range.max_date ? new Date(data.date_range.max_date) : new Date();
+      totalDays = Math.floor((maxDate - dateOrigin) / msPerDay);
+      slider.noUiSlider.updateOptions({
+        range: { min: 0, max: totalDays },
+        start: [0, totalDays]
+      });
+      updateDateLabels();
+    }
+
     // Group properties by coordinates to create one marker per unique location
     const locationGroups = new Map();
     points.forEach((point) => {
@@ -528,15 +543,18 @@ function updateListingsSidebar(points) {
 
 
 /************** 5. FILTERED DATA REQUEST **************/
-const dateOrigin = new Date("2019-01-01");
+let dateOrigin = new Date("2019-01-01");  // default, updated when data loads
 const msPerDay = 1000 * 60 * 60 * 24;
-const today = new Date();
-const totalDays = Math.floor((today - dateOrigin) / msPerDay);
+let totalDays = Math.floor((new Date() - dateOrigin) / msPerDay);
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function updateDateLabels() {
   const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
-  labelStart.textContent = offsetToDateStr(startOffset);
-  labelEnd.textContent = offsetToDateStr(endOffset);
+  const startDate = new Date(dateOrigin.getTime() + startOffset * msPerDay);
+  const endDate = new Date(dateOrigin.getTime() + endOffset * msPerDay);
+  labelStart.textContent = `${MONTH_NAMES[startDate.getMonth()]} ${startDate.getFullYear()}`;
+  labelEnd.textContent = `${MONTH_NAMES[endDate.getMonth()]} ${endDate.getFullYear()}`;
 }
 
 const slider = document.getElementById("dateRangeSlider");

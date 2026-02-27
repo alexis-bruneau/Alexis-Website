@@ -152,7 +152,24 @@ def points():
             return obj
             
         points_data = sanitize(points_data)
-        return jsonify(points_data)
+
+        # Get the actual date range from the data
+        date_range = {"min_date": None, "max_date": None}
+        try:
+            dates_df = con.execute("""
+                SELECT "Sold Date" FROM properties
+                WHERE "Sold Date" IS NOT NULL AND "Sold Date" != ''
+            """).fetchdf()
+            if not dates_df.empty:
+                parsed = pd.to_datetime(dates_df["Sold Date"], format="mixed", dayfirst=False)
+                parsed = parsed.dropna()
+                if not parsed.empty:
+                    date_range["min_date"] = parsed.min().strftime("%Y-%m-%d")
+                    date_range["max_date"] = parsed.max().strftime("%Y-%m-%d")
+        except Exception as e:
+            sys.stderr.write(f"Date range error: {e}\n")
+
+        return jsonify({"points": points_data, "date_range": date_range})
 
     except Exception as e:
         sys.stderr.write(f"ERROR in points: {str(e)}\n{traceback.format_exc()}\n")
