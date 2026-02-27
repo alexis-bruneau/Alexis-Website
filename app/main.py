@@ -107,7 +107,8 @@ def points():
                 url, 
                 photo_blob, 
                 "Days On Market" as dom,
-                "Sold Price Difference" as price_diff
+                "Sold Price Difference" as price_diff,
+                "Property Type" as ptype
             FROM properties
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
         """
@@ -225,7 +226,8 @@ def filtered_points():
                 url, 
                 photo_blob, 
                 "Days On Market" as dom,
-                "Sold Price Difference" as price_diff
+                "Sold Price Difference" as price_diff,
+                "Property Type" as ptype
             FROM properties
             WHERE {where_str}
         """
@@ -267,6 +269,8 @@ def filtered_points():
             df = df[df["sold_date"] <= pd.to_datetime(filters["sold_end"])]
         if "beds" in filters and filters["beds"]:
              df = df[df["beds"].isin(filters["beds"])]
+        if "ptypes" in filters and filters["ptypes"]:
+             df = df[df["ptype"].isin(filters["ptypes"])]
 
         # Calculations
         # List Price = Sold - Diff
@@ -286,7 +290,7 @@ def filtered_points():
         # Select Output Columns
         out_cols = [
             "latitude", "longitude", "price", "sold_date", "address", "mls",
-            "beds", "baths", "url", "photo", "dom", "price_diff_pct"
+            "beds", "baths", "url", "photo", "dom", "price_diff_pct", "ptype"
         ]
         # Valid columns only
         out_cols = [c for c in out_cols if c in df.columns]

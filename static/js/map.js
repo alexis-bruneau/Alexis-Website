@@ -59,6 +59,9 @@ document.getElementById("toggleListings")
 let selectedBeds = [];    // e.g. [2,3,4,5]
 let rangeMode = false; // first click = “range”, second = “exact”
 
+/************** PTYPE-FILTER STATE **************/
+let selectedPTypes = [];  // Array of property types
+
 
 /************** 1. MAP SETUP **************/
 const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
@@ -222,6 +225,10 @@ document.getElementById("clearFilters").addEventListener("click", () => {
   rangeMode = false;
   document.querySelectorAll(".bed-btn").forEach(b => b.classList.remove("selected"));
 
+  // Reset property type filter
+  selectedPTypes = [];
+  document.querySelectorAll(".ptype-btn").forEach(b => b.classList.remove("selected"));
+
   // Reset date range slider to full range
   slider.noUiSlider.set([0, totalDays]);
 
@@ -252,6 +259,24 @@ document.querySelectorAll(".bed-btn").forEach(btn => {
       btn.classList.add("selected");
       selectedBeds = [clicked];
       rangeMode = false;
+    }
+
+    fetchFilteredPoints();
+  });
+});
+
+// Property Type buttons
+document.querySelectorAll(".ptype-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const ptype = btn.dataset.ptype;
+
+    // Toggle state
+    if (selectedPTypes.includes(ptype)) {
+      selectedPTypes = selectedPTypes.filter(t => t !== ptype);
+      btn.classList.remove("selected");
+    } else {
+      selectedPTypes.push(ptype);
+      btn.classList.add("selected");
     }
 
     fetchFilteredPoints();
@@ -500,6 +525,8 @@ function updateListingsSidebar(points) {
       <div class="image-wrapper">
         <img
           src="${pt.photo || ''}"
+          referrerpolicy="no-referrer"
+          loading="lazy"
           onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
           alt=""
         />
@@ -507,7 +534,7 @@ function updateListingsSidebar(points) {
       <div class="listing-info">
         <strong>$${parseInt(pt.price).toLocaleString()}</strong>
         <p>${pt.address}</p>
-        <p>${pt.beds} 🛏 | ${pt.baths} 🛁</p>
+        <p>${pt.beds} 🛏 | ${pt.baths} 🛁 | <strong>${pt.ptype || 'Unknown Type'}</strong></p>
         <p>${getTimeSinceSold(pt.sold_date)}</p>
         <a
           href="${pt.url}"
@@ -609,6 +636,7 @@ async function fetchFilteredPoints() {
   if (minPrice > MIN_PRICE) filters.min_price = minPrice;
   if (maxPrice < MAX_PRICE) filters.max_price = maxPrice;
   if (selectedBeds.length) filters.beds = selectedBeds;
+  if (selectedPTypes.length) filters.ptypes = selectedPTypes;
 
   const payload = {
     center: [center.lat, center.lng],

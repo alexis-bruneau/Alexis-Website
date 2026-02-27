@@ -294,6 +294,15 @@ def process_property(url, context):
     else:
         first_image_blob = None
 
+    # Extract Property Type securely
+    prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
+    if prop_type_match:
+        property_type = prop_type_match.group(1).title()
+    else:
+        property_type = extract_between(html, 'Property Type","content":"', "\\")
+        if property_type == "N/A":
+            property_type = None
+
     # 6. Return Data Record
     record = {
         "url": url,
@@ -304,7 +313,7 @@ def process_property(url, context):
         "Sold Date": sold_evt["eventDate"] if sold_evt else extract_between(html, '"lastSaleDate":"'),
         "Address": extract_between(html, 'assembledAddress":"', "\\"),
         "Postal Code": extract_between(html, '"postalCode":"', '"'),
-        "Property Type": extract_between(html, 'Property Type","content":"', "\\"),
+        "Property Type": property_type,
         "latitude": lat,
         "longitude": lon,
         "First Listed Date": first_listed_evt["eventDate"] if first_listed_evt else None,

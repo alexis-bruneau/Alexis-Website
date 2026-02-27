@@ -39,7 +39,7 @@ body {
   padding: 12px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 1000;
+  z-index: 9999;
   transition: all 0.3s ease;
 }
 
@@ -65,7 +65,7 @@ body {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-#controls button:not(.bed-btn):not(.clear-filters-btn) {
+#controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) {
   padding: 8px 16px;
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
@@ -78,12 +78,12 @@ body {
   box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
 }
 
-#controls button:not(.bed-btn):not(.clear-filters-btn):hover {
+#controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
 }
 
-#controls button:not(.bed-btn):not(.clear-filters-btn):active {
+#controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):active {
   transform: translateY(0);
 }
 
@@ -376,7 +376,7 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 1001;
+  z-index: 9999;
   overflow: hidden;
   transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
   visibility: hidden;
@@ -539,15 +539,17 @@ body {
   line-height: 1.4;
 }
 
-#bedFilter {
+#bedFilter,
+#ptypeFilter {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.bed-btn {
+.bed-btn,
+.ptype-btn {
   flex: 1;
-  min-width: 50px;
+  min-width: 45%;
   padding: 10px 16px;
   border: 2px solid #2563eb;
   background: transparent;
@@ -558,14 +560,28 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  text-align: center;
 }
 
-.bed-btn:hover {
+.bed-btn {
+  min-width: 50px;
+}
+
+.ptype-btn {
+  font-size: 13px;
+  /* Slightly smaller for longer text */
+  flex: 1 1 45%;
+  /* Use 2x2 grid layout */
+}
+
+.bed-btn:hover,
+.ptype-btn:hover {
   background: rgba(37, 99, 235, 0.05);
   transform: translateY(-1px);
 }
 
-.bed-btn.selected {
+.bed-btn.selected,
+.ptype-btn.selected {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border-color: #1d4ed8;
@@ -958,34 +974,39 @@ body {
 
   /* Controls bar: full-width, compact */
   #controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    width: calc(100% - 24px);
-    left: 12px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: calc(100% - 16px);
+    left: 8px;
     transform: none;
-    padding: 8px 12px;
-    gap: 8px;
+    padding: 6px 8px;
+    gap: 4px;
     top: 8px;
   }
 
   #controls label {
-    font-size: 13px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   #controls input[type="number"] {
-    width: 55px;
-    padding: 5px 8px;
-    font-size: 13px;
+    width: 40px;
+    padding: 4px 6px;
+    font-size: 12px;
   }
 
-  #controls button:not(.bed-btn):not(.clear-filters-btn) {
-    padding: 6px 12px;
-    font-size: 13px;
+  #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) {
+    padding: 6px 8px;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
-  /* Leaflet zoom: below controls bar, not overlapping */
+  /* Leaflet zoom: move to bottom right on mobile */
   .leaflet-top.leaflet-left {
-    top: 60px;
+    top: auto !important;
+    bottom: 20px !important;
+    left: auto !important;
+    right: 12px !important;
   }
 
   /* Filter panel: full width, compact */
@@ -1025,11 +1046,21 @@ body {
     margin-top: 6px;
   }
 
+  .bed-btn,
+  .ptype-btn {
+    border-width: 1.5px;
+  }
+
   .bed-btn {
     min-width: 40px;
     padding: 7px 10px;
     font-size: 13px;
-    border-width: 1.5px;
+  }
+
+  .ptype-btn {
+    font-size: 11px;
+    padding: 7px 4px;
+    min-width: auto;
   }
 
   #bedFilter {
@@ -1197,6 +1228,10 @@ body {
     flex: none;
     width: 100%;
     min-height: 200px;
+  }
+
+  .chart-container-full {
+    min-height: 150px;
   }
 
   .chart-header {
@@ -1424,6 +1459,10 @@ body {
     flex: none !important;
     width: 100% !important;
     min-height: 200px !important;
+  }
+
+  .chart-container-full {
+    min-height: 150px !important;
   }
 
   /* Mobile listings: right column — NO display:none so JS inline style works */
