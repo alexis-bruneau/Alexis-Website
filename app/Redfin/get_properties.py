@@ -27,45 +27,27 @@ WAIT_SEC = 2
 # ---------------- Helpers -------------------------------------------------
 
 def get_latest_azure_urls():
-    """Fetches the LATEST parquet file from Azure and returns a set of known URLs."""
+    """Returns the set of listing URLs already stored in ANY silver/<month>/ parquet in Azure."""
     if not AZURE_CONN_STR:
-        print("⚠️ No AZURE_STORAGE_CONNECTION_STRING. Skipping Azure check.")
+        print("No AZURE_STORAGE_CONNECTION_STRING. Skipping Azure check.")
         return set()
 
     try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
-        container_client = blob_service_client.get_container_client(CONTAINER_NAME)
-        
-        # Find latest parquet in silver/
-        blobs = container_client.list_blobs(name_starts_with="silver/")
-        latest_blob = None
-        latest_time = None
-        
-        for blob in blobs:
-            if blob.name.endswith("listed_properties.parquet"):
-                if latest_time is None or blob.last_modified > latest_time:
-                    latest_time = blob.last_modified
-                    latest_blob = blob.name
-                    
-        if latest_blob:
-            print(f"✅ Found latest Azure data: {latest_blob}")
-            blob_client = container_client.get_blob_client(latest_blob)
-            data = blob_client.download_blob().readall()
-            
-            df = pd.read_parquet(io.BytesIO(data))
-            if "url" in df.columns:
-                urls = set(df["url"].dropna().tolist())
-                print(f"ℹ️ Loaded {len(urls)} existing URLs from Azure.")
-                return urls
-            else:
-                print("⚠️ Azure parquet missing 'url' column.")
-                return set()
-        else:
-            print("ℹ️ No existing parquet files in Azure.")
-            return set()
-            
+        container_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR).get_container_client(CONTAINER_NAME)
+        urls = set()
+        files = 0
+        for blob in container_client.list_blobs(name_starts_with="silver/"):
+            if not blob.name.endswith("listed_properties.parquet"):
+                continue
+            data = container_client.get_blob_client(blob.name).download_blob().readall()
+            df = pd.read_parquet(io.BytesIO(data), columns=["url"])
+            urls.update(df["url"].dropna())
+            files += 1
+        print(f"Loaded {len(urls)} known URLs from {files} Azure parquet file(s).")
+        return urls
+
     except Exception as e:
-        print(f"❌ Error fetching Azure data: {e}")
+        print(f"Error fetching Azure data: {e}")
         return set()
 
 def get_local_urls():

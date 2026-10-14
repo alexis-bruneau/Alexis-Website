@@ -36,6 +36,15 @@ BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
 WAIT_SEC = 2
 
+# Run limits (all overridable from the environment / --limit):
+#   MAX_SCRAPE_COUNT  0 = process every pending URL (default). Set a number to cap a run.
+#   CHECKPOINT_EVERY  upload the silver parquet after this many listings, so a crash loses little.
+#   MAX_CONSECUTIVE_FAILURES  stop early when Redfin is clearly blocking us (expired cookies, 403s).
+MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", "0"))
+CHECKPOINT_EVERY = int(os.getenv("CHECKPOINT_EVERY", "25"))
+MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", "8"))
+IMAGE_WORKERS = 8
+
 # ---------------- Azure Client --------------------------------------------
 if not CONN_STR:
     raise ValueError("Missing AZURE_STORAGE_CONNECTION_STRING in .env")
@@ -64,41 +73,40 @@ def load_redfin_cookies():
         if ".redfin.ca" in c.get("domain", "")
     ]
 
+# Blob names already in Azure, listed once at startup (replaces one exists() call per listing).
+_bronze_today = set()
+_existing_images = set()
+
 def upload_bronze_html(html_content, mls):
-    """Saves compressed HTML to bronze/YYYY-MM-DD/mls.html.gz"""
+    """Saves compressed HTML to bronze/YYYY-MM-DD/mls.html.gz. Returns False if already saved today."""
     today = datetime.now().strftime("%Y-%m-%d")
     blob_name = f"bronze/{today}/{mls}.html.gz"
-    
-    # Check if exists (Idempotency)
-    try:
-        if container_client.get_blob_client(blob_name).exists():
-            return False # Skipped
-    except:
-        pass
+    if blob_name in _bronze_today:
+        return False  # Skipped
 
-    # Compress
     compressed = zlib.compress(html_content.encode("utf-8"))
-    
-    blob_client = container_client.get_blob_client(blob_name)
-    blob_client.upload_blob(compressed, overwrite=True)
-    return True # Uploaded
+    container_client.get_blob_client(blob_name).upload_blob(compressed, overwrite=True)
+    _bronze_today.add(blob_name)
+    return True  # Uploaded
 
-def upload_image(mls, image_url):
-    """Uploads ONLY the first image to images/mls_1.jpg"""
+def upload_image(mls, image_url, retries=3):
+    """Uploads ONLY the first image to images/mls_1.jpg. Returns True only if the blob is in Azure."""
     blob_name = f"images/{mls}_1.jpg"
-    blob_client = container_client.get_blob_client(blob_name)
-    
-    # Check if exists to save bandwidth/cost
-    if blob_client.exists():
-        return 
-        
-    try:
-        resp = requests.get(image_url, timeout=10)
-        if resp.status_code == 200:
-            blob_client.upload_blob(resp.content, overwrite=True)
-            # print(f"   -> Saved Image: {blob_name}")
-    except Exception as e:
-        print(f"   -> Failed Image {mls}: {e}")
+    if blob_name in _existing_images:
+        return True
+
+    for attempt in range(1, retries + 1):
+        try:
+            resp = requests.get(image_url, timeout=15)
+            if resp.status_code == 200 and resp.content:
+                container_client.get_blob_client(blob_name).upload_blob(resp.content, overwrite=True)
+                _existing_images.add(blob_name)
+                return True
+            print(f"   -> Image {mls}: HTTP {resp.status_code} (attempt {attempt}/{retries})")
+        except Exception as e:
+            print(f"   -> Image {mls} failed (attempt {attempt}/{retries}): {e}")
+        time.sleep(attempt)  # simple backoff
+    return False
 
 # ---------------- Parsing Logic (Copied from scrape_properties.py) --------
 
@@ -286,13 +294,8 @@ def process_property(url, context):
     # 5. Handle Images (First one only)
     mls_tail = mls[-3:] if len(mls) >= 3 else mls
     image_filenames = find_genmid_values(html)
-    if image_filenames:
-        # Construct URL for the FIRST image
-        first_img_url = f"{BASE_IMAGE_URL}{mls_tail}/genMid.{image_filenames[0]}"
-        upload_image(mls, first_img_url)
-        first_image_blob = f"images/{mls}_1.jpg" # Reference for DB
-    else:
-        first_image_blob = None
+    # The upload happens in main() (in parallel); photo_blob is only set once it succeeds.
+    first_img_url = f"{BASE_IMAGE_URL}{mls_tail}/genMid.{image_filenames[0]}" if image_filenames else None
 
     # Extract Property Type securely
     prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
@@ -319,99 +322,123 @@ def process_property(url, context):
         "First Listed Date": first_listed_evt["eventDate"] if first_listed_evt else None,
         "Days On Market": days_on_market,
         "Sold Price Difference": sold_price_diff,
-        "photo_blob": first_image_blob, # Azure Path
+        "photo_blob": None,        # Azure path, filled in by main() after a successful upload
+        "_img_url": first_img_url, # internal: removed before saving
     }
     return record
 
 
-def main():
+def load_silver_state(month_blob):
+    """Reads all silver parquets once. Returns (known_urls, current_month_df)."""
+    known_urls = set()
+    current_df = pd.DataFrame()
+    for blob in container_client.list_blobs(name_starts_with="silver/"):
+        if not blob.name.endswith("listed_properties.parquet"):
+            continue
+        df = pd.read_parquet(io.BytesIO(container_client.get_blob_client(blob.name).download_blob().readall()))
+        if "url" in df.columns:
+            known_urls.update(df["url"].dropna())
+        if blob.name == month_blob:
+            current_df = df
+    return known_urls, current_df
+
+
+def save_silver(df, month_blob):
+    buf = io.BytesIO()
+    df.to_parquet(buf, index=False)
+    buf.seek(0)
+    container_client.upload_blob(name=month_blob, data=buf, overwrite=True)
+
+
+def main(limit=None):
     start_time = time.time()
-    
-    # Load URLs
+    limit = MAX_SCRAPE_COUNT if limit is None else limit
+
     if not URLS_FILE.exists():
-        print("URL File not found!")
+        print("URL File not found! Run get_properties.py first.")
         return
 
-    with URLS_FILE.open("r", encoding="utf-8") as f:
-        urls = [u.strip() for u in f if u.strip()]
-    
-    print(f"🚀 Found {len(urls)} total URLs.")
-    
-    # LIMIT BATCH SIZE (Prevent timeouts)
-    MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", 10))
-    if len(urls) > MAX_SCRAPE_COUNT:
-        print(f"⚠️ Limiting scrape to last {MAX_SCRAPE_COUNT} URLs (Configured by MAX_SCRAPE_COUNT)")
-        urls = urls[-MAX_SCRAPE_COUNT:]
-        
-    print(f"🚀 Starting scrape for {len(urls)} properties...")
+    month_blob = f"silver/{datetime.now().strftime('%Y-%m')}/listed_properties.parquet"
+    today = datetime.now().strftime("%Y-%m-%d")
 
-    results = []
-    
-    # Single Browser Instance for ALL URLs (Much Faster)
-    with sync_playwright() as p:
+    # One-time state from Azure: what is already scraped, which blobs already exist.
+    print("Reading existing state from Azure...")
+    known_urls, current_df = load_silver_state(month_blob)
+    _existing_images.update(b.name for b in container_client.list_blobs(name_starts_with="images/"))
+    _bronze_today.update(b.name for b in container_client.list_blobs(name_starts_with=f"bronze/{today}/"))
+    print(f"   {len(known_urls)} listings already in silver, {len(_existing_images)} images in Azure.")
+
+    with URLS_FILE.open("r", encoding="utf-8") as f:
+        all_urls = list(dict.fromkeys(u.strip() for u in f if u.strip()))
+    pending = [u for u in all_urls if u not in known_urls]
+    print(f"URL file: {len(all_urls)} URLs, {len(pending)} not yet in Azure.")
+
+    if limit and len(pending) > limit:
+        print(f"Limiting this run to the first {limit} pending URLs (newest first).")
+        pending = pending[:limit]
+    if not pending:
+        print("Nothing to scrape. Done.")
+        return
+
+    new_rows = []          # records not yet written to Azure
+    image_jobs = []        # (record, future) for photo uploads
+    saved_total = 0
+    failures_in_row = 0
+
+    def flush():
+        """Wait for image uploads, then merge new rows into this month's parquet and upload it."""
+        nonlocal current_df, new_rows, image_jobs, saved_total
+        for rec, fut in image_jobs:
+            if fut.result():
+                rec["photo_blob"] = f"images/{rec['MLS']}_1.jpg"
+        image_jobs = []
+        if not new_rows:
+            return
+        batch = pd.DataFrame([{k: v for k, v in r.items() if not k.startswith("_")} for r in new_rows])
+        merged = pd.concat([current_df, batch], ignore_index=True) if len(current_df) else batch
+        merged = merged.drop_duplicates(subset=["MLS"], keep="last")
+        # Never persist the literal string "None" for a missing photo.
+        merged["photo_blob"] = merged["photo_blob"].where(~merged["photo_blob"].isin(["None", "nan", ""]), None)
+        save_silver(merged, month_blob)
+        saved_total += len(new_rows)
+        print(f"   [Silver] Saved {len(new_rows)} rows -> {month_blob} (file now {len(merged)} rows)")
+        current_df, new_rows = merged, []
+
+    with sync_playwright() as p, ThreadPoolExecutor(max_workers=IMAGE_WORKERS) as pool:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
         context.add_cookies(load_redfin_cookies())
-        
-        for url in urls:
+
+        print(f"Starting scrape for {len(pending)} properties...")
+        for i, url in enumerate(pending, 1):
             res = process_property(url, context)
-            if res:
-                results.append(res)
-                print(f"✅ Processed {res.get('MLS', 'Unknown')}")
-        
+            if res is None:
+                failures_in_row += 1
+                if failures_in_row >= MAX_CONSECUTIVE_FAILURES:
+                    print(f"Stopping: {failures_in_row} failures in a row (blocked or cookies expired?).")
+                    break
+                continue
+            failures_in_row = 0
+
+            img_url = res.get("_img_url")
+            if img_url:
+                image_jobs.append((res, pool.submit(upload_image, res["MLS"], img_url)))
+            new_rows.append(res)
+            print(f"[{i}/{len(pending)}] {res.get('MLS', 'Unknown')}")
+
+            if len(new_rows) >= CHECKPOINT_EVERY:
+                flush()
+
         browser.close()
-    
-    # 7. Save Silver (Parquet) to Azure
-    # 7. Save Silver (Parquet) to Azure
-    if results:
-        # Resolve FutureWarning: Wrap string in StringIO
-        new_df = pd.read_json(io.StringIO(json.dumps(results))) # Ensure types
-        
-        # Determine target blob name
-        today_month = datetime.now().strftime("%Y-%m")
-        blob_name = f"silver/{today_month}/listed_properties.parquet"
-        
-        # Check if blob exists and merge
-        try:
-            print(f"Checking for existing data in {blob_name}...")
-            blob_client = container_client.get_blob_client(blob_name)
-            
-            if blob_client.exists():
-                print("   -> Found existing file. Downloading to merge...")
-                existing_data = blob_client.download_blob().readall()
-                existing_df = pd.read_parquet(io.BytesIO(existing_data))
-                
-                # Combine and Deduplicate (Keep latest scrape for same MLS)
-                combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-                # Drop duplicates based on MLS, keeping the LAST occurrence (newest scrape)
-                combined_df = combined_df.drop_duplicates(subset=["MLS"], keep="last")
-                
-                print(f"   -> Merged {len(new_df)} new rows with {len(existing_df)} existing rows. Total: {len(combined_df)}")
-                final_df = combined_df
-            else:
-                print("   -> No existing file. Creating new.")
-                final_df = new_df
-                
-        except Exception as e:
-            print(f"⚠️ Error merging with existing blob: {e}")
-            print("   -> Falling back to saving ONLY new data to avoid total loss.")
-            final_df = new_df
+        flush()
 
-        # Save locally first
-        local_parquet = "temp_silver.parquet"
-        final_df.to_parquet(local_parquet, index=False)
-        
-        # Upload to Azure Silver
-        with open(local_parquet, "rb") as data:
-            container_client.upload_blob(name=blob_name, data=data, overwrite=True)
-            
-        print(f"\n🎉 Success! Uploaded {len(final_df)} rows to {blob_name}")
-        if os.path.exists(local_parquet):
-            os.remove(local_parquet)
-    else:
-        print("No valid results found.")
+    print(f"\nDone: saved {saved_total} new listings in {time.time() - start_time:.0f}s "
+          f"({len(pending) - saved_total} not saved).")
 
-    print(f"⏱️ Total time: {time.time() - start_time:.1f}s")
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description="Scrape pending Redfin listings into Azure.")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Max listings this run (default: MAX_SCRAPE_COUNT env, 0 = all pending)")
+    main(limit=parser.parse_args().limit)

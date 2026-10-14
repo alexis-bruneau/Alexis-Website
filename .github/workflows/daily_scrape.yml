@@ -28,12 +28,26 @@ jobs:
         run: |
           playwright install chromium
 
+      - name: Restore Redfin cookies
+        env:
+          REDFIN_COOKIES_JSON: ${{ secrets.REDFIN_COOKIES_JSON }}
+        run: |
+          if [ -n "$REDFIN_COOKIES_JSON" ]; then
+            printf '%s' "$REDFIN_COOKIES_JSON" > app/Redfin/chrome_cookies.json
+          else
+            echo "No REDFIN_COOKIES_JSON secret set; continuing without cookies."
+          fi
+
       - name: Discover New Properties
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         run: |
           python app/Redfin/get_properties.py
 
       - name: Run Scraper
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          # Cap per scheduled run so it always finishes; locally the default is "all pending".
+          MAX_SCRAPE_COUNT: 300
         run: |
           python app/Redfin/scrape_properties_prod.py
