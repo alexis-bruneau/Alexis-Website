@@ -27,6 +27,16 @@ BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 # DuckDB Setup
 con = duckdb.connect(database=":memory:")
 
+def photo_url(blob):
+    """Public image URL for a photo_blob path, or None when the scraper stored no real path
+    (null, empty, or the literal strings 'None' / 'nan')."""
+    if blob is None or pd.isna(blob):
+        return None
+    blob = str(blob).strip()
+    if blob in ("", "None", "nan"):
+        return None
+    return f"{BASE_IMG_URL}{blob}"
+
 def create_empty_view():
     """Empty 'properties' view so the API endpoints still work without data."""
     con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\", CAST(NULL AS VARCHAR) as \"Property Type\" WHERE 1=0")
@@ -141,7 +151,7 @@ def points():
         # Construct Image URL
         if "photo_blob" in df.columns:
             df["photo"] = df["photo_blob"].apply(
-                lambda x: f"{BASE_IMG_URL}{x}" if pd.notna(x) and x else None
+                photo_url
             )
         else:
             df["photo"] = None
@@ -292,7 +302,7 @@ def filtered_points():
         # Construct Image URL
         if "photo_blob" in df.columns:
             df["photo"] = df["photo_blob"].apply(
-                lambda x: f"{BASE_IMG_URL}{x}" if pd.notna(x) and x else None
+                photo_url
             )
         else:
             df["photo"] = None
