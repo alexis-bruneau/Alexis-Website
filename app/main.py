@@ -8,6 +8,13 @@ import sys
 import traceback
 from dotenv import load_dotenv
 
+# Windows consoles default to cp1252 and crash on the emoji in our log lines
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 # ---------------- Config --------------------------------------------------
 load_dotenv()
 
@@ -20,6 +27,10 @@ BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
 # DuckDB Setup
 con = duckdb.connect(database=":memory:")
 
+def create_empty_view():
+    """Empty 'properties' view so the API endpoints still work without data."""
+    con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\", CAST(NULL AS VARCHAR) as \"Property Type\" WHERE 1=0")
+
 def load_data():
     global con
     try:
@@ -29,6 +40,7 @@ def load_data():
         # 1. Connect to Azure using Python SDK (Reliable on Heroku)
         if not AZURE_CONN_STR:
              print("⚠️ AZURE_STORAGE_CONNECTION_STRING not found. Running in offline/empty mode.")
+             create_empty_view()
              return False, "Missing Connection String"
 
         blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
@@ -63,14 +75,14 @@ def load_data():
             return True, f"Loaded {len(full_df)} rows from {len(dfs)} files"
         else:
             print("⚠️ No parquet files found in Azure 'silver/' folder.")
-            con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\" WHERE 1=0")
+            create_empty_view()
             return False, "No parquet files found"
 
     except Exception as e:
         sys.stderr.write(f"CRITICAL ERROR loading data from Azure: {e}\n{traceback.format_exc()}\n")
         # Create empty table as fallback
         try:
-             con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\" WHERE 1=0")
+             create_empty_view()
         except:
             pass
         return False, str(e)
