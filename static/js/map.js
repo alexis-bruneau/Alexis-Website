@@ -190,7 +190,7 @@ handle.on("drag", () => circle.setLatLng(handle.getLatLng()));
 handle.on("dragend", () => fetchFilteredPoints());
 
 radiusInput.addEventListener("change", () => {
-  const r = Math.min(parseFloat(radiusInput.value) || 0, 40);
+  const r = Math.min(parseFloat(radiusInput.value) || 0, 60);
   radiusInput.value = r;
   circle.setRadius(r * 1000);
   fetchFilteredPoints();
