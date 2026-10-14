@@ -1,5 +1,5 @@
 $(document).ready(function() {
-  $("#menu").load("/menu_bar.html", function() {
+  $("#menu").load("menu_bar.html", function() {
       function initializeMenu() {
           // Show and hide main dropdown menu
           $(document).on('click', 'nav ul li a:not(:only-child)', function(e) {
