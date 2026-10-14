@@ -165,3 +165,7 @@ app/Redfin/Output/images/
 
 # Static site build output
 _site/
+
+# Redfin session data (contains login cookies) - never commit
+app/Redfin/chrome_cookies.json
+redfin_profile/
