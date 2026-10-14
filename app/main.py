@@ -174,7 +174,7 @@ def points():
                 WHERE "Sold Date" IS NOT NULL AND "Sold Date" != ''
             """).fetchdf()
             if not dates_df.empty:
-                parsed = pd.to_datetime(dates_df["Sold Date"], format="mixed", dayfirst=False)
+                parsed = pd.to_datetime(dates_df["Sold Date"], format="mixed", dayfirst=False, errors="coerce")
                 parsed = parsed.dropna()
                 if not parsed.empty:
                     date_range["min_date"] = parsed.min().strftime("%Y-%m-%d")
