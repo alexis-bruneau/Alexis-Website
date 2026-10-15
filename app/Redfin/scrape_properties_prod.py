@@ -292,8 +292,13 @@ def process_property(url, context):
         sold_price_diff = sold_price - first_list_price
 
     # 5. Handle Images (First one only)
-    mls_tail = mls[-3:] if len(mls) >= 3 else mls
     image_filenames = find_genmid_values(html)
+    # Prefer photos that belong to this listing's own MLS number. A re-listed property's page shows
+    # photos from the earlier listing (different MLS), so the CDN folder must come from the PHOTO's
+    # MLS number, not the current one (stable sort keeps the page order otherwise).
+    image_filenames.sort(key=lambda name: not name.startswith(mls))
+    photo_mls = image_filenames[0].split("_")[0] if image_filenames else ""
+    mls_tail = photo_mls[-3:]
     # The upload happens in main() (in parallel); photo_blob is only set once it succeeds.
     first_img_url = f"{BASE_IMAGE_URL}{mls_tail}/genMid.{image_filenames[0]}" if image_filenames else None
 
