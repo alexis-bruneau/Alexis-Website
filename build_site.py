@@ -3,6 +3,7 @@
 Run locally with `python build_site.py`, then preview with
 `python -m http.server --directory _site`.
 """
+import re
 import shutil
 from pathlib import Path
 
@@ -27,6 +28,14 @@ def main():
             shutil.copytree(src, OUT / src.name)
         else:
             shutil.copy2(src, OUT / src.name)
+
+    # The static site has no backend, so remove the dashboard link from the published menu
+    # (the source menu keeps it for the local Flask app).
+    menu = OUT / "menu_bar.html"
+    html = menu.read_text(encoding="utf-8")
+    html, n = re.subn(r'\s*<li>\s*<a href="ottawa_map">[^<]*</a>\s*</li>', "", html, count=1)
+    assert n == 1, "dashboard link not found in menu_bar.html"
+    menu.write_text(html, encoding="utf-8")
 
     # static/ -> site/static
     static_out = OUT / "static"
