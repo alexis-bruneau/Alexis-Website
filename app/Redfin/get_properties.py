@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import json
 import time
 import random
@@ -88,6 +89,7 @@ def main():
     print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
     
     new_found = []
+    blocked = False
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -115,6 +117,8 @@ def main():
 
         current_url = START_URL
         page_num = 1
+        empty_pages_in_row = 0   # pages with 0 listing links (403 / challenge / end of results)
+        MAX_EMPTY_PAGES = 3
         
         while len(new_found) < MAX_NEW_URLS:
             print(f"\n--- Scraping Page {page_num} ---")
@@ -139,13 +143,21 @@ def main():
                 print(f"   [DEBUG] Found {len(links)} raw links on page.")
                 
                 if len(links) == 0:
-                    # Debug Screenshot
-                    debug_path = Path(f"app/Redfin/Output/debug_page_{page_num}.png")
+                    empty_pages_in_row += 1
+                    # One debug screenshot (overwritten) + title, to see whether we are blocked
+                    debug_path = Path("app/Redfin/Output/debug_blocked.png")
                     page.screenshot(path=str(debug_path))
-                    print(f"   ⚠️ Found 0 links. Saved screenshot to {debug_path}")
-                    
-                    # Also dump HTML title to see if we are blocked
+                    print(f"   Found 0 links. Saved screenshot to {debug_path}")
                     print(f"   [DEBUG] Page Title: {page.title()}")
+
+                    if empty_pages_in_row >= MAX_EMPTY_PAGES:
+                        print(f"STOPPING: {empty_pages_in_row} pages in a row had no listings. "
+                              "Redfin is probably blocking us (403 / expired aws-waf-token). "
+                              "Export fresh cookies - see app/Redfin/HOW_TO_FIX_403_ERROR.md")
+                        blocked = True
+                        break
+                else:
+                    empty_pages_in_row = 0
 
                 count_before = len(new_found)
                 
@@ -250,6 +262,9 @@ def main():
         save_urls(new_found)
     else:
         print("\n⚠️ No new URLs found in this run.")
+
+    if blocked:
+        sys.exit(2)
 
 if __name__ == "__main__":
     main()

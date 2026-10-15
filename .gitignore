@@ -169,3 +169,6 @@ _site/
 # Redfin session data (contains login cookies) - never commit
 app/Redfin/chrome_cookies.json
 redfin_profile/
+
+# Redfin discovery debug screenshots
+app/Redfin/Output/debug_*.png
