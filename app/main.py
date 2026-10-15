@@ -39,7 +39,7 @@ def photo_url(blob):
 
 def create_empty_view():
     """Empty 'properties' view so the API endpoints still work without data."""
-    con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\", CAST(NULL AS VARCHAR) as \"Property Type\" WHERE 1=0")
+    con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\", CAST(NULL AS VARCHAR) as \"Property Type\", CAST(NULL AS VARCHAR) as photo_type WHERE 1=0")
 
 def load_data():
     global con
@@ -77,6 +77,8 @@ def load_data():
             
             # Deduplicate just in case (e.g. same MLS in multiple months - shouldn't happen but good safety)
             full_df = full_df.drop_duplicates(subset=["MLS"], keep="last")
+            if "photo_type" not in full_df.columns:
+                full_df["photo_type"] = None
             
             # 4. Register as DuckDB View
             con.register('df_parquet_view', full_df)
@@ -130,7 +132,8 @@ def points():
                 photo_blob, 
                 "Days On Market" as dom,
                 "Sold Price Difference" as price_diff,
-                "Property Type" as ptype
+                "Property Type" as ptype,
+                photo_type
             FROM properties
             WHERE latitude IS NOT NULL AND longitude IS NOT NULL
         """
@@ -249,7 +252,8 @@ def filtered_points():
                 photo_blob, 
                 "Days On Market" as dom,
                 "Sold Price Difference" as price_diff,
-                "Property Type" as ptype
+                "Property Type" as ptype,
+                photo_type
             FROM properties
             WHERE {where_str}
         """
@@ -312,7 +316,7 @@ def filtered_points():
         # Select Output Columns
         out_cols = [
             "latitude", "longitude", "price", "sold_date", "address", "mls",
-            "beds", "baths", "url", "photo", "dom", "price_diff_pct", "ptype"
+            "beds", "baths", "url", "photo", "photo_type", "dom", "price_diff_pct", "ptype"
         ]
         # Valid columns only
         out_cols = [c for c in out_cols if c in df.columns]

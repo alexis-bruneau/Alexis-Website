@@ -5,6 +5,7 @@ import json
 import time
 import zlib
 import re
+import html as htmllib
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -44,6 +45,10 @@ MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", "0"))
 CHECKPOINT_EVERY = int(os.getenv("CHECKPOINT_EVERY", "25"))
 MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", "8"))
 IMAGE_WORKERS = 8
+# When a listing has no MLS photo, save Redfin's Google Street View image instead (images/<MLS>_sv.jpg,
+# photo_type = "streetview"). Set SAVE_STREETVIEW=0 to switch it off. Remove existing ones with
+# `python app/Redfin/backfill_images.py --drop-streetview --apply`.
+SAVE_STREETVIEW = os.getenv("SAVE_STREETVIEW", "1") == "1"
 
 # ---------------- Azure Client --------------------------------------------
 if not CONN_STR:
@@ -89,24 +94,26 @@ def upload_bronze_html(html_content, mls):
     _bronze_today.add(blob_name)
     return True  # Uploaded
 
-def upload_image(mls, image_url, retries=3):
-    """Uploads ONLY the first image to images/mls_1.jpg. Returns True only if the blob is in Azure."""
-    blob_name = f"images/{mls}_1.jpg"
+def upload_image(mls, image_url, kind="listing", retries=3):
+    """Uploads one image to images/<mls>_1.jpg (listing photo) or images/<mls>_sv.jpg (Street View).
+    Returns the blob name only if the image is really in Azure, else None."""
+    blob_name = f"images/{mls}_{'sv' if kind == 'streetview' else '1'}.jpg"
     if blob_name in _existing_images:
-        return True
+        return blob_name
 
     for attempt in range(1, retries + 1):
         try:
-            resp = requests.get(image_url, timeout=15)
-            if resp.status_code == 200 and resp.content:
+            resp = requests.get(image_url, timeout=20)
+            # Only accept real JPEGs (not an HTML error page that happens to be HTTP 200)
+            if resp.status_code == 200 and resp.content[:3] == b"\xff\xd8\xff":
                 container_client.get_blob_client(blob_name).upload_blob(resp.content, overwrite=True)
                 _existing_images.add(blob_name)
-                return True
-            print(f"   -> Image {mls}: HTTP {resp.status_code} (attempt {attempt}/{retries})")
+                return blob_name
+            print(f"   -> Image {mls} ({kind}): HTTP {resp.status_code} (attempt {attempt}/{retries})")
         except Exception as e:
-            print(f"   -> Image {mls} failed (attempt {attempt}/{retries}): {e}")
+            print(f"   -> Image {mls} ({kind}) failed (attempt {attempt}/{retries}): {e}")
         time.sleep(attempt)  # simple backoff
-    return False
+    return None
 
 # ---------------- Parsing Logic (Copied from scrape_properties.py) --------
 
@@ -171,6 +178,30 @@ def parse_sale_history(html, url):
 
 def find_genmid_values(html):
     return list(dict.fromkeys(re.findall(r"genMid\.([A-Za-z0-9_]+\.jpg)", html)))
+
+_STREETVIEW_RE = re.compile(r'<(?:img|link)[^>]*?(?:src|href)="(https://maps\.googleapis\.com/maps/api/streetview\?[^"]+)"')
+
+def find_streetview_url(html):
+    """The signed Google Street View URL Redfin embeds when a listing has no MLS photos."""
+    m = _STREETVIEW_RE.search(html)
+    return htmllib.unescape(m.group(1)) if m else None
+
+def pick_image(mls, html):
+    """Returns (image_url, kind) with kind 'listing' | 'streetview', or (None, None).
+
+    Listing photos first. A re-listed property's page shows photos of its EARLIER listing (a different
+    MLS number), so the CDN folder is taken from the photo's own MLS number, and photos that belong to
+    this MLS are preferred. Street View is only a fallback, and only when SAVE_STREETVIEW is on."""
+    names = find_genmid_values(html)
+    if names:
+        names.sort(key=lambda n: not n.startswith(mls))  # stable: keeps page order otherwise
+        photo_mls = names[0].split("_")[0]
+        return f"{BASE_IMAGE_URL}{photo_mls[-3:]}/genMid.{names[0]}", "listing"
+    if SAVE_STREETVIEW:
+        sv = find_streetview_url(html)
+        if sv:
+            return sv, "streetview"
+    return None, None
 
 def extract_price_from_json(html):
     soup = BeautifulSoup(html, "lxml")
@@ -291,16 +322,8 @@ def process_property(url, context):
     if sold_price and first_list_price:
         sold_price_diff = sold_price - first_list_price
 
-    # 5. Handle Images (First one only)
-    image_filenames = find_genmid_values(html)
-    # Prefer photos that belong to this listing's own MLS number. A re-listed property's page shows
-    # photos from the earlier listing (different MLS), so the CDN folder must come from the PHOTO's
-    # MLS number, not the current one (stable sort keeps the page order otherwise).
-    image_filenames.sort(key=lambda name: not name.startswith(mls))
-    photo_mls = image_filenames[0].split("_")[0] if image_filenames else ""
-    mls_tail = photo_mls[-3:]
-    # The upload happens in main() (in parallel); photo_blob is only set once it succeeds.
-    first_img_url = f"{BASE_IMAGE_URL}{mls_tail}/genMid.{image_filenames[0]}" if image_filenames else None
+    # 5. Choose the image. The upload happens in main() (in parallel); photo_blob is only set on success.
+    img_url, img_kind = pick_image(mls, html)
 
     # Extract Property Type securely
     prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
@@ -328,7 +351,9 @@ def process_property(url, context):
         "Days On Market": days_on_market,
         "Sold Price Difference": sold_price_diff,
         "photo_blob": None,        # Azure path, filled in by main() after a successful upload
-        "_img_url": first_img_url, # internal: removed before saving
+        "photo_type": None,        # "listing" | "streetview", set together with photo_blob
+        "_img_url": img_url,       # internal: removed before saving
+        "_img_kind": img_kind,     # internal: removed before saving
     }
     return record
 
@@ -394,8 +419,10 @@ def main(limit=None):
         """Wait for image uploads, then merge new rows into this month's parquet and upload it."""
         nonlocal current_df, new_rows, image_jobs, saved_total
         for rec, fut in image_jobs:
-            if fut.result():
-                rec["photo_blob"] = f"images/{rec['MLS']}_1.jpg"
+            blob = fut.result()
+            if blob:
+                rec["photo_blob"] = blob
+                rec["photo_type"] = rec["_img_kind"]
         image_jobs = []
         if not new_rows:
             return
@@ -427,7 +454,7 @@ def main(limit=None):
 
             img_url = res.get("_img_url")
             if img_url:
-                image_jobs.append((res, pool.submit(upload_image, res["MLS"], img_url)))
+                image_jobs.append((res, pool.submit(upload_image, res["MLS"], img_url, res.get("_img_kind") or "listing")))
             new_rows.append(res)
             print(f"[{i}/{len(pending)}] {res.get('MLS', 'Unknown')}")
 
