@@ -77,6 +77,9 @@ class LocalSink:
         data = path.read_bytes()
         return json.loads(data if name == "manifest.json" else zlib.decompress(data))
 
+    def days(self):
+        return sorted(d.name for d in self.root.iterdir() if (d / "manifest.json").exists()) if self.root.exists() else []
+
     def write(self, day, name, payload, overwrite=False):
         path = self.root / day / name
         if path.exists() and not overwrite:
@@ -97,8 +100,33 @@ class AzureSink:
     def read(self, day, name):
         return self.store.read_search_blob(day, name)
 
+    def days(self):
+        return self.store.list_search_days()
+
     def write(self, day, name, payload, overwrite=False):
         return self.store.put_search_blob(day, name, payload, overwrite=overwrite)
+
+
+def read_census(sink, day):
+    """The day's census as flat rows (parsing.census_row), one per MLS number, sorted by MLS.
+
+    Bands overlap at their edges, and Redfin sometimes holds the same MLS listing under two propertyIds (same
+    address). Those collapse to one row, keeping the lowest propertyId; the others go in `alt_property_ids`."""
+    manifest = sink.read(day, "manifest.json")
+    if manifest is None:
+        raise FileNotFoundError(f"no census manifest for {day}")
+    seen = {}
+    for s in manifest["slices"]:
+        for home in sink.read(day, band_name(s["min"], s["max"]))["homes"]:
+            row = parsing.census_row(home)
+            seen.setdefault(row["mls"] or f"P{row['property_id']}", {})[row["property_id"]] = row
+    rows = []
+    for key in sorted(seen):
+        by_pid = seen[key]
+        row = dict(by_pid[min(by_pid, key=int)])
+        row["alt_property_ids"] = sorted(set(by_pid) - {row["property_id"]}, key=int)
+        rows.append(row)
+    return rows
 
 
 class Census:

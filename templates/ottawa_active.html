@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ottawa Active Listings</title>
+
+  <!-- ─── Vendor styles ─────────────────────────────────── -->
+  <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <!-- ─── App styles (shared with the sold map) ──────────── -->
+  <link rel="stylesheet" href="/static/css/map.css" />
+</head>
+
+<body>
+  <!-- ─── Sold | Active ──────────────────────────────────── -->
+  <nav class="mode-tabs" aria-label="Listing type">
+    <a href="/ottawa_map">Sold</a>
+    <a href="/ottawa_active" class="active" aria-current="page">Active</a>
+  </nav>
+
+  <!-- ─── Radius / filter controls ───────────────────────── -->
+  <div id="controls">
+    <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
+    <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+
+    <button id="filterToggle">Filters ⚙️</button>
+    <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
+
+    <div id="filterPanel">
+      <div class="filter-header">
+        <h3>Filter Options</h3>
+        <button id="clearFilters" class="clear-filters-btn">🗑️ Clear All</button>
+      </div>
+
+      <!-- Asking price filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Asking Price</strong></legend>
+        <div id="priceRangeSlider"></div>
+        <div class="range-labels">
+          <span id="labelPriceMin">$0</span>
+          <span id="labelPriceMax">$2,000,000</span>
+        </div>
+      </fieldset>
+
+      <!-- Beds filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Bedrooms</strong></legend>
+        <div id="bedFilter">
+          <button class="bed-btn" data-bed="1">1</button>
+          <button class="bed-btn" data-bed="2">2</button>
+          <button class="bed-btn" data-bed="3">3</button>
+          <button class="bed-btn" data-bed="4">4</button>
+          <button class="bed-btn" data-bed="5">5+</button>
+        </div>
+        <p class="filter-hint">💡 Click once for "X or more", twice for "exactly X"</p>
+      </fieldset>
+
+      <!-- Property Type filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Property Type</strong></legend>
+        <div id="ptypeFilter">
+          <button class="ptype-btn" data-ptype="Condo">Condo</button>
+          <button class="ptype-btn" data-ptype="Townhome">Townhome</button>
+          <button class="ptype-btn" data-ptype="Single-family">Single-family</button>
+          <button class="ptype-btn" data-ptype="Multi-family">Multi-family</button>
+        </div>
+      </fieldset>
+
+      <!-- Price-change filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Price Changes</strong></legend>
+        <div id="changeFilter">
+          <button class="ptype-btn" data-change="down">▼ Price cut</button>
+          <button class="ptype-btn" data-change="up">▲ Increased</button>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- ─── Main flex layout ───────────────────────────────── -->
+  <div id="appContainer">
+    <div id="listingsPanel" class="hidden">
+      <button class="toolbar-btn" id="viewInsightsBtn">📊 View Insights</button>
+
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="listingSearch" placeholder="Search by address, price…" autocomplete="off" />
+      </div>
+
+      <div class="sort-container">
+        <label for="sortSelect">Sort By:</label>
+        <select id="sortSelect">
+          <option value="newest">Newest on Market</option>
+          <option value="oldest">Longest on Market</option>
+          <option value="recent-change">Latest Price Change</option>
+          <option value="biggest-drop">Biggest Price Drop</option>
+          <option value="desc-price">Highest Price</option>
+          <option value="asc-price">Lowest Price</option>
+        </select>
+      </div>
+
+      <div id="listingRows" class="listing-rows"></div>
+      <div id="paginationControls" class="pagination-controls"></div>
+    </div>
+
+    <div id="mainPanel">
+      <div id="map"></div>
+
+      <!-- ═══ INSIGHTS FOOTER ═══ -->
+      <div id="insights">
+        <div class="insights-left">
+          <div class="summary-cards">
+            <div class="card"><strong>Active Listings</strong><span id="stat-count">–</span></div>
+            <div class="card"><strong>With a Price Cut</strong><span id="stat-cuts">–</span></div>
+            <div class="card"><strong>Average Asking</strong><span id="stat-avg">–</span></div>
+            <div class="card"><strong>Median Asking</strong><span id="stat-median">–</span></div>
+            <div class="card"><strong>Avg Days on Market</strong><span id="stat-dom">–</span></div>
+            <div class="card"><strong>Median Days on Market</strong><span id="stat-dom-median">–</span></div>
+            <div class="card"><strong>Lowest Ask</strong><span id="stat-min">–</span></div>
+            <div class="card"><strong>Highest Ask</strong><span id="stat-max">–</span></div>
+          </div>
+        </div>
+
+        <div class="insights-right">
+          <div class="chart-header">
+            <span style="font-weight: 600; color: #555;">Latest Price Changes</span>
+            <span id="asOf" class="as-of"></span>
+          </div>
+          <div id="recentChanges" class="recent-changes"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+  <script src="/static/js/active.js"></script>
+</body>
+
+</html>

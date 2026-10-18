@@ -132,6 +132,69 @@ def load_data():
 # Initial Load
 load_data()
 
+# ---------------- Active listings ------------------------------------------
+# One row per active listing we hold a detail page for (app/Redfin/transform_active.py). Kept apart from the sold
+# 'properties' view: those rows are sales, these are asking prices.
+ACTIVE_BLOB = os.getenv("ACTIVE_BLOB", "silver/active/listings.parquet")
+ACTIVE_COLUMNS = ["mls", "address", "list_price", "beds", "baths", "latitude", "longitude", "url", "photo_blob",
+                  "property_type_name", "days_on_market", "cumulative_dom", "original_price", "price_changes",
+                  "last_change_amount", "last_change_pct", "last_change_date", "last_change_direction",
+                  "price_vs_original", "as_of"]
+active_df = pd.DataFrame(columns=ACTIVE_COLUMNS)
+
+
+def load_active_data():
+    """Reloads the active-listing snapshot from Azure into memory. An empty frame when it is missing."""
+    global active_df
+    try:
+        from azure.storage.blob import BlobServiceClient
+        import io
+        if not AZURE_CONN_STR:
+            active_df = pd.DataFrame(columns=ACTIVE_COLUMNS)
+            return False, "Missing Connection String"
+        container_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR).get_container_client(CONTAINER_NAME)
+        blob = container_client.get_blob_client(ACTIVE_BLOB)
+        if not blob.exists():
+            active_df = pd.DataFrame(columns=ACTIVE_COLUMNS)
+            return False, f"{ACTIVE_BLOB} not found"
+        df = pd.read_parquet(io.BytesIO(blob.download_blob().readall()))
+        for col in ACTIVE_COLUMNS:
+            if col not in df.columns:
+                df[col] = None
+        active_df = df
+        print(f"✅ Loaded {len(df)} active listings from {ACTIVE_BLOB}")
+        return True, f"Loaded {len(df)} active listings"
+    except Exception as e:
+        sys.stderr.write(f"ERROR loading active listings: {e}\n{traceback.format_exc()}\n")
+        active_df = pd.DataFrame(columns=ACTIVE_COLUMNS)
+        return False, str(e)
+
+
+load_active_data()
+
+
+def sanitize_json(obj):
+    """numpy / NaN / dates -> plain JSON values."""
+    if isinstance(obj, dict):
+        return {k: sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_json(v) for v in obj]
+    if isinstance(obj, (np.integer,)):
+        return int(obj)
+    if isinstance(obj, (np.floating, float)):
+        return None if np.isnan(obj) or np.isinf(obj) else float(obj)
+    if hasattr(obj, "isoformat"):
+        return obj.isoformat()
+    if obj is pd.NA or obj is pd.NaT:
+        return None
+    return obj
+
+
+def haversine_km(lon1, lat1, lon2, lat2):
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    a = np.sin((lat2 - lat1) / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2.0) ** 2
+    return 6371 * 2 * np.arcsin(np.sqrt(a))
+
 # ---------------- App -----------------------------------------------------
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
@@ -144,7 +207,8 @@ def home():
 def refresh_data():
     """Trigger a data reload from Azure without restarting"""
     success, msg = load_data()
-    return jsonify({"success": success, "message": msg})
+    active_ok, active_msg = load_active_data()
+    return jsonify({"success": success, "message": msg, "active": {"success": active_ok, "message": active_msg}})
 
 @app.route("/points.json")
 def points():
@@ -228,6 +292,10 @@ def points():
 @app.route("/ottawa_map")
 def ottawa_map():
     return render_template("ottawa_map.html")
+
+@app.route("/ottawa_active")
+def ottawa_active():
+    return render_template("ottawa_active.html")
 
 # Restoring: Serve other HTML files (menu_bar, Contact, etc.)
 @app.route("/<path:filename>", methods=["GET"])
@@ -402,6 +470,62 @@ def filtered_points():
         import sys
         sys.stderr.write(f"ERROR in filtered_points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/active-points", methods=["POST"])
+def active_points():
+    """Active listings inside the search circle (+ filters) and their insights: the counterpart of /filtered-points."""
+    try:
+        data = request.get_json() or {}
+        center_lat, center_lng = data.get("center", [45.4215, -75.6972])
+        radius_km = data.get("radius_km", 5)
+        filters = data.get("filters", {})
+
+        df = active_df.copy()
+        for col in ("latitude", "longitude", "list_price", "beds", "baths", "days_on_market", "cumulative_dom",
+                    "original_price", "price_changes", "last_change_amount", "last_change_pct", "price_vs_original"):
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df = df.dropna(subset=["latitude", "longitude"])
+        if not df.empty:
+            df = df[haversine_km(center_lng, center_lat, df["longitude"], df["latitude"]) <= radius_km]
+        if "min_price" in filters:
+            df = df[df["list_price"] >= int(filters["min_price"])]
+        if "max_price" in filters:
+            df = df[df["list_price"] <= int(filters["max_price"])]
+        if filters.get("beds"):  # the "5+" button sends 5 and means 5 or more
+            df = df[df["beds"].isin(filters["beds"]) | (df["beds"] >= 5 if 5 in filters["beds"] else False)]
+        if filters.get("ptypes"):
+            df = df[df["property_type_name"].map(property_group).isin(filters["ptypes"])]
+
+        df["price"] = df["list_price"]
+        df["photo"] = df["photo_blob"].apply(photo_url)
+        df["ptype"] = df["property_type_name"]
+        df["dom"] = df["days_on_market"]
+        out_cols = ["latitude", "longitude", "price", "address", "mls", "beds", "baths", "url", "photo", "ptype", "dom",
+                    "cumulative_dom", "original_price", "price_changes", "last_change_amount", "last_change_pct",
+                    "last_change_date", "last_change_direction", "price_vs_original"]
+        points = df[out_cols].astype(object).where(pd.notnull(df[out_cols]), None).to_dict(orient="records")
+
+        changed = df[df["price_changes"].fillna(0) > 0]
+        has_dom = df["dom"].notna().any()
+        summary = {
+            "count": int(len(df)),
+            "average_price": round(df["price"].mean(), 2) if len(df) else None,
+            "median_price": round(df["price"].median(), 2) if len(df) else None,
+            "min_price": df["price"].min() if len(df) else None,
+            "max_price": df["price"].max() if len(df) else None,
+            "avg_dom": round(df["dom"].mean(), 1) if has_dom else None,
+            "median_dom": round(df["dom"].median(), 1) if has_dom else None,
+            "with_price_cut": int((df["last_change_direction"] == "down").sum()),
+            "with_price_increase": int((df["last_change_direction"] == "up").sum()),
+            "avg_cut_pct": round(float(changed["price_vs_original"].div(changed["original_price"]).mean() * 100), 2)
+                           if len(changed) and changed["original_price"].notna().any() else None,
+            "as_of": str(df["as_of"].max()) if len(df) and df["as_of"].notna().any() else None,
+        }
+        return jsonify({"points": sanitize_json(points), "summary": sanitize_json(summary)})
+    except Exception as e:
+        sys.stderr.write(f"ERROR in active_points: {e}\n{traceback.format_exc()}\n")
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

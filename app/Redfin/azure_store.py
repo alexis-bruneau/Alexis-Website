@@ -6,6 +6,9 @@ Container layout:
     bronze/search/<YYYY-MM-DD>/<lo>_<hi>.json.gz  census: the raw homes array of one price-band search, zlib-compressed JSON,
                                         plus manifest.json (written last; says whether the day's census is complete).
                                         4 path parts, so list_bronze() and the transform never see them.
+    bronze/active/<YYYY-MM-DD>/<MLS>.html.gz   detail page of a listing that was still for sale that day (same format as
+                                        bronze/<day>/, but kept apart: the sold transform must never see them).
+    silver/active/listings.parquet      one row per active listing we hold a detail page for, rebuilt from the above
     silver/<YYYY-MM>/listed_properties.parquet   parsed rows, rebuilt from bronze by transform_silver.py
     images/<MLS>_1.jpg | <MLS>_sv.jpg   listing photo / Street View fallback
 """
@@ -40,14 +43,15 @@ if not container_client.exists():
 
 # ---------------- bronze (raw, immutable) ---------------------------------
 
-def bronze_blob_name(day, mls):
-    return f"bronze/{day}/{mls}.html.gz"
+def bronze_blob_name(day, mls, prefix="bronze"):
+    return f"{prefix}/{day}/{mls}.html.gz"
 
 
-def put_bronze(html, mls, url, day=None):
-    """Writes one raw page. Never overwrites: returns False if this MLS is already saved for that day."""
+def put_bronze(html, mls, url, day=None, prefix="bronze"):
+    """Writes one raw page. Never overwrites: returns False if this MLS is already saved for that day.
+    prefix="bronze/active" keeps the detail pages of active listings apart from the sold ones."""
     day = day or datetime.now().strftime("%Y-%m-%d")
-    blob = container_client.get_blob_client(bronze_blob_name(day, mls))
+    blob = container_client.get_blob_client(bronze_blob_name(day, mls, prefix))
     metadata = {"url": url, "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     try:
         blob.upload_blob(zlib.compress(html.encode("utf-8")), overwrite=False, metadata=metadata)
@@ -95,6 +99,19 @@ def read_search_blob(day, name):
         return None
     data = blob.download_blob().readall()
     return json.loads(data if name == "manifest.json" else zlib.decompress(data))
+
+
+def list_search_days():
+    """Days that have a census manifest, oldest first."""
+    return sorted(b.name.split("/")[2] for b in container_client.list_blobs(name_starts_with="bronze/search/")
+                  if b.name.endswith("/manifest.json"))
+
+
+def list_active_pages(day):
+    """{MLS: blob name} of the active-listing detail pages saved on `day`."""
+    prefix = f"bronze/active/{day}/"
+    return {b.name[len(prefix):-len(".html.gz")]: b.name
+            for b in container_client.list_blobs(name_starts_with=prefix) if b.name.endswith(".html.gz")}
 
 
 def bronze_url_metadata(blob_name):

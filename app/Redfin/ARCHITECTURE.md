@@ -92,3 +92,27 @@ until the app reads the new names. Listings whose sold event has no MLS (e.g. So
 | silver | `silver/<YYYY-MM>/listed_properties.parquet`, `silver/sale_history.parquet` | transform | rebuilt from bronze |
 | images | `images/<key>_1.jpg` / `_sv.jpg` | transform | idempotent |
 | gold | not built yet | | |
+
+## Active listings (listings still for sale)
+
+Sold listings are final, so one fetch is the whole truth. Active ones change, so they get their own prefixes and are
+never mixed into the sold path: the sold transform reads every `bronze/<day>/*.html.gz`, and an active page parsed
+there would become a fake sale. Design and open questions: [ACTIVE_LISTINGS_DESIGN.md](ACTIVE_LISTINGS_DESIGN.md).
+
+```
+census.py          for-sale search, sliced by price (a page embeds at most 350 homes)  -> bronze/search/<day>/*.json.gz + manifest.json
+fetch_active.py    detail page of a sample of the census (history of price changes)    -> bronze/active/<day>/<MLS>.html.gz
+transform_active.py  census row (identity, price, coordinates) + page events (metrics.active_metrics)
+                                                                                       -> silver/active/listings.parquet
+app/main.py        /ottawa_active page, POST /active-points (circle + filters + insights)
+```
+
+* The census row is the identity of a listing (MLS, listingId, price, status); the detail page is only used for its events.
+  A page can name several MLS numbers (relists), so `fetch_active.py` checks the page contains the census row's `listingId`.
+* Active listings are keyed by MLS. Redfin sometimes holds one MLS listing under two propertyIds; `census.read_census` keeps
+  the lowest and records the others in `alt_property_ids`.
+* Days on market and price changes are computed from the events as of the census day (never the clock), with the same
+  definitions as the sold metrics. Redfin's own `dom` restarts on a relist, so it is kept only as `dom_redfin`.
+* `silver/active/listings.parquet` is a snapshot of one day, rebuilt from bronze. It does not end in `listed_properties.parquet`,
+  so the sold map never loads it.
+* Not wired into `daily_scrape.yml` yet.

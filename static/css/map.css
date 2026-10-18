@@ -552,7 +552,8 @@ body {
 }
 
 #bedFilter,
-#ptypeFilter {
+#ptypeFilter,
+#changeFilter {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -1606,4 +1607,97 @@ body {
   .listing-info p {
     font-size: 10px !important;
   }
+}
+
+/* ─── ACTIVE LISTINGS ───────────────────────────────────────── */
+
+/* Sold | Active switch, top-right of the map (the left side is the listings sidebar and the zoom buttons) */
+.mode-tabs {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: inline-flex;
+  padding: 4px;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.mode-tabs a {
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mode-tabs a:hover {
+  background: #e2e8f0;
+}
+
+.mode-tabs a.active {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+/* "▼ $14,100 (6.6%)" next to a price: last asking-price change. Red = cut, green = increase. */
+.chg {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.chg.down { color: #dc2626; }
+.chg.up { color: #059669; }
+.chg.flat { color: #94a3b8; font-weight: 500; }
+
+.price-marker .price-label .arrow { font-size: 10px; }
+.price-marker .price-label .arrow.down { color: #dc2626; }
+.price-marker .price-label .arrow.up { color: #059669; }
+.price-marker:hover .price-label .arrow { color: #ffffff; }
+
+.as-of {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.recent-changes {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-row {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid #f1f5f9;
+  color: inherit;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.recent-row:hover { background: #f8fafc; }
+.recent-addr { color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-date { color: #94a3b8; font-size: 12px; }
+
+.empty-note {
+  padding: 16px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.listing-info .ptype-text {
+  font-weight: 600;
+  color: #475569;
 }

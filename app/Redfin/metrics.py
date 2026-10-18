@@ -83,3 +83,56 @@ def listing_metrics(events, mls, sold_price):
         if sold_price and first["price"]:
             result["sold_vs_original_list"] = int(sold_price - first["price"])
     return result
+
+
+# ---------------- active listings ------------------------------------------------------------
+
+ACTIVE_METRICS = ("original_price", "first_listed_date", "days_on_market", "cumulative_dom", "price_changes",
+                  "last_change_amount", "last_change_pct", "last_change_date", "price_vs_original")
+ACTIVE_ASKING_EVENTS = ("Listed", "Price Changed", "Relisted")
+
+
+def active_metrics(events, mls, as_of, list_price):
+    """Metrics of a listing that is still for sale on `as_of`, from the property's event timeline.
+
+    Same definitions as the sold metrics with `as_of` in place of the sold date, so a listing that sells later
+    ends with the numbers it had on its last day:
+        days_on_market      as_of - first Listed date of this MLS (a same-MLS delisting gap is counted)
+        cumulative_dom      the same, plus the earlier unsold listings of the home back to the previous sale
+        original_price      the first asking price of this MLS
+        price_changes       how many times the asking price differed from the one before
+        last_change_*       the most recent change: dollars, % of the previous asking price, and the date
+        price_vs_original   list_price - original_price
+
+    `list_price` is today's asking price from the search results. When it differs from the last asking price in the
+    page history (the history lags, or the page was fetched earlier), it counts as a change on `as_of`.
+    Every value is None where the events needed for it are missing. Pure: `as_of` is passed in, never read from the clock."""
+    result = dict.fromkeys(ACTIVE_METRICS)
+    own = [e for e in _chronological(e for e in events if e["mls"] == mls) if e["event_date"] <= as_of]
+
+    series = []  # (date, asking price) with consecutive repeats collapsed
+    for e in own:
+        if e["event_type"] in ACTIVE_ASKING_EVENTS and e["price"] and (not series or series[-1][1] != e["price"]):
+            series.append((e["event_date"], e["price"]))
+    if list_price and (not series or series[-1][1] != list_price):
+        series.append((as_of, int(list_price)))
+    if not series:
+        return result
+
+    result["original_price"] = series[0][1]
+    result["price_changes"] = len(series) - 1
+    if len(series) > 1:
+        (_, before), (changed_on, after) = series[-2], series[-1]
+        result["last_change_amount"] = int(after - before)
+        result["last_change_pct"] = round((after - before) / before * 100, 2)
+        result["last_change_date"] = changed_on
+    if list_price:
+        result["price_vs_original"] = int(list_price - series[0][1])
+
+    listed = [e for e in own if e["event_type"] == "Listed"]
+    if listed:
+        first = listed[0]["event_date"]
+        result["first_listed_date"] = first
+        result["days_on_market"] = (as_of - first).days
+        result["cumulative_dom"] = _cumulative_dom(events, mls, first, as_of)
+    return result

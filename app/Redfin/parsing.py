@@ -124,6 +124,19 @@ def parse_sale_history(html, url):
     return rows
 
 
+def chronological_history(html, url):
+    """The page's sale-history events, oldest first (Redfin lists them newest first; same-day events keep page order)."""
+    history = parse_sale_history(html, url)
+    history.reverse()
+    history.sort(key=lambda h: parse_date(h["eventDate"]) or datetime.min)
+    return history
+
+
+def parse_events(html, url):
+    """A listing page -> the sale_history rows of its property (see history_rows)."""
+    return history_rows(chronological_history(html, url), property_id(url))
+
+
 def history_rows(history, pid):
     """Sale-history events of one property as rows for the sale_history table.
 
@@ -203,6 +216,15 @@ def extract_price_from_json(html):
     return None
 
 
+def extract_property_type(html):
+    """Redfin's property type text for the page ('Single Family Residential', 'Condo/Co-Op', ...), or None."""
+    m = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
+    if m:
+        return m.group(1).title()
+    property_type = extract_between(html, 'Property Type","content":"', "\\")
+    return None if property_type == "N/A" else property_type
+
+
 def parse_listing(html, url, mls, streetview=True):
     """Turns one listing page into (record, events): the silver row and the property's sale-history rows.
 
@@ -212,9 +234,7 @@ def parse_listing(html, url, mls, streetview=True):
     record is the silver row. photo_blob / photo_type stay None here: they are only set once the image
     is really in Azure. The chosen image is returned in the internal _img_url / _img_kind keys."""
     pid = property_id(url)
-    history = parse_sale_history(html, url)
-    history.reverse()  # Redfin lists newest first; reversed, the stable sort below keeps same-day events in order
-    history.sort(key=lambda h: parse_date(h["eventDate"]) or datetime.min)
+    history = chronological_history(html, url)
 
     sold_evts = [h for h in history if "sold" in h["eventType"].lower()]
     sold_evt = sold_evts[-1] if sold_evts else None
@@ -238,13 +258,7 @@ def parse_listing(html, url, mls, streetview=True):
 
     img_url, img_kind = pick_image(mls, html, streetview)
 
-    prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
-    if prop_type_match:
-        property_type = prop_type_match.group(1).title()
-    else:
-        property_type = extract_between(html, 'Property Type","content":"', "\\")
-        if property_type == "N/A":
-            property_type = None
+    property_type = extract_property_type(html)
 
     record = {
         "property_id": pid,
