@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare a rebuilt silver (default silver_v2/) against the live silver/, joined on MLS.
+"""Compare a rebuilt silver (default silver_v2/) against the live silver/, joined on (property_id, MLS).
 
 Read-only. Use it after transform_silver.py to see whether the rebuild reproduces what the old scraper
 wrote, column by column:
@@ -14,13 +14,18 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 import azure_store as store  # noqa: E402
+import parsing  # noqa: E402
 
 
 def load(prefix):
     frames = [store.read_parquet(b) for b in store.list_silver(prefix + "/")]
     if not frames:
         sys.exit(f"No parquet files under {prefix}/")
-    return pd.concat(frames, ignore_index=True)
+    df = pd.concat(frames, ignore_index=True)
+    if "property_id" not in df.columns:  # silver written before the key existed
+        df["property_id"] = df["url"].map(parsing.property_id)
+    df["key"] = df["property_id"].astype(str) + "|" + df["MLS"].fillna("").astype(str)
+    return df
 
 
 def same(a, b):
@@ -39,14 +44,14 @@ def main():
 
     new, old = load(args.new), load(args.old)
     for name, df in (("new", new), ("old", old)):
-        print(f"{name}: {len(df)} rows, {df['MLS'].nunique()} distinct MLS, {df['MLS'].duplicated().sum()} duplicate MLS")
+        print(f"{name}: {len(df)} rows, {df['key'].nunique()} distinct listings, {df['key'].duplicated().sum()} duplicate keys")
 
-    old = old.drop_duplicates("MLS", keep="last").set_index("MLS")
-    new = new.drop_duplicates("MLS", keep="last").set_index("MLS")
+    old = old.drop_duplicates("key", keep="last").set_index("key")
+    new = new.drop_duplicates("key", keep="last").set_index("key")
     both = new.index.intersection(old.index)
     print(f"in both: {len(both)} | only in new: {len(new.index.difference(old.index))} | only in old: {len(old.index.difference(new.index))}")
 
-    print("\ncolumn differences on shared MLS:")
+    print("\ncolumn differences on shared listings:")
     for col in [c for c in new.columns if c in old.columns]:
         diffs = [m for m in both if not same(new.at[m, col], old.at[m, col])]
         print(f"  {col:<24} {len(diffs):>6} differ")

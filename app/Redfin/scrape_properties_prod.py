@@ -85,8 +85,10 @@ def main(limit=None):
     known = known_property_ids()
     with URLS_FILE.open("r", encoding="utf-8") as f:
         all_urls = list(dict.fromkeys(u.strip() for u in f if u.strip()))
-    pending = [u for u in all_urls if parsing.property_id(u) not in known]
-    print(f"URL file: {len(all_urls)} URLs, {len(pending)} not yet in silver.")
+    in_scope = [u for u in all_urls if parsing.in_scope(u)]
+    pending = [u for u in in_scope if parsing.property_id(u) not in known]
+    print(f"URL file: {len(all_urls)} URLs ({len(all_urls) - len(in_scope)} out of scope, ignored), "
+          f"{len(pending)} not yet in silver.")
 
     if limit and len(pending) > limit:
         print(f"Limiting this run to the first {limit} pending URLs (newest first).")
@@ -112,10 +114,11 @@ def main(limit=None):
                 continue
             failures_in_row = 0
 
-            mls = parsing.extract_mls(html) or f"UNKNOWN_{int(time.time())}"
-            written = store.put_bronze(html, mls, url)
+            # Named by MLS, or P<property_id> when the page has none: the same page always gets the same name
+            name = parsing.listing_key(parsing.property_id(url), parsing.extract_mls(html))
+            written = store.put_bronze(html, name, url)
             saved += written
-            print(f"[{i}/{len(pending)}] {mls} {'saved to bronze' if written else 'already in bronze today'}")
+            print(f"[{i}/{len(pending)}] {name} {'saved to bronze' if written else 'already in bronze today'}")
 
         browser.close()
 

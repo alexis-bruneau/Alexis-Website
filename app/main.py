@@ -8,6 +8,11 @@ import sys
 import traceback
 from dotenv import load_dotenv
 
+try:  # served as app.main (gunicorn) or run as a script from app/
+    from app.property_types import property_group
+except ImportError:
+    from property_types import property_group
+
 # Windows consoles default to cp1252 and crash on the emoji in our log lines
 for _stream in (sys.stdout, sys.stderr):
     try:
@@ -296,7 +301,8 @@ def filtered_points():
         if "beds" in filters and filters["beds"]:
              df = df[df["beds"].isin(filters["beds"])]
         if "ptypes" in filters and filters["ptypes"]:
-             df = df[df["ptype"].isin(filters["ptypes"])]
+             # silver holds the raw Redfin value; the filter buttons send grouped names
+             df = df[df["ptype"].map(property_group).isin(filters["ptypes"])]
 
         # Calculations
         # List Price = Sold - Diff

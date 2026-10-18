@@ -57,6 +57,18 @@ def property_id(url):
     return m.group(1) if m else None
 
 
+def in_scope(url):
+    """True for Ontario pages on redfin.ca. Anything else (e.g. redfin.com US listings that slipped into the
+    search results) is out of scope for this project."""
+    return bool(re.match(r"https://www\.redfin\.ca/on/", url or "", re.I))
+
+
+def listing_key(property_id, mls):
+    """Name used for a listing's files (bronze page, images): the MLS number, or P<property_id> when the page
+    has none. Deterministic, so re-scraping the same page never creates a second key."""
+    return mls or f"P{property_id}"
+
+
 def extract_mls(html):
     """The MLS number shown on the page ('TREB #X123'), or None."""
     mls = extract_between(html, "TREB #", "<")
@@ -125,7 +137,7 @@ def pick_image(mls, html, streetview=True):
     this MLS are preferred. Street View is only a fallback, and only when `streetview` is True."""
     names = find_genmid_values(html)
     if names:
-        names.sort(key=lambda n: not n.startswith(mls))  # stable: keeps page order otherwise
+        names.sort(key=lambda n: not n.startswith(mls or ""))  # stable: keeps page order otherwise
         photo_mls = names[0].split("_")[0]
         return f"{BASE_IMAGE_URL}{photo_mls[-3:]}/genMid.{names[0]}", "listing"
     if streetview:
@@ -165,6 +177,9 @@ def extract_price_from_json(html):
 def parse_listing(html, url, mls, streetview=True):
     """Turns one listing page into (record, events).
 
+    A listing is identified by (property_id, MLS): property_id comes from the URL and is always set, MLS is
+    the real MLS number or None when the page has none (never a made-up value).
+
     record is the silver row. photo_blob / photo_type stay None here: they are only set once the image
     is really in Azure. The chosen image is returned in the internal _img_url / _img_kind keys."""
     history = parse_sale_history(html, url)
@@ -201,6 +216,7 @@ def parse_listing(html, url, mls, streetview=True):
     if sold_price and first_list_price:
         sold_price_diff = sold_price - first_list_price
 
+    pid = property_id(url)
     img_url, img_kind = pick_image(mls, html, streetview)
 
     prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
@@ -212,6 +228,7 @@ def parse_listing(html, url, mls, streetview=True):
             property_type = None
 
     record = {
+        "property_id": pid,
         "url": url,
         "MLS": mls,
         "Sold Price": sold_price,
@@ -228,6 +245,7 @@ def parse_listing(html, url, mls, streetview=True):
         "Sold Price Difference": sold_price_diff,
         "photo_blob": None,
         "photo_type": None,
+        "_key": listing_key(pid, mls),   # internal: file name for the image
         "_img_url": img_url,
         "_img_kind": img_kind,
     }

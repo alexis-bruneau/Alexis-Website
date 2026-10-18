@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """TRANSFORM: rebuild the silver parquet files from the raw HTML in bronze/. Never contacts redfin.ca.
 
-For every MLS number the most recent bronze page wins. Pages are parsed with parsing.py, so fixing a
+A listing is identified by (property_id, MLS): property_id is the number in the URL, MLS is the real MLS
+number or empty when the page has none. For each listing the most recent bronze page wins. Pages that are
+not Ontario pages on redfin.ca (e.g. US redfin.com listings) are skipped. Pages are parsed with parsing.py, so fixing a
 parser bug and re-running this script corrects every listing, old and new.
 
 Output goes to <out-prefix>/<YYYY-MM>/listed_properties.parquet (month of the bronze page). The default
@@ -28,36 +30,42 @@ import azure_store as store  # noqa: E402
 import parsing  # noqa: E402
 
 MISSING = {"", "None", "nan"}
+KEY = ["property_id", "MLS"]
 
 
-def latest_bronze_per_mls(entries):
-    """[(day, mls, blob)] -> one entry per MLS, the newest day."""
+def latest_bronze_per_name(entries):
+    """[(day, name, blob)] -> one entry per bronze file name (the MLS, or P<property_id>), the newest day."""
     latest = {}
-    for day, mls, blob in entries:
-        if mls not in latest or day > latest[mls][0]:
-            latest[mls] = (day, mls, blob)
+    for day, name, blob in entries:
+        if name not in latest or day > latest[name][0]:
+            latest[name] = (day, name, blob)
     return sorted(latest.values())
 
 
 def transform_one(entry, streetview):
-    """bronze page -> (day, record, None) or (day, None, error message)."""
-    day, mls, blob = entry
+    """bronze page -> (day, record, None) or (day, None, (kind, message)) with kind 'scope' or 'error'."""
+    day, name, blob = entry
     try:
         html = store.read_bronze(blob)
         url = parsing.extract_url(html) or store.bronze_url_metadata(blob)
         if not url:
-            return day, None, f"{mls}: no url in page or blob metadata"
-        record, _events = parsing.parse_listing(html, url, mls, streetview=streetview)
+            return day, None, ("error", f"{name}: no url in page or blob metadata")
+        if not parsing.in_scope(url):
+            return day, None, ("scope", f"{name}: {url}")
+        record, _events = parsing.parse_listing(html, url, parsing.extract_mls(html), streetview=streetview)
         return day, record, None
     except Exception as e:  # one bad page must not stop a full rebuild
-        return day, None, f"{mls}: {type(e).__name__}: {e}"
+        return day, None, ("error", f"{name}: {type(e).__name__}: {e}")
 
 
 def load_existing_output(prefix):
     """{month: DataFrame} already written under the output prefix (for --incremental merges)."""
     frames = {}
     for blob in store.list_silver(prefix + "/"):
-        frames[blob.split("/")[1]] = store.read_parquet(blob)
+        df = store.read_parquet(blob)
+        if "property_id" not in df.columns:  # written before the key existed
+            df.insert(0, "property_id", df["url"].map(parsing.property_id))
+        frames[blob.split("/")[1]] = df
     return frames
 
 
@@ -70,14 +78,14 @@ def attach_images(records, skip_images):
             kind, img_url = rec["_img_kind"], rec["_img_url"]
             if not img_url:
                 continue
-            listing_blob = store.image_blob_name(rec["MLS"], "listing")
-            blob = store.image_blob_name(rec["MLS"], kind)
+            listing_blob = store.image_blob_name(rec["_key"], "listing")
+            blob = store.image_blob_name(rec["_key"], kind)
             if listing_blob in existing:  # a real photo already saved (e.g. by an older parser) always wins
                 rec["photo_blob"], rec["photo_type"] = listing_blob, "listing"
             elif blob in existing:
                 rec["photo_blob"], rec["photo_type"] = blob, kind
             elif not skip_images:
-                jobs.append((rec, pool.submit(store.upload_image, rec["MLS"], img_url, kind)))
+                jobs.append((rec, pool.submit(store.upload_image, rec["_key"], img_url, kind)))
         for rec, fut in jobs:
             blob = fut.result()
             if blob:
@@ -96,12 +104,16 @@ def main():
     args = ap.parse_args()
     t0 = time.time()
 
-    entries = latest_bronze_per_mls(store.list_bronze())
-    print(f"Bronze: {len(entries)} distinct listings.")
+    entries = latest_bronze_per_name(store.list_bronze())
+    print(f"Bronze: {len(entries)} distinct pages.")
     existing = load_existing_output(args.out_prefix) if args.incremental else {}
+    done = set()  # (property_id, MLS) already in the output
     if args.incremental:
-        done = set().union(*(set(df["MLS"]) for df in existing.values())) if existing else set()
-        entries = [e for e in entries if e[1] not in done]
+        for df in existing.values():
+            done.update(zip(df["property_id"], df["MLS"].where(df["MLS"].notna(), None)))
+        # Cheap pre-filter on the file name; legacy UNKNOWN_<time> pages can only be matched after parsing.
+        done_names = {parsing.listing_key(pid, mls) for pid, mls in done}
+        entries = [e for e in entries if e[1] not in done_names]
         print(f"Incremental: {len(entries)} listings not yet in {args.out_prefix}/.")
         if not entries:
             return
@@ -109,18 +121,27 @@ def main():
         entries = entries[-args.limit:]
         print(f"Limiting to the {len(entries)} newest.")
 
-    results, errors = [], []
+    results, errors, out_of_scope = [], [], 0
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, out in enumerate(pool.map(lambda e: transform_one(e, not args.no_streetview), entries), 1):
             day, rec, err = out
             if rec:
                 results.append((day, rec))
+            elif err[0] == "scope":
+                out_of_scope += 1
             else:
-                errors.append(err)
+                errors.append(err[1])
             if i % 500 == 0:
                 print(f"   parsed {i}/{len(entries)}")
 
-    print(f"Parsed {len(results)} listings, {len(errors)} skipped.")
+    # One row per (property_id, MLS): the newest page wins. Pages of the same listing under different file
+    # names (legacy UNKNOWN_<time> duplicates) collapse here; listings already in the output are dropped.
+    newest = {}
+    for day, rec in sorted(results, key=lambda r: r[0]):
+        newest[(rec["property_id"], rec["MLS"])] = (day, rec)
+    results = [v for k, v in newest.items() if k not in done]
+
+    print(f"Parsed {len(results)} listings; skipped {out_of_scope} out-of-scope pages and {len(errors)} unreadable ones.")
     for err in errors[:10]:
         print(f"   skipped: {err}")
 
@@ -133,7 +154,7 @@ def main():
     for month, rows in sorted(by_month.items()):
         df = pd.DataFrame(rows)
         if month in existing:
-            df = pd.concat([existing[month], df], ignore_index=True).drop_duplicates(subset=["MLS"], keep="last")
+            df = pd.concat([existing[month], df], ignore_index=True).drop_duplicates(subset=KEY, keep="last")
         df["photo_blob"] = df["photo_blob"].where(~df["photo_blob"].isin(MISSING), None)
         blob = f"{args.out_prefix}/{month}/listed_properties.parquet"
         store.write_parquet(df, blob)
