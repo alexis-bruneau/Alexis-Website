@@ -7,7 +7,7 @@ transform_silver.py rebuilds every listing from the raw HTML without contacting 
 import html as htmllib
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bs4 import BeautifulSoup
 
@@ -107,7 +107,8 @@ def parse_sale_history(html, url):
         ts = e.get("eventDate")
         date_str = ""
         if isinstance(ts, int):
-            date_str = datetime.fromtimestamp(ts / 1000).strftime("%b %d, %Y")
+            # UTC, so a GitHub runner and a laptop agree on the date (Redfin stamps events at local midnight)
+            date_str = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime("%b %d, %Y")
 
         rows.append({
             "url": url,
@@ -115,6 +116,32 @@ def parse_sale_history(html, url):
             "eventType": e.get("eventDescription", ""),
             "price": str(e.get("price", "")),
             "MLS": e.get("sourceId", ""),
+            "source": e.get("source"),
+            "status": e.get("mlsDescription"),
+        })
+    return rows
+
+
+def history_rows(history, pid):
+    """Sale-history events of one property as rows for the sale_history table.
+
+    The history belongs to the PROPERTY: one page lists the events of every listing the home has had, each
+    event carrying the MLS of its own listing (`mls`). Sold (Public Records) and CREA price changes have no
+    board MLS number, so `mls` is None for them; `source` / `source_id` keep what Redfin said."""
+    rows = []
+    for seq, h in enumerate(history):
+        d = parse_date(h["eventDate"])
+        source_id = h["MLS"] or None
+        rows.append({
+            "property_id": pid,
+            "event_seq": seq,
+            "event_date": d.date() if d else None,
+            "event_type": h["eventType"] or None,
+            "price": money_to_int(h["price"]) if h["price"] not in ("", "None") else None,
+            "source": h["source"],
+            "source_id": source_id,
+            "mls": source_id if h["source"] and h["source"] != "CREA" else None,
+            "status": h["status"],
         })
     return rows
 

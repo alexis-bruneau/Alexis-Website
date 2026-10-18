@@ -6,7 +6,9 @@ number or empty when the page has none. For each listing the most recent bronze 
 not Ontario pages on redfin.ca (e.g. US redfin.com listings) are skipped. Pages are parsed with parsing.py, so fixing a
 parser bug and re-running this script corrects every listing, old and new.
 
-Output goes to <out-prefix>/<YYYY-MM>/listed_properties.parquet (month of the bronze page). The default
+Output goes to <out-prefix>/<YYYY-MM>/listed_properties.parquet (month of the bronze page), plus
+<out-prefix>/sale_history.parquet: one row per sale-history event (listed, price change, sold, ...), linked
+to the listings by property_id (and by mls where the event has one). The default
 prefix is `silver_v2`, NOT the live `silver/`, so you can compare before switching:
     python app/Redfin/transform_silver.py --limit 200            # quick trial on 200 listings
     python app/Redfin/transform_silver.py                        # full rebuild into silver_v2/
@@ -31,6 +33,7 @@ import parsing  # noqa: E402
 
 MISSING = {"", "None", "nan"}
 KEY = ["property_id", "MLS"]
+EVENT_KEY = ["property_id", "event_date", "event_type", "source_id", "price"]
 
 
 def latest_bronze_per_name(entries):
@@ -43,19 +46,19 @@ def latest_bronze_per_name(entries):
 
 
 def transform_one(entry, streetview):
-    """bronze page -> (day, record, None) or (day, None, (kind, message)) with kind 'scope' or 'error'."""
+    """bronze page -> (day, record, events, None) or (day, None, None, (kind, message)); kind is 'scope' or 'error'."""
     day, name, blob = entry
     try:
         html = store.read_bronze(blob)
         url = parsing.extract_url(html) or store.bronze_url_metadata(blob)
         if not url:
-            return day, None, ("error", f"{name}: no url in page or blob metadata")
+            return day, None, None, ("error", f"{name}: no url in page or blob metadata")
         if not parsing.in_scope(url):
-            return day, None, ("scope", f"{name}: {url}")
-        record, _events = parsing.parse_listing(html, url, parsing.extract_mls(html), streetview=streetview)
-        return day, record, None
+            return day, None, None, ("scope", f"{name}: {url}")
+        record, history = parsing.parse_listing(html, url, parsing.extract_mls(html), streetview=streetview)
+        return day, record, parsing.history_rows(history, record["property_id"]), None
     except Exception as e:  # one bad page must not stop a full rebuild
-        return day, None, ("error", f"{name}: {type(e).__name__}: {e}")
+        return day, None, None, ("error", f"{name}: {type(e).__name__}: {e}")
 
 
 def load_existing_output(prefix):
@@ -67,6 +70,22 @@ def load_existing_output(prefix):
             df.insert(0, "property_id", df["url"].map(parsing.property_id))
         frames[blob.split("/")[1]] = df
     return frames
+
+
+def write_sale_history(results, out_prefix, incremental):
+    """Events of the parsed pages -> <out_prefix>/sale_history.parquet (merged with the existing file when incremental)."""
+    rows = [event for _, _, events in results for event in events]
+    df = pd.DataFrame(rows)
+    blob = f"{out_prefix}/sale_history.parquet"
+    if incremental and store.container_client.get_blob_client(blob).exists():
+        df = pd.concat([store.read_parquet(blob), df], ignore_index=True)
+    if df.empty:
+        return
+    df = df.drop_duplicates(subset=EVENT_KEY, keep="last")
+    df["price"] = df["price"].astype("Int64")
+    df = df.sort_values(["property_id", "event_date", "event_seq"], kind="stable").reset_index(drop=True)
+    store.write_parquet(df, blob)
+    print(f"   wrote {len(df):>5} events ({df['property_id'].nunique()} properties) -> {blob}")
 
 
 def attach_images(records, skip_images):
@@ -124,9 +143,9 @@ def main():
     results, errors, out_of_scope = [], [], 0
     with ThreadPoolExecutor(max_workers=args.workers) as pool:
         for i, out in enumerate(pool.map(lambda e: transform_one(e, not args.no_streetview), entries), 1):
-            day, rec, err = out
+            day, rec, events, err = out
             if rec:
-                results.append((day, rec))
+                results.append((day, rec, events))
             elif err[0] == "scope":
                 out_of_scope += 1
             else:
@@ -137,19 +156,19 @@ def main():
     # One row per (property_id, MLS): the newest page wins. Pages of the same listing under different file
     # names (legacy UNKNOWN_<time> duplicates) collapse here; listings already in the output are dropped.
     newest = {}
-    for day, rec in sorted(results, key=lambda r: r[0]):
-        newest[(rec["property_id"], rec["MLS"])] = (day, rec)
+    for day, rec, events in sorted(results, key=lambda r: r[0]):
+        newest[(rec["property_id"], rec["MLS"])] = (day, rec, events)
     results = [v for k, v in newest.items() if k not in done]
 
     print(f"Parsed {len(results)} listings; skipped {out_of_scope} out-of-scope pages and {len(errors)} unreadable ones.")
     for err in errors[:10]:
         print(f"   skipped: {err}")
 
-    records = [rec for _, rec in results]
+    records = [rec for _, rec, _ in results]
     attach_images(records, args.skip_images)
 
     by_month = {}
-    for day, rec in results:
+    for day, rec, _ in results:
         by_month.setdefault(day[:7], []).append({k: v for k, v in rec.items() if not k.startswith("_")})
     for month, rows in sorted(by_month.items()):
         df = pd.DataFrame(rows)
@@ -159,6 +178,8 @@ def main():
         blob = f"{args.out_prefix}/{month}/listed_properties.parquet"
         store.write_parquet(df, blob)
         print(f"   wrote {len(df):>5} rows -> {blob}")
+
+    write_sale_history(results, args.out_prefix, args.incremental)
 
     print(f"Done in {time.time() - t0:.0f}s.")
 
