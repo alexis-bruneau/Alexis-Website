@@ -44,10 +44,18 @@ jobs:
         run: |
           python app/Redfin/get_properties.py
 
-      - name: Run Scraper
+      - name: Extract (fetch pages into bronze)
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           # Cap per scheduled run so it always finishes; locally the default is "all pending".
           MAX_SCRAPE_COUNT: 300
         run: |
           python app/Redfin/scrape_properties_prod.py
+
+      - name: Transform (bronze to silver)
+        # Also runs when extract stopped early, so pages already saved still reach silver.
+        if: always()
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+        run: |
+          python app/Redfin/transform_silver.py --incremental --out-prefix silver

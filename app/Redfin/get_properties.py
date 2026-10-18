@@ -11,6 +11,8 @@ from playwright.sync_api import sync_playwright
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
+from parsing import property_id
+
 # ---------------- Config --------------------------------------------------
 load_dotenv()
 
@@ -86,6 +88,7 @@ def main():
     local_urls = get_local_urls()
     
     known_urls = azure_urls.union(local_urls)
+    known_ids = {property_id(u) for u in known_urls}
     print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
     
     new_found = []
@@ -168,9 +171,10 @@ def main():
                     full_url = f"https://www.redfin.ca{href}" if href.startswith("/") else href
                     
                     # Dedupe
-                    if full_url not in known_urls and full_url not in new_found:
+                    pid = property_id(full_url)
+                    if pid not in known_ids and full_url not in new_found:
                         new_found.append(full_url)
-                        known_urls.add(full_url) 
+                        known_ids.add(pid)
                 
                 added = len(new_found) - count_before
                 print(f"   + Added {added} new properties (Total New: {len(new_found)})")

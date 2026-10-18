@@ -13,6 +13,7 @@ Run from the project root (needs AZURE_STORAGE_CONNECTION_STRING in .env):
 """
 import argparse
 import io
+import os
 import sys
 import zlib
 from concurrent.futures import ThreadPoolExecutor
@@ -21,9 +22,12 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
-import scrape_properties_prod as sp  # noqa: E402  (connects to Azure, shares the image helpers)
+import azure_store as store  # noqa: E402  (connects to Azure, shares the image helpers)
+import parsing  # noqa: E402
 
-container = sp.container_client
+container = store.container_client
+# Street View as the fallback photo (SAVE_STREETVIEW=0 or --no-streetview switches it off)
+STREETVIEW = os.getenv("SAVE_STREETVIEW", "1") == "1"
 MISSING = {"", "None", "nan"}
 
 
@@ -83,8 +87,8 @@ def drop_streetview(apply):
 
 
 def backfill(apply):
-    existing_images = set(sp._existing_images) or {b.name for b in container.list_blobs(name_starts_with="images/")}
-    sp._existing_images.update(existing_images)
+    existing_images = set(store._existing_images) or {b.name for b in container.list_blobs(name_starts_with="images/")}
+    store._existing_images.update(existing_images)
     bronze = latest_bronze_by_mls()
     print(f"Saved HTML pages in bronze/: {len(bronze)}")
 
@@ -107,7 +111,7 @@ def backfill(apply):
                 stats["no_bronze"] += 1
                 continue
             html = zlib.decompress(container.get_blob_client(bronze[mls]).download_blob().readall()).decode("utf-8", "ignore")
-            url, kind = sp.pick_image(mls, html)
+            url, kind = parsing.pick_image(mls, html, STREETVIEW)
             if not url:
                 stats["no_image"] += 1
                 continue
@@ -130,8 +134,8 @@ def backfill(apply):
 
     print(f"\nDownloading {len(unique)} images...")
     mls_list = list(unique)
-    with ThreadPoolExecutor(max_workers=sp.IMAGE_WORKERS) as pool:
-        uploaded = dict(zip(mls_list, pool.map(lambda m: sp.upload_image(m, *unique[m]), mls_list)))
+    with ThreadPoolExecutor(max_workers=store.IMAGE_WORKERS) as pool:
+        uploaded = dict(zip(mls_list, pool.map(lambda m: store.upload_image(m, *unique[m]), mls_list)))
     results = [b for b in uploaded.values() if b]
 
     changed = set()
@@ -168,7 +172,8 @@ def main():
         drop_streetview(args.apply)
         return
     if args.no_streetview:
-        sp.SAVE_STREETVIEW = False
+        global STREETVIEW
+        STREETVIEW = False
     backfill(args.apply)
 
 
