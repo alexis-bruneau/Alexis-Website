@@ -1,0 +1,545 @@
+[
+ {
+  "mlsId": {
+   "label": "MLS#",
+   "value": "X14091584"
+  },
+  "showMlsId": false,
+  "mlsStatus": "Active",
+  "showDatasourceLogo": false,
+  "price": {
+   "value": 783000,
+   "level": 1
+  },
+  "hideSalePrice": false,
+  "hoa": {
+   "level": 1
+  },
+  "isHoaFrequencyKnown": true,
+  "sqFt": {
+   "level": 5
+  },
+  "pricePerSqFt": {
+   "level": 1
+  },
+  "lotSize": {
+   "value": 6091,
+   "level": 1
+  },
+  "beds": 2,
+  "baths": 3.0,
+  "location": {
+   "value": "Billings Bridge - Riverside Park and Area",
+   "level": 1
+  },
+  "latLong": {
+   "value": {
+    "latitude": 45.3666411,
+    "longitude": -75.6859979
+   },
+   "level": 1
+  },
+  "streetLine": {
+   "value": "2713 Dupont St",
+   "level": 1
+  },
+  "unitNumber": {
+   "level": 1
+  },
+  "city": "Ottawa",
+  "state": "ON",
+  "zip": "K1V 8N2",
+  "postalCode": {
+   "value": "K1V 8N2",
+   "level": 1
+  },
+  "countryCode": "CA",
+  "showAddressOnMap": true,
+  "soldDate": 1788505200000,
+  "searchStatus": 1,
+  "propertyType": 6,
+  "uiPropertyType": 1,
+  "listingType": 1,
+  "propertyId": 149579893,
+  "listingId": 224493705,
+  "dataSourceId": 248,
+  "isEarlyAccess": false,
+  "marketId": 78,
+  "yearBuilt": {
+   "level": 1
+  },
+  "dom": {
+   "value": 1,
+   "level": 1
+  },
+  "timeOnRedfin": {
+   "value": 6280305,
+   "level": 1
+  },
+  "originalTimeOnRedfin": {
+   "value": 6280363,
+   "level": 1
+  },
+  "timeZone": "America/Toronto",
+  "primaryPhotoDisplayLevel": 1,
+  "photos": {
+   "value": "0-39:0",
+   "level": 1
+  },
+  "numPictures": 40,
+  "additionalPhotosInfo": [],
+  "photoFormat": "webp",
+  "url": "/on/ottawa/2713-Dupont-St-K1V-8N2/home/149579893",
+  "hasInsight": false,
+  "sashes": [
+   {
+    "sashType": 7,
+    "sashTypeId": 7,
+    "sashTypeName": "New",
+    "sashTypeColor": "#2E7E36",
+    "isRedfin": false,
+    "isActiveKeyListing": false,
+    "timeOnRedfin": 6280305,
+    "openHouseText": "",
+    "lastSaleDate": "",
+    "lastSalePrice": ""
+   }
+  ],
+  "keyFacts": [
+   {
+    "description": "Backyard pool",
+    "rank": 0
+   },
+   {
+    "description": "Spacious family room",
+    "rank": 1
+   },
+   {
+    "description": "Home office",
+    "rank": 2
+   }
+  ],
+  "listingTags": [
+   "BACKYARD POOL",
+   "PRIVATE BACKYARD RETREAT",
+   "SPACIOUS FAMILY ROOM",
+   "HOME OFFICE",
+   "RECREATIONAL AMENITIES"
+  ],
+  "isHot": false,
+  "hasVirtualTour": false,
+  "hasVideoTour": false,
+  "has3DTour": false,
+  "hasInteractiveFloorplan": false,
+  "newConstructionCommunityInfo": {},
+  "isRedfin": false,
+  "isNewConstruction": false,
+  "listingRemarks": "Nestled in a sought-after neighbourhood ",
+  "remarksAccessLevel": 1,
+  "businessMarketId": 99,
+  "isShortlisted": false,
+  "isViewedListing": true,
+  "skParkingSpaces": 6,
+  "skPoolType": 0
+ },
+ {
+  "mlsId": {
+   "label": "MLS#",
+   "value": "X9516577"
+  },
+  "showMlsId": false,
+  "mlsStatus": "Active",
+  "showDatasourceLogo": false,
+  "price": {
+   "value": 3980000,
+   "level": 1
+  },
+  "hideSalePrice": false,
+  "hoa": {
+   "level": 1
+  },
+  "isHoaFrequencyKnown": true,
+  "sqFt": {
+   "level": 5
+  },
+  "pricePerSqFt": {
+   "level": 1
+  },
+  "lotSize": {
+   "value": 4425400,
+   "level": 1
+  },
+  "beds": 3,
+  "baths": 2.0,
+  "location": {
+   "value": "Clarence-Rockland",
+   "level": 1
+  },
+  "stories": 2.0,
+  "latLong": {
+   "value": {
+    "latitude": 45.4839643,
+    "longitude": -75.3107471
+   },
+   "level": 1
+  },
+  "streetLine": {
+   "value": "2691 Canaan Rd",
+   "level": 1
+  },
+  "unitNumber": {
+   "level": 1
+  },
+  "city": "Sarsfield",
+  "state": "ON",
+  "zip": "K0A 3E0",
+  "postalCode": {
+   "value": "K0A 3E0",
+   "level": 1
+  },
+  "countryCode": "CA",
+  "showAddressOnMap": true,
+  "searchStatus": 1,
+  "propertyType": 6,
+  "uiPropertyType": 1,
+  "listingType": 1,
+  "propertyId": 148887398,
+  "listingId": 195912889,
+  "dataSourceId": 248,
+  "isEarlyAccess": false,
+  "marketId": 78,
+  "yearBuilt": {
+   "level": 1
+  },
+  "dom": {
+   "value": 719,
+   "level": 1
+  },
+  "timeOnRedfin": {
+   "value": 62146253126,
+   "level": 1
+  },
+  "originalTimeOnRedfin": {
+   "value": 62146253225,
+   "level": 1
+  },
+  "timeZone": "America/Toronto",
+  "primaryPhotoDisplayLevel": 1,
+  "photos": {
+   "value": "0-23:7",
+   "level": 1
+  },
+  "numPictures": 24,
+  "additionalPhotosInfo": [],
+  "photoFormat": "webp",
+  "url": "/on/clarence-rockland/2691-Canaan-Rd-K0A-3E0/home/148887398",
+  "hasInsight": false,
+  "sashes": [
+   {
+    "sashType": 32,
+    "sashTypeId": 32,
+    "sashTypeName": "Video Tour",
+    "sashTypeColor": "#7556F2",
+    "isRedfin": false,
+    "isActiveKeyListing": false,
+    "openHouseText": "",
+    "lastSaleDate": "",
+    "lastSalePrice": ""
+   }
+  ],
+  "keyFacts": [
+   {
+    "description": "101.59 acre lot",
+    "rank": 0
+   },
+   {
+    "description": "Garage",
+    "rank": 1
+   },
+   {
+    "description": "Listed 719 days",
+    "rank": 2
+   }
+  ],
+  "isHot": false,
+  "hasVirtualTour": true,
+  "hasVideoTour": true,
+  "has3DTour": false,
+  "hasInteractiveFloorplan": false,
+  "newConstructionCommunityInfo": {},
+  "isRedfin": false,
+  "isNewConstruction": false,
+  "listingRemarks": "*  *  *  Visit the REALTOR website for f",
+  "remarksAccessLevel": 1,
+  "businessMarketId": 99,
+  "isShortlisted": false,
+  "isViewedListing": false,
+  "skParkingSpaces": 10,
+  "skPoolType": 5
+ },
+ {
+  "mlsId": {
+   "label": "MLS#",
+   "value": "X12526082"
+  },
+  "showMlsId": false,
+  "mlsStatus": "Off Market",
+  "showDatasourceLogo": false,
+  "price": {
+   "level": 1
+  },
+  "hideSalePrice": false,
+  "hoa": {
+   "level": 1
+  },
+  "isHoaFrequencyKnown": true,
+  "sqFt": {
+   "level": 5
+  },
+  "pricePerSqFt": {
+   "level": 1
+  },
+  "lotSize": {
+   "value": 42,
+   "level": 1
+  },
+  "beds": 4,
+  "baths": 2.0,
+  "location": {
+   "value": "Greely - Metcalfe - Osgoode - Vernon and Area",
+   "level": 1
+  },
+  "latLong": {
+   "value": {
+    "latitude": 45.2298079,
+    "longitude": -75.5018563
+   },
+   "level": 1
+  },
+  "streetLine": {
+   "value": "7122 Bank St",
+   "level": 1
+  },
+  "unitNumber": {
+   "level": 1
+  },
+  "city": "Ottawa",
+  "state": "ON",
+  "zip": "K0A 2P0",
+  "postalCode": {
+   "value": "K0A 2P0",
+   "level": 1
+  },
+  "countryCode": "CA",
+  "showAddressOnMap": true,
+  "searchStatus": 16,
+  "propertyType": 8,
+  "uiPropertyType": 5,
+  "listingType": 1,
+  "propertyId": 149197214,
+  "listingId": 209168066,
+  "dataSourceId": 248,
+  "marketId": 78,
+  "yearBuilt": {
+   "level": 1
+  },
+  "dom": {
+   "value": 145,
+   "level": 1
+  },
+  "timeOnRedfin": {
+   "value": 12528000000,
+   "level": 1
+  },
+  "timeZone": "America/Toronto",
+  "primaryPhotoDisplayLevel": 1,
+  "photos": {
+   "value": "0-17:1",
+   "level": 1
+  },
+  "numPictures": 18,
+  "additionalPhotosInfo": [],
+  "photoFormat": "webp",
+  "url": "/on/ottawa/7122-Bank-St-K0A-2P0/home/149197214",
+  "hasInsight": false,
+  "sashes": [
+   {
+    "sashType": 14,
+    "sashTypeId": 14,
+    "sashTypeName": "Off Market",
+    "sashTypeColor": "#5D8ACB",
+    "isRedfin": false,
+    "isActiveKeyListing": false,
+    "openHouseText": "",
+    "lastSaleDate": "",
+    "lastSalePrice": ""
+   }
+  ],
+  "listingTags": [
+   "FARM HOUSE SETTING",
+   "PRIME LAND",
+   "BANK STREET",
+   "SCRIVENS DRIVE",
+   "INSIDE ACCESS"
+  ],
+  "isHot": false,
+  "hasVirtualTour": false,
+  "hasVideoTour": false,
+  "has3DTour": false,
+  "newConstructionCommunityInfo": {},
+  "isRedfin": false,
+  "isNewConstruction": false,
+  "listingRemarks": "Farm House setting on Approximately 42 A",
+  "remarksAccessLevel": 1,
+  "isShortlisted": false,
+  "isViewedListing": false,
+  "skPoolType": 5
+ },
+ {
+  "mlsId": {
+   "label": "MLS#",
+   "value": "X14091510"
+  },
+  "showMlsId": false,
+  "mlsStatus": "Active",
+  "showDatasourceLogo": true,
+  "price": {
+   "value": 319900,
+   "level": 1
+  },
+  "hideSalePrice": false,
+  "hoa": {
+   "value": 680,
+   "level": 1
+  },
+  "isHoaFrequencyKnown": true,
+  "sqFt": {
+   "level": 1
+  },
+  "pricePerSqFt": {
+   "level": 1
+  },
+  "lotSize": {
+   "level": 1
+  },
+  "beds": 3,
+  "baths": 1.5,
+  "fullBaths": 1,
+  "partialBaths": 1,
+  "location": {
+   "value": "7604 - Craig Henry/Woodvale",
+   "level": 1
+  },
+  "stories": 2.0,
+  "latLong": {
+   "value": {
+    "latitude": 45.3327382,
+    "longitude": -75.7605266
+   },
+   "level": 1
+  },
+  "streetLine": {
+   "value": "7 Woodvale Green Lane #57",
+   "level": 1
+  },
+  "unitNumber": {
+   "value": "#57",
+   "level": 1
+  },
+  "city": "Nepean",
+  "state": "ON",
+  "zip": "K2G 4G9",
+  "postalCode": {
+   "value": "K2G 4G9",
+   "level": 1
+  },
+  "countryCode": "CA",
+  "showAddressOnMap": true,
+  "searchStatus": 1,
+  "propertyType": 3,
+  "uiPropertyType": 2,
+  "listingType": 1,
+  "propertyId": 206578936,
+  "listingId": 224493921,
+  "dataSourceId": 247,
+  "isEarlyAccess": false,
+  "marketId": 78,
+  "yearBuilt": {
+   "level": 1
+  },
+  "dom": {
+   "value": 1,
+   "level": 1
+  },
+  "timeOnRedfin": {
+   "value": 4695298,
+   "level": 1
+  },
+  "originalTimeOnRedfin": {
+   "value": 4695371,
+   "level": 1
+  },
+  "timeZone": "America/Toronto",
+  "primaryPhotoDisplayLevel": 1,
+  "photos": {
+   "value": "0-34:0",
+   "level": 1
+  },
+  "numPictures": 35,
+  "additionalPhotosInfo": [],
+  "photoFormat": "webp",
+  "url": "/on/ottawa/7-Woodvale-Green-K2G-4G9/unit-57/home/206578936",
+  "hasInsight": false,
+  "sashes": [
+   {
+    "sashType": 7,
+    "sashTypeId": 7,
+    "sashTypeName": "New",
+    "sashTypeColor": "#2E7E36",
+    "isRedfin": false,
+    "isActiveKeyListing": false,
+    "timeOnRedfin": 4695298,
+    "openHouseText": "",
+    "lastSaleDate": "",
+    "lastSalePrice": ""
+   }
+  ],
+  "keyFacts": [
+   {
+    "description": "Renovated bathroom",
+    "rank": 0
+   },
+   {
+    "description": "Renovated kitchen",
+    "rank": 1
+   },
+   {
+    "description": "$680 HOA",
+    "rank": 2
+   }
+  ],
+  "listingTags": [
+   "RENOVATED KITCHEN",
+   "DIRECT ACCESS TO PATIO",
+   "OPEN-CONCEPT LIVING AREA",
+   "RENOVATED BATHROOM",
+   "PRIVATE LANDSCAPED PATIO",
+   "PEACEFUL PARK-LIKE SETTING"
+  ],
+  "isHot": false,
+  "hasVirtualTour": false,
+  "hasVideoTour": false,
+  "has3DTour": false,
+  "hasInteractiveFloorplan": false,
+  "newConstructionCommunityInfo": {},
+  "isRedfin": false,
+  "isNewConstruction": false,
+  "listingRemarks": "Welcome to 7C Woodvale Green, ideally si",
+  "remarksAccessLevel": 1,
+  "businessMarketId": 99,
+  "isShortlisted": false,
+  "isViewedListing": false,
+  "skParkingSpaces": 2,
+  "skPoolType": 5
+ }
+]

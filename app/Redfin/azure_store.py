@@ -3,10 +3,14 @@
 Container layout:
     bronze/<YYYY-MM-DD>/<MLS>.html.gz   raw page, zlib-compressed. IMMUTABLE: written once, never overwritten
                                         or edited. Blob metadata carries the url and fetch time.
+    bronze/search/<YYYY-MM-DD>/<lo>_<hi>.json.gz  census: the raw homes array of one price-band search, zlib-compressed JSON,
+                                        plus manifest.json (written last; says whether the day's census is complete).
+                                        4 path parts, so list_bronze() and the transform never see them.
     silver/<YYYY-MM>/listed_properties.parquet   parsed rows, rebuilt from bronze by transform_silver.py
     images/<MLS>_1.jpg | <MLS>_sv.jpg   listing photo / Street View fallback
 """
 import io
+import json
 import os
 import time
 import zlib
@@ -66,6 +70,31 @@ def read_bronze(blob_name):
     """The decompressed HTML of one bronze page."""
     data = container_client.get_blob_client(blob_name).download_blob().readall()
     return zlib.decompress(data).decode("utf-8")
+
+
+# ---------------- bronze/search (census of active listings) -----------------
+
+def search_blob_name(day, name):
+    return f"bronze/search/{day}/{name}"
+
+
+def put_search_blob(day, name, payload, overwrite=False):
+    """Writes one census blob (a slice's raw homes array, or manifest.json). Returns False if it already exists."""
+    data = zlib.compress(json.dumps(payload, separators=(",", ":")).encode("utf-8")) if name != "manifest.json"         else json.dumps(payload, indent=1).encode("utf-8")
+    try:
+        container_client.get_blob_client(search_blob_name(day, name)).upload_blob(data, overwrite=overwrite)
+    except ResourceExistsError:
+        return False
+    return True
+
+
+def read_search_blob(day, name):
+    """The decoded payload of a census blob, or None when it does not exist."""
+    blob = container_client.get_blob_client(search_blob_name(day, name))
+    if not blob.exists():
+        return None
+    data = blob.download_blob().readall()
+    return json.loads(data if name == "manifest.json" else zlib.decompress(data))
 
 
 def bronze_url_metadata(blob_name):

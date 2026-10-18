@@ -272,3 +272,77 @@ def parse_listing(html, url, mls, streetview=True):
         "_img_kind": img_kind,
     }
     return record, events
+
+
+# ---------------- search-results pages (the active-listing census) ----------------------------
+
+_SEARCH_HOMES_MARKER = '\\"homes\\":['   # the results array, inside Redfin's escaped page-state string
+_SEARCH_TOTAL_RE = re.compile(r'data-rf-test-id="homes-description">([\d,]+) homes?\b')
+SEARCH_RESULT_CAP = 350                  # a search page embeds at most this many homes, however many match
+
+
+def _unescape_page_state(s):
+    return s.replace('\\"', '"').replace("\\\\", "\\").replace("\u002F", "/")
+
+
+def parse_search_page(html):
+    """A redfin.ca search-results page -> (homes, total).
+
+    homes is the raw list of dicts Redfin embeds in the page: up to SEARCH_RESULT_CAP of the newest matches,
+    each with MLS number, status, price, coordinates, Redfin's days on market, propertyId and listingId.
+    total is the 'N homes' count in the page header (None when the header is missing, e.g. a block or login
+    page). When total <= SEARCH_RESULT_CAP, homes is the complete result; otherwise it is only a sample and
+    the search must be narrowed (price bands) to see the rest. Page 2 returns the same 350 homes again."""
+    m = _SEARCH_TOTAL_RE.search(html)
+    total = int(m.group(1).replace(",", "")) if m else None
+    i = html.find(_SEARCH_HOMES_MARKER)
+    if i == -1:
+        return [], total
+    tail = _unescape_page_state(html[i + len(_SEARCH_HOMES_MARKER) - 1:])
+    try:
+        homes, _ = json.JSONDecoder().raw_decode(tail)
+    except json.JSONDecodeError:
+        return [], total
+    return homes, total
+
+
+def _level_value(field):
+    """Redfin wraps most search fields as {"value": x, "level": n}; the value is absent when hidden."""
+    return field.get("value") if isinstance(field, dict) else field
+
+
+def census_row(home):
+    """One raw search-result home -> a flat row. Pure: the same input always gives the same row.
+
+    Codes are kept as Redfin sends them (property_type, ui_property_type) rather than guessed at.
+    dom_redfin is Redfin's own days-on-market: it restarts when a listing is re-entered, so it is NOT the
+    cumulative days-on-market computed from the event history."""
+    lat_long = _level_value(home.get("latLong")) or {}
+    url = home.get("url") or ""
+    return {
+        "property_id": str(home["propertyId"]),
+        "listing_id": str(home["listingId"]) if home.get("listingId") else None,
+        "mls": _level_value(home.get("mlsId")),
+        "status": home.get("mlsStatus"),
+        "search_status": home.get("searchStatus"),
+        "list_price": _level_value(home.get("price")),
+        "beds": home.get("beds"),
+        "baths": home.get("baths"),
+        "sqft": _level_value(home.get("sqFt")),
+        "lot_size": _level_value(home.get("lotSize")),
+        "year_built": _level_value(home.get("yearBuilt")),
+        "hoa": _level_value(home.get("hoa")),
+        "address": _level_value(home.get("streetLine")),
+        "unit": _level_value(home.get("unitNumber")),
+        "city": home.get("city"),
+        "postal_code": _level_value(home.get("postalCode")),
+        "neighbourhood": _level_value(home.get("location")),
+        "latitude": lat_long.get("latitude"),
+        "longitude": lat_long.get("longitude"),
+        "property_type": home.get("propertyType"),
+        "ui_property_type": home.get("uiPropertyType"),
+        "is_new_construction": home.get("isNewConstruction"),
+        "data_source_id": home.get("dataSourceId"),
+        "dom_redfin": _level_value(home.get("dom")),
+        "url": f"https://www.redfin.ca{url}" if url.startswith("/") else url or None,
+    }

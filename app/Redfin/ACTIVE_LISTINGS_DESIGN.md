@@ -30,13 +30,25 @@ Things the prompt did not know, and that change the design:
    sold again in 2026 keeps its 2024 row forever. 2,673 properties already have more than one MLS in their history, so this is common.
 4. **Bronze already holds the raw JSON.** Each page embeds Redfin's own API responses (`"type":"application/json","status":200`,
    including `…/stingray/api/home/details/listingStatusBannerInfo/v1`), with `propertyId`, `listingId` (Redfin's internal listing
-   id), `searchStatus` (4 on the sold page sampled; the value for active listings still needs confirming), `listingPrice`, `sashes` (`"Sold"`) and the full
+   id), `searchStatus` (4 on sold pages, 1 for active listings in the census), `listingPrice`, `sashes` (`"Sold"`) and the full
    `propertyHistoryInfo`. Today's parser scrapes strings out of this; it does not need a separate JSON fetch.
 5. **Relisting usually keeps the MLS number.** Of 368 `Relisted` events, 276 reuse the MLS of the previous `Listed`/`Delisted`.
    35 listings went `Pending` and then back to `Listed` on the same MLS (the deal fell through). So "same MLS" does **not** mean
    "same uninterrupted listing period", and "Sold → Active needs a new MLS" is the only safe version of that rule.
 6. 25 silver rows have `longitude = NaN` (`extract_between(html, 'longitude":', "}")` misses a variant). They are not outside
    Ottawa; they cannot be placed at all.
+
+7. **Active detail pages break two assumptions of the sold parser** (tested on 2713 Dupont St and 2691 Canaan Rd, 2026-10-18):
+   * `parsing.extract_mls` takes the first `TREB #` on the page. 2691 Canaan Rd has three (X9239541, X9443724, X9516577) and the
+     parser returned X9239541, but the active listing is X9516577, the one whose `listingId` (195912889) matches the census. For an
+     active listing the identity (MLS, listingId, price, status, coordinates) must come from the **census row**, and the detail page
+     is used only for the event history.
+   * `Sold Price` / `Sold Date` are filled from the *previous* sale or the JSON-LD asking price: Dupont St, relisted on Oct 18
+     after selling on Sep 4 for $831,000, came out as `Sold Price 831000, Sold Date Sep 04, 2026`. Active pages must never go
+     through the sold-record path (this is finding 2 again, now reproduced).
+8. **Redfin's `dom` is not our DOM.** Canaan Rd shows `dom = 719` in the census, which is the days since the Nov 1, 2024 relist.
+   The first `Listed` event of the same home is Aug 4, 2024 (805 days). Keep `dom_redfin` as an observed value and compute DOM from
+   the events (section 1).
 
 ## 1. Entity model
 
@@ -115,24 +127,26 @@ Keep the existing layout untouched and add a sibling prefix:
 ```
 bronze/<day>/<MLS|P<pid>>.html.gz                 (unchanged) detail pages: sold and now active
 bronze/search/<day>/<slice>.json.gz               NEW census: raw search API responses, one per slice
-bronze/search/<day>/<slice>.html.gz               NEW fallback if the JSON can't be captured
+bronze/search/<day>/manifest.json                written last: complete?, totals, problems
 ```
 
 * `azure_store.list_bronze()` only accepts 3-part names, so the new 4-part `bronze/search/…` paths are **invisible to today's
   transform**. Nothing existing breaks.
-* **How to get JSON without extra requests:** the census is the same Playwright page load discovery already does. Register
-  `page.on("response")` and save any response whose URL contains `/stingray/api/gis` (the search results endpoint on redfin.com).
-  **To verify on redfin.ca before building**: one headed Playwright run with that listener, logging response URLs. If redfin.ca
-  serves results only inside the HTML, store the HTML and parse the embedded `reactServerState` the same way detail pages are.
-  Do **not** call the API URLs directly: it is a different request pattern from a browser and the most likely thing to get the WAF
-  to block you.
+* **Measured on 2026-10-18 (see `census.py`):** the for-sale search page (`.../filter/viewport=...,no-outline`) embeds its results
+  as JSON in the page itself, so no separate API call is needed and none is made. Per home: `mlsId`, `mlsStatus`, `price`,
+  `latLong`, `beds`, `baths`, `sqFt`, `dom`, `propertyId`, `listingId`, `propertyType`, `url`, ... (`parsing.census_row`). The page
+  embeds at most **350** homes (the newest matches) however many there are, and page 2 returns the same 350, so pagination
+  cannot be used.
 * Detail pages already contain their API responses, so there is nothing to add. The parser can move gradually from string slicing to
   reading that JSON, and replay from bronze picks the change up for free.
 * Append-only, as now: `overwrite=False`, plus `fetched_at` and `url` metadata. Census blobs also carry `slice` and `total_reported`
   (the result count Redfin shows) in metadata, which feeds a validation check.
-* **Slicing:** Redfin search results are capped per query (historically about 350 homes; check the header count). Ottawa's active
-  inventory is several thousand, so the census is split into price bands (`min-price=…,max-price=…`), each kept under the cap.
-  The slice list lives in code; if any slice comes back at the cap, the run logs it and the band is split.
+* **Slicing (implemented):** `min-price` / `max-price` in the URL work. A band with more than 340 results is split at its median
+  price until every band is complete: 41 page loads, 231 s headless, for 4,951 homes. Redfin rounds the price bounds, so bands
+  overlap at their edges (a "min 599,901" band returns homes at 599,900); duplicates are removed by `listingId`.
+* **Identity:** 5,109 distinct `listingId`s were seen but only 4,966 distinct MLS numbers. 143 MLS numbers sit on **two
+  `propertyId`s** (same address, e.g. 5 West Herrington Crt). The page header (4,951) counts MLS listings, so an active listing is
+  keyed by **MLS**, and `property_id` is an attribute that can have aliases.
 
 ## 4. Silver
 
@@ -215,16 +229,16 @@ fixes finding 3 (re-sales of known homes), because a new MLS on a known property
 
 | Work | Requests/day |
 |---|---|
-| census, ≈ 4k / 40 per page | ≈ 100 search page loads |
+| census (measured: 41 loads for 4,951 homes) | 41 search page loads |
 | priority 1 (exits) | ≈ 60 |
 | priority 2 (new) | ≈ 60 |
 | priority 3 (state changes) | ≈ 20 |
 | priority 4 (stale, 4k / 30) | ≈ 130 |
-| **total** | **≈ 100 search + ≈ 270 detail** |
+| **total** | **41 search + ≈ 270 detail** |
 
 Today's run caps detail at `MAX_SCRAPE_COUNT=300`, and bronze shows single days of 4–5k pages when cookies were fresh, so this fits.
-The risk is the census: 100 search pages in a row is more than discovery usually does. Spread slices with jitter, and keep
-discovery's "3 empty pages → stop" rule per run.
+The census is 41 loads, ≈ 4 minutes, with a pause of 3–5 s between loads; it ran headless without being blocked. It saves band by band and resumes
+if blocked partway.
 
 **When blocked partway:** work strictly by priority, and **commit what you have**. A partial census is still saved (slice by slice,
 each its own blob) and marked with `complete=false` metadata. Transform does **not** mark listings `GONE` from an incomplete census:
@@ -324,8 +338,7 @@ layout vary). Requirement this puts on the code: transform never uses `now()`, o
 
 ## First slice (one weekend)
 
-1. `get_properties.py --mode census`: price-band slices, save raw responses to `bronze/search/<day>/`, with `complete` and
-   `total_reported` metadata. (Do the one-off `page.on("response")` check first.)
+1. **Done:** `census.py` (price-band slices → `bronze/search/<day>/`, manifest with `complete`) and `parsing.parse_search_page` / `census_row`, with tests.
 2. `transform_observations.py`: census → `silver/observations/<day>.parquet` + `in_ottawa` filter.
 3. A DuckDB query: open listings today, `first_seen`, `gone` since yesterday.
 
