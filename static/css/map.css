@@ -311,6 +311,14 @@ body {
   margin-bottom: 10px;
 }
 
+.chart-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .chart-container-full {
   flex: 1;
   position: relative;
@@ -338,6 +346,10 @@ body {
   padding: 4px;
   border-radius: 8px;
   gap: 4px;
+}
+
+.btn-group[hidden] {
+  display: none;
 }
 
 .chart-btn {
@@ -666,6 +678,18 @@ body {
   font-weight: 700;
   color: #2563eb;
 }
+
+/* "▲ 2.3% over asking" / "▼ 1.5% under asking" under a listing's price */
+.ask-diff {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.ask-diff.up { color: #059669; }
+.ask-diff.down { color: #dc2626; }
+.ask-diff.flat { color: #64748b; }
 
 .listing-info p {
   margin: 0;

@@ -170,7 +170,7 @@
               <span id="stat-min">–</span>
             </div>
             <div class="card">
-              <strong>Avg % Diff</strong>
+              <strong id="stat-diff-label">Avg vs Final Ask</strong>
               <span id="stat-diff">–</span>
             </div>
           </div>
@@ -180,10 +180,19 @@
         <div class="insights-right">
           <div class="chart-header">
             <span style="font-weight: 600; color: #555;">Market Trend</span>
-            <div class="btn-group">
-              <button class="chart-btn active" data-metric="price">Price</button>
-              <button class="chart-btn" data-metric="dom">DOM</button>
-              <button class="chart-btn" data-metric="diff">% Diff</button>
+            <div class="chart-actions">
+              <!-- Only shown on the % Diff tab: what the sold price is compared with -->
+              <div class="btn-group" id="diffBasisGroup" role="group" aria-label="Compare sold price with" hidden>
+                <button class="chart-btn active" data-basis="last"
+                  title="Sold price vs the asking price when the home sold, after any price cuts">vs Final ask</button>
+                <button class="chart-btn" data-basis="original"
+                  title="Sold price vs the first asking price the home was listed at">vs Original ask</button>
+              </div>
+              <div class="btn-group">
+                <button class="chart-btn active" data-metric="price">Price</button>
+                <button class="chart-btn" data-metric="dom">DOM</button>
+                <button class="chart-btn" data-metric="diff">% Diff</button>
+              </div>
             </div>
           </div>
 
@@ -208,9 +217,9 @@
     <script src="/static/js/map.js"></script>
     <script>
       // Simple script to handle chart toggle UI state (logic in map.js)
-      document.querySelectorAll('.chart-btn').forEach(btn => {
+      document.querySelectorAll('.chart-btn[data-metric]').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.chart-btn[data-metric]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           if (window.renderChart) window.renderChart(btn.dataset.metric);
         });

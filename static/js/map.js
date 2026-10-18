@@ -533,6 +533,7 @@ function updateListingsSidebar(points) {
       </div>
       <div class="listing-info">
         <strong>$${parseInt(pt.price).toLocaleString()}</strong>
+        ${askingBadge(pt)}
         <p>${pt.address}</p>
         <p>${pt.beds} 🛏 | ${pt.baths} 🛁 | <strong>${pt.ptype || 'Unknown Type'}</strong></p>
         <p>${getTimeSinceSold(pt.sold_date)}</p>
@@ -785,13 +786,53 @@ function updateMapMarkers(filteredPoints) {
 let soldChart = null;
 let currentChartMetric = "price"; // default
 
+// What "% diff" compares the sold price with: the asking price when it sold ("last") or the first one ("original").
+let diffBasis = "last";
+const DIFF_BASIS_LABEL = { last: "Final ask", original: "Original ask" };
+
 // Globally available for HTML buttons
 window.renderChart = function (metric) {
   currentChartMetric = metric;
+  // The basis switch only means something for the % diff chart
+  const basisGroup = document.getElementById("diffBasisGroup");
+  if (basisGroup) basisGroup.hidden = metric !== "diff";
   if (lastSummaryData) {
     updateStats(lastSummaryData, lastPointsData);
   }
 };
+
+window.setDiffBasis = function (basis) {
+  diffBasis = basis;
+  document.querySelectorAll("#diffBasisGroup .chart-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.basis === basis));
+  if (lastSummaryData) {
+    updateStats(lastSummaryData, lastPointsData);
+  }
+};
+
+document.querySelectorAll("#diffBasisGroup .chart-btn").forEach(btn =>
+  btn.addEventListener("click", () => window.setDiffBasis(btn.dataset.basis)));
+
+const isNumber = v => v !== null && v !== undefined && !isNaN(v);
+
+// "▲ 2.3% over asking" (green) / "▼ 1.5% under asking" (red) under a listing's price, against the final asking price.
+// The tooltip gives the dollars and the comparison with the original asking price.
+function askingBadge(pt) {
+  if (!isNumber(pt.diff_pct_last)) return "";
+  const describe = (dollars, pct, what) => {
+    const dir = pct > 0 ? "over" : "under";
+    return `${Math.abs(pct).toFixed(1)}% ($${Math.abs(Math.round(dollars)).toLocaleString()}) ${dir} ${what}`;
+  };
+  const pct = pt.diff_pct_last;
+  const flat = Math.abs(pct) < 0.05;
+  const cls = flat ? "flat" : pct > 0 ? "up" : "down";
+  const text = flat ? "At asking" : `${pct > 0 ? "▲" : "▼"} ${Math.abs(pct).toFixed(1)}% ${pct > 0 ? "over" : "under"} asking`;
+  let title = flat ? "Sold at the final asking price" : "Sold " + describe(pt.diff_last, pct, "the final asking price");
+  if (isNumber(pt.diff_pct_original) && Math.abs(pt.diff_pct_original) >= 0.05) {
+    title += `. Original asking price: ${describe(pt.diff_original, pt.diff_pct_original, "it")}`;
+  }
+  return `<span class="ask-diff ${cls}" title="${title}">${text}</span>`;
+}
 
 let lastSummaryData = null;
 let lastPointsData = null;
@@ -829,8 +870,8 @@ function updateStats(summary, points) {
         domSum += pt.dom;
         domCount++;
       }
-      if (pt.price_diff_pct !== null && pt.price_diff_pct !== undefined && !isNaN(pt.price_diff_pct)) {
-        diffSum += pt.price_diff_pct;
+      if (isNumber(pt[`diff_pct_${diffBasis}`])) {
+        diffSum += pt[`diff_pct_${diffBasis}`];
         diffCount++;
       }
     });
@@ -854,6 +895,9 @@ function updateStats(summary, points) {
   // New metrics
   const domEl = document.getElementById("stat-dom");
   if (domEl) domEl.textContent = avg_dom ? Math.round(avg_dom) : "–";
+
+  const diffLabelEl = document.getElementById("stat-diff-label");
+  if (diffLabelEl) diffLabelEl.textContent = `Avg vs ${DIFF_BASIS_LABEL[diffBasis]}`;
 
   const diffEl = document.getElementById("stat-diff");
   if (diffEl) {
@@ -889,8 +933,8 @@ function updateStats(summary, points) {
       lineBg = "rgba(245, 158, 11, 0.2)";
       yAxisFormat = (val) => `${Math.round(val)}d`;
     } else if (currentChartMetric === "diff") {
-      lineData = by_month.map(item => item.avg_diff_pct || 0);
-      lineLabel = "Avg Sold vs List %";
+      lineData = by_month.map(item => item[`avg_diff_pct_${diffBasis}`] || 0);
+      lineLabel = `Avg Sold vs ${DIFF_BASIS_LABEL[diffBasis]} %`;
       lineColor = "#8b5cf6"; // Violet
       lineBg = "rgba(139, 92, 246, 0.2)";
       yAxisFormat = (val) => `${val.toFixed(1)}%`;
@@ -1142,6 +1186,7 @@ function offsetToDateStr(offset) {
         </div>
         <div class="listing-info">
           <strong>$${parseInt(pt.price).toLocaleString()}</strong>
+          ${askingBadge(pt)}
           <p>${pt.address}</p>
           <p>${pt.beds} 🛏 | ${pt.baths} 🛁</p>
           <p>${getTimeSinceSold(pt.sold_date)}</p>

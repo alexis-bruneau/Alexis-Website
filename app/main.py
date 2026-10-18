@@ -27,6 +27,14 @@ AZURE_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 CONTAINER_NAME = "redfin-data"
 ACCOUNT_NAME = "stredfinprod" 
 BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
+SILVER_PREFIX = os.getenv("SILVER_PREFIX", "silver")  # e.g. SILVER_PREFIX=silver_v2 to preview a rebuilt silver
+
+# What the sold price is compared with: the final asking price when it sold, or the first asking price.
+# Each basis maps to a silver column (sold_vs_<basis>_list, in dollars).
+DIFF_BASES = ("last", "original")
+# A sold price more than 50% away from the asking price is almost always bad data (an asking price of $1 for
+# "contact agent", or a wrong sold price). Those listings get no difference rather than skewing the averages.
+MAX_PLAUSIBLE_DIFF_PCT = 50
 
 # DuckDB Setup
 con = duckdb.connect(database=":memory:")
@@ -41,9 +49,23 @@ def photo_url(blob):
         return None
     return f"{BASE_IMG_URL}{blob}"
 
+def add_asking_diffs(df):
+    """Adds diff_<basis> ($) and diff_pct_<basis> (% over (+) / under (-) the asking price) for each basis.
+
+    The asking price is sold price minus the difference; the percentage is relative to it. Implausible
+    differences (see MAX_PLAUSIBLE_DIFF_PCT) are left empty."""
+    for basis in DIFF_BASES:
+        diff = pd.to_numeric(df[f"diff_{basis}"], errors="coerce").astype(float)
+        asking = df["price"] - diff
+        pct = pd.Series(np.where(asking > 0, diff / asking * 100, np.nan), index=df.index)
+        plausible = pct.abs() <= MAX_PLAUSIBLE_DIFF_PCT
+        df[f"diff_{basis}"] = diff.where(plausible)
+        df[f"diff_pct_{basis}"] = pct.where(plausible)
+
+
 def create_empty_view():
     """Empty 'properties' view so the API endpoints still work without data."""
-    con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as \"Sold Price Difference\", CAST(NULL AS VARCHAR) as \"Property Type\", CAST(NULL AS VARCHAR) as photo_type WHERE 1=0")
+    con.execute("CREATE OR REPLACE VIEW properties AS SELECT CAST(NULL AS DOUBLE) as latitude, CAST(NULL AS DOUBLE) as longitude, CAST(NULL AS DOUBLE) as \"Sold Price\", CAST(NULL AS VARCHAR) as \"Sold Date\", CAST(NULL AS VARCHAR) as \"Address\", CAST(NULL AS VARCHAR) as MLS, CAST(NULL AS DOUBLE) as \"Number Beds\", CAST(NULL AS DOUBLE) as \"Number Baths\", CAST(NULL AS VARCHAR) as url, CAST(NULL AS VARCHAR) as photo_blob, CAST(NULL AS DOUBLE) as \"Days On Market\", CAST(NULL AS DOUBLE) as sold_vs_last_list, CAST(NULL AS DOUBLE) as sold_vs_original_list, CAST(NULL AS VARCHAR) as \"Property Type\", CAST(NULL AS VARCHAR) as photo_type WHERE 1=0")
 
 def load_data():
     global con
@@ -61,8 +83,8 @@ def load_data():
         container_client = blob_service_client.get_container_client(CONTAINER_NAME)
         
         # 2. Iterate to find ALL 'listed_properties.parquet' files in silver/
-        print("🔍 Searching for parquet files in 'silver/'...")
-        blobs = container_client.list_blobs(name_starts_with="silver/")
+        print(f"🔍 Searching for parquet files in '{SILVER_PREFIX}/'...")
+        blobs = container_client.list_blobs(name_starts_with=f"{SILVER_PREFIX}/")
         
         dfs = []
         for blob in blobs:
@@ -79,10 +101,14 @@ def load_data():
             # 3. Combine all dataframes
             full_df = pd.concat(dfs, ignore_index=True)
             
-            # Deduplicate just in case (e.g. same MLS in multiple months - shouldn't happen but good safety)
-            full_df = full_df.drop_duplicates(subset=["MLS"], keep="last")
-            if "photo_type" not in full_df.columns:
-                full_df["photo_type"] = None
+            # Deduplicate on the listing key (property id from the URL + MLS). MLS alone is not enough: it can be
+            # empty, and older silver files have no property_id column.
+            property_ids = full_df["url"].str.extract(r"/home/(\d+)", expand=False)
+            full_df = full_df[~pd.concat([property_ids, full_df["MLS"]], axis=1).duplicated(keep="last")]
+            # Older silver files lack columns added later
+            for col in ("photo_type", "sold_vs_last_list", "sold_vs_original_list"):
+                if col not in full_df.columns:
+                    full_df[col] = None
             
             # 4. Register as DuckDB View
             con.register('df_parquet_view', full_df)
@@ -135,7 +161,8 @@ def points():
                 url, 
                 photo_blob, 
                 "Days On Market" as dom,
-                "Sold Price Difference" as price_diff,
+                sold_vs_last_list as diff_last,
+                sold_vs_original_list as diff_original,
                 "Property Type" as ptype,
                 photo_type
             FROM properties
@@ -145,15 +172,7 @@ def points():
         df = con.execute(query).fetchdf()
         
         # 2. Add calculated fields
-        # List Price = Sold - Diff
-        df["list_price"] = df["price"] - df["price_diff"]
-        
-        # Avoid division by zero
-        df["price_diff_pct"] = np.where(
-            df["list_price"] != 0, 
-            (df["price_diff"] / df["list_price"]) * 100, 
-            0
-        )
+        add_asking_diffs(df)
 
         # Construct Image URL
         if "photo_blob" in df.columns:
@@ -255,7 +274,8 @@ def filtered_points():
                 url, 
                 photo_blob, 
                 "Days On Market" as dom,
-                "Sold Price Difference" as price_diff,
+                sold_vs_last_list as diff_last,
+                sold_vs_original_list as diff_original,
                 "Property Type" as ptype,
                 photo_type
             FROM properties
@@ -268,7 +288,7 @@ def filtered_points():
         # ---------------- Python Post-Processing --------------------------
         
         # numeric conversion
-        numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom", "price_diff"]
+        numeric_cols = ["latitude", "longitude", "price", "beds", "baths", "dom"]
         for col in numeric_cols:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -303,10 +323,7 @@ def filtered_points():
              # silver holds the raw Redfin value; the filter buttons send grouped names
              df = df[df["ptype"].map(property_group).isin(filters["ptypes"])]
 
-        # Calculations
-        # List Price = Sold - Diff
-        df["list_price"] = df["price"] - df["price_diff"]
-        df["price_diff_pct"] = (df["price_diff"] / df["list_price"]) * 100
+        add_asking_diffs(df)
 
         # Construct Image URL
         if "photo_blob" in df.columns:
@@ -321,7 +338,8 @@ def filtered_points():
         # Select Output Columns
         out_cols = [
             "latitude", "longitude", "price", "sold_date", "address", "mls",
-            "beds", "baths", "url", "photo", "photo_type", "dom", "price_diff_pct", "ptype"
+            "beds", "baths", "url", "photo", "photo_type", "dom", "ptype",
+            "diff_last", "diff_original", "diff_pct_last", "diff_pct_original"
         ]
         # Valid columns only
         out_cols = [c for c in out_cols if c in df.columns]
@@ -334,13 +352,14 @@ def filtered_points():
 
         # Summary Stats (By Month)
         if not df["sold_date"].isna().all():
-            df["month"] = df["sold_date"].dt.to_period("M").astype(str)
+            df["month"] = df["sold_date"].dt.to_period("M").astype(str).where(df["sold_date"].notna())
             grouped = df.groupby("month")
             by_month = (
                 grouped.size().to_frame("count")
                 .join(grouped["price"].mean().to_frame("avg_price"))
                 .join(grouped["dom"].mean().to_frame("avg_dom"))
-                .join(grouped["price_diff_pct"].mean().to_frame("avg_diff_pct"))
+                .join(grouped["diff_pct_last"].mean().to_frame("avg_diff_pct_last"))
+                .join(grouped["diff_pct_original"].mean().to_frame("avg_diff_pct_original"))
                 .reset_index()
                 .fillna(0)
                 .to_dict(orient="records")
@@ -352,7 +371,8 @@ def filtered_points():
             "count": int(len(df)), # ensure int
             "average_price": round(df["price"].mean(), 2) if not df.empty else None,
             "avg_dom": round(df["dom"].mean(), 1) if not df.empty else None,
-            "avg_diff_pct": round(df["price_diff_pct"].mean(), 2) if not df.empty else None,
+            "avg_diff_pct_last": round(df["diff_pct_last"].mean(), 2) if not df.empty else None,
+            "avg_diff_pct_original": round(df["diff_pct_original"].mean(), 2) if not df.empty else None,
             "min_price": df["price"].min() if not df.empty else None,
             "max_price": df["price"].max() if not df.empty else None,
             "by_month": by_month,
