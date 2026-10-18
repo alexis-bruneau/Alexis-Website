@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 
 from bs4 import BeautifulSoup
 
+from metrics import listing_metrics
+
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 
 _money_re = re.compile(r"[^\d]")
@@ -202,14 +204,16 @@ def extract_price_from_json(html):
 
 
 def parse_listing(html, url, mls, streetview=True):
-    """Turns one listing page into (record, events).
+    """Turns one listing page into (record, events): the silver row and the property's sale-history rows.
 
     A listing is identified by (property_id, MLS): property_id comes from the URL and is always set, MLS is
     the real MLS number or None when the page has none (never a made-up value).
 
     record is the silver row. photo_blob / photo_type stay None here: they are only set once the image
     is really in Azure. The chosen image is returned in the internal _img_url / _img_kind keys."""
+    pid = property_id(url)
     history = parse_sale_history(html, url)
+    history.reverse()  # Redfin lists newest first; reversed, the stable sort below keeps same-day events in order
     history.sort(key=lambda h: parse_date(h["eventDate"]) or datetime.min)
 
     sold_evts = [h for h in history if "sold" in h["eventType"].lower()]
@@ -224,26 +228,14 @@ def parse_listing(html, url, mls, streetview=True):
         if json_price:
             sold_price = json_price
 
-    first_list_price = money_to_int(first_listed_evt["price"]) if first_listed_evt else None
+    events = history_rows(history, pid)
+    sale_metrics = listing_metrics(events, mls, sold_price)
 
     beds = safe_float(extract_between(html, '"latestListingInfo":{"beds":', ","))
     baths = safe_float(extract_between(html, '"baths":', ","))
     lat = safe_float(extract_between(html, 'latitude":', ","))
     lon = safe_float(extract_between(html, 'longitude":', "}"))
 
-    days_on_market = None
-    sold_price_diff = None
-
-    if sold_evt and first_listed_evt:
-        d_sold = parse_date(sold_evt["eventDate"])
-        d_listed = parse_date(first_listed_evt["eventDate"])
-        if d_sold and d_listed:
-            days_on_market = (d_sold - d_listed).days
-
-    if sold_price and first_list_price:
-        sold_price_diff = sold_price - first_list_price
-
-    pid = property_id(url)
     img_url, img_kind = pick_image(mls, html, streetview)
 
     prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
@@ -268,12 +260,15 @@ def parse_listing(html, url, mls, streetview=True):
         "latitude": lat,
         "longitude": lon,
         "First Listed Date": first_listed_evt["eventDate"] if first_listed_evt else None,
-        "Days On Market": days_on_market,
-        "Sold Price Difference": sold_price_diff,
+        **sale_metrics,
+        # Legacy names the map reads, now holding the corrected values: days on market of the sold listing and
+        # sold price vs the last asking price. Drop them once the app reads the columns above.
+        "Days On Market": sale_metrics["days_on_market"],
+        "Sold Price Difference": sale_metrics["sold_vs_last_list"],
         "photo_blob": None,
         "photo_type": None,
         "_key": listing_key(pid, mls),   # internal: file name for the image
         "_img_url": img_url,
         "_img_kind": img_kind,
     }
-    return record, history
+    return record, events

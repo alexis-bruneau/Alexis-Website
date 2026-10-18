@@ -29,6 +29,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent))
 import azure_store as store  # noqa: E402
+import metrics  # noqa: E402
 import parsing  # noqa: E402
 
 MISSING = {"", "None", "nan"}
@@ -55,8 +56,8 @@ def transform_one(entry, streetview):
             return day, None, None, ("error", f"{name}: no url in page or blob metadata")
         if not parsing.in_scope(url):
             return day, None, None, ("scope", f"{name}: {url}")
-        record, history = parsing.parse_listing(html, url, parsing.extract_mls(html), streetview=streetview)
-        return day, record, parsing.history_rows(history, record["property_id"]), None
+        record, events = parsing.parse_listing(html, url, parsing.extract_mls(html), streetview=streetview)
+        return day, record, events, None
     except Exception as e:  # one bad page must not stop a full rebuild
         return day, None, None, ("error", f"{name}: {type(e).__name__}: {e}")
 
@@ -174,6 +175,8 @@ def main():
         df = pd.DataFrame(rows)
         if month in existing:
             df = pd.concat([existing[month], df], ignore_index=True).drop_duplicates(subset=KEY, keep="last")
+        for col in metrics.METRICS:  # whole numbers with gaps, not floats with NaN
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
         df["photo_blob"] = df["photo_blob"].where(~df["photo_blob"].isin(MISSING), None)
         blob = f"{args.out_prefix}/{month}/listed_properties.parquet"
         store.write_parquet(df, blob)

@@ -40,8 +40,10 @@ erDiagram
         string property_type "raw Redfin value"
         float  latitude
         float  longitude
-        float  days_on_market "see known issue"
-        float  sold_price_difference "see known issue"
+        int    sold_vs_last_list
+        int    sold_vs_original_list
+        int    days_on_market
+        int    cumulative_dom
         string photo_blob
     }
     SALE_HISTORY_EVENT {
@@ -67,11 +69,20 @@ erDiagram
   the whole life of the home.
 * Event identity: `(property_id, event_date, event_type, source_id, price)`.
 
-## Known issue: days on market and sold-vs-asking
+## Sale metrics (metrics.py)
 
-`parse_listing` measures from the first-ever Listed event of the property, which can be an earlier listing years
-before the one that sold. On the current data 35% of listings differ when measured against the sold listing's own
-Listed event. The sale_history table has what is needed to compute it correctly (gold model).
+Computed per listing from the sold listing's **own** events (matched by MLS), never from earlier listings of the
+same home. Unit-tested in `tests/test_metrics.py`.
+
+| Column | Definition |
+|---|---|
+| `sold_vs_last_list` | sold price - last Listed / Price Changed price of that MLS on or before the sale (sale-to-list) |
+| `sold_vs_original_list` | sold price - first Listed price of that MLS |
+| `days_on_market` | sold date - first Listed date of that MLS |
+| `cumulative_dom` | days on market plus the earlier unsold listings of the same home, back to the previous sale (a relist does not reset it) |
+
+The map's legacy columns `Days On Market` and `Sold Price Difference` hold `days_on_market` and `sold_vs_last_list`
+until the app reads the new names. Listings whose sold event has no MLS (e.g. Sold (Public Records) only) have no metrics.
 
 ## Layers
 

@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
-import json
 import os
 import duckdb
 import pandas as pd

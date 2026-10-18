@@ -20,9 +20,9 @@ from pathlib import Path
 HERE = Path(__file__).parent
 
 
-def run(script, env):
+def run(script, env, *args):
     print(f"\n=== {script} ===", flush=True)
-    return subprocess.call([sys.executable, str(HERE / script)], env=env)
+    return subprocess.call([sys.executable, str(HERE / script), *args], env=env)
 
 
 def main():
@@ -34,6 +34,7 @@ def main():
     args = ap.parse_args()
 
     env = dict(os.environ)
+    env["PYTHONUTF8"] = "1"  # the scripts print emoji; a redirected Windows console would crash on cp1252
     if args.max_new is not None:
         env["MAX_NEW_URLS"] = str(args.max_new)
 
