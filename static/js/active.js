@@ -21,6 +21,8 @@ const chartSelection = { dom: new Set(), cut: new Set(), brush: null };   // bru
 const ITEMS_PER_PAGE = 20;
 const MIN_PRICE = 0;
 const MAX_PRICE = 2000000;
+const MIN_DOM = 0;
+const MAX_DOM = 180;         // the slider's top end means "180 or more", i.e. no upper limit
 
 const sortSelect = document.getElementById("sortSelect");
 const listingsPanel = document.getElementById("listingsPanel");
@@ -138,6 +140,19 @@ priceSlider.noUiSlider.on("update", (values) => {
 });
 priceSlider.noUiSlider.on("change", () => fetchActivePoints());
 
+// Days on market: finer steps for the first weeks, where most of the movement is.
+const domSlider = document.getElementById("domRangeSlider");
+noUiSlider.create(domSlider, {
+  start: [MIN_DOM, MAX_DOM], connect: true, step: 1,
+  range: { min: MIN_DOM, "30%": 14, "60%": 60, max: MAX_DOM }
+});
+domSlider.noUiSlider.on("update", (values) => {
+  const [lo, hi] = values.map(Math.round);
+  document.getElementById("labelDomMin").textContent = `${lo} day${lo === 1 ? "" : "s"}`;
+  document.getElementById("labelDomMax").textContent = hi >= MAX_DOM ? `${hi}+ days` : `${hi} day${hi === 1 ? "" : "s"}`;
+});
+domSlider.noUiSlider.on("change", () => fetchActivePoints());
+
 document.getElementById("filterToggle").addEventListener("click", (e) => {
   L.DomEvent.stopPropagation(e);
   const panel = document.getElementById("filterPanel");
@@ -154,6 +169,7 @@ document.getElementById("clearFilters").addEventListener("click", () => {
   selectedBeds = []; rangeMode = false; selectedPTypes = []; selectedChanges = [];
   document.querySelectorAll(".bed-btn, .ptype-btn").forEach((b) => b.classList.remove("selected"));
   priceSlider.noUiSlider.set([MIN_PRICE, MAX_PRICE]);
+  domSlider.noUiSlider.set([MIN_DOM, MAX_DOM]);
   fetchActivePoints();
 });
 
@@ -195,6 +211,9 @@ async function fetchActivePoints() {
   const filters = {};
   if (minPrice > MIN_PRICE) filters.min_price = minPrice;
   if (maxPrice < MAX_PRICE) filters.max_price = maxPrice;
+  const [minDom, maxDom] = domSlider.noUiSlider.get().map((v) => Math.round(v));
+  if (minDom > MIN_DOM) filters.min_dom = minDom;
+  if (maxDom < MAX_DOM) filters.max_dom = maxDom;
   if (selectedBeds.length) filters.beds = selectedBeds;
   if (selectedPTypes.length) filters.ptypes = selectedPTypes;
 
