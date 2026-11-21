@@ -1,7 +1,13 @@
 # Active listings: design
 
-Status: **design only**, nothing here is implemented yet. Extends the pipeline in [ARCHITECTURE.md](ARCHITECTURE.md)
-so it also follows listings that are still for sale: price changes, time on market, and how each listing ends.
+Status: **partly implemented.** Built: the census (§3), the active detail fetch and the one-day snapshot
+`silver/active/listings.parquet` (see [ARCHITECTURE.md](ARCHITECTURE.md), "Active listings"). Not built: observations,
+`listing_events`, `listing_state`, `fetch_plan()`, gold, validation. What runs today and what is next: [STATUS.md](STATUS.md).
+Decisions taken from this document are logged in [DECISIONS.md](DECISIONS.md) (D6-D9, P2).
+
+Extends the pipeline so it also follows listings that are still for sale: price changes, time on market, and how each
+listing ends. Section 0 and its findings are a snapshot from 2026-10-18; file references were updated to the
+`redfin` package layout on 2026-11-21.
 
 Measured on the live container on 2026-10-18 (one-off read-only queries, not committed):
 11,218 bronze pages over 8 fetch days, 7,577 silver listings / 7,576 properties, 27,735 sale-history events.
@@ -10,17 +16,17 @@ Measured on the live container on 2026-10-18 (one-off read-only queries, not com
 
 | Claim | Verified? | Where |
 |---|---|---|
-| Daily Action runs discovery → extract → transform | Yes, as three workflow steps (not via `run_pipeline.py`, which is the local equivalent) | `.github/workflows/daily_scrape.yml` |
-| Discovery pages `sold-3yr`, dedups against silver + `property_urls.txt`, stops after 3 empty pages | Yes. Dedup is by **property_id** | `get_properties.py:90`, `:174` |
-| Extract writes `bronze/<day>/<name>.html.gz`, skips property ids in silver | Yes. Name = MLS or `P<property_id>`; one page per name per day (`put_bronze` refuses overwrite) | `scrape_properties_prod.py:47`, `azure_store.py:43` |
-| Transform: newest bronze page per listing wins, monthly `listed_properties`, `--incremental`, `silver_v2` + `compare_silver.py` | Yes. `--incremental` skips any `(property_id, MLS)` already written, so **a row is never updated** once written | `transform_silver.py:130-136` |
-| Sale history is a separate event table | Yes, and it is no longer a CSV: `silver/sale_history.parquet`, keyed by `property_id`, each event tagged with its `mls` | `parsing.history_rows`, `transform_silver.py:69` |
-| Silver stores DOM / Sold Price Difference | Yes, now computed per sold MLS by `metrics.py` (`days_on_market`, `cumulative_dom`, `sold_vs_*_list`); legacy names kept for the map | `parsing.py:262` |
-| `property_urls.txt` has non-Ottawa URLs | 17 of 687 lines are not `redfin.ca/on/`, but `parsing.in_scope()` already drops them in extract and transform. The oldest bronze page (`2026-02-19/UNKNOWN_…`) is an Idaho page that transform skips | `parsing.py:72` |
+| Daily Action runs discovery → extract → transform | Yes, as three workflow steps (not via `redfin.pipeline`, which is the local equivalent) | `.github/workflows/daily_scrape.yml` |
+| Discovery pages `sold-3yr`, dedups against silver + the URL queue, stops after 3 empty pages | Yes. Dedup is by **property_id** | `extract/discover_sold.py` |
+| Extract writes `bronze/<day>/<name>.html.gz`, skips property ids in silver | Yes. Name = MLS or `P<property_id>`; one page per name per day (`put_bronze` refuses overwrite) | `extract/fetch_sold.py`, `storage/azure_store.py` `put_bronze` |
+| Transform: newest bronze page per listing wins, monthly `listed_properties`, `--incremental`, `silver_v2` + `scripts/compare_silver.py` | Yes. `--incremental` skips any `(property_id, MLS)` already written, so **a row is never updated** once written | `transform/sold.py` `main` |
+| Sale history is a separate event table | Yes, and it is no longer a CSV: `silver/sale_history.parquet`, keyed by `property_id`, each event tagged with its `mls` | `parsing.history_rows`, `transform/sold.py` `write_sale_history` |
+| Silver stores DOM / Sold Price Difference | Yes, now computed per sold MLS by `transform/metrics.py` (`days_on_market`, `cumulative_dom`, `sold_vs_*_list`); legacy names kept for the map | `transform/parsing.py` |
+| the URL queue has non-Ottawa URLs | 17 of 687 lines are not `redfin.ca/on/`, but `parsing.in_scope()` already drops them in extract and transform. The oldest bronze page (`2026-02-19/UNKNOWN_…`) is an Idaho page that transform skips | `parsing.in_scope` |
 
 Things the prompt did not know, and that change the design:
 
-1. **The map reads every `*listed_properties.parquet` under `silver/`** (`app/main.py:91`) and treats each row as a sale.
+1. **The map reads every `*listed_properties.parquet` under `silver/`** (`app/main.py`, `load_data`) and treats each row as a sale.
    Any active row written there becomes a fake sale on the map. Active data must live in **new tables**.
 2. **Silver already contains unsold listings.** 113 properties' latest event is not a sale (64 Listed, 35 Delisted, 8 Relisted,
    3 Price Changed, 3 Pending). These are homes found through the sold search whose page now shows a newer listing. 20 rows have no
@@ -35,8 +41,8 @@ Things the prompt did not know, and that change the design:
 5. **Relisting usually keeps the MLS number.** Of 368 `Relisted` events, 276 reuse the MLS of the previous `Listed`/`Delisted`.
    35 listings went `Pending` and then back to `Listed` on the same MLS (the deal fell through). So "same MLS" does **not** mean
    "same uninterrupted listing period", and "Sold → Active needs a new MLS" is the only safe version of that rule.
-6. 25 silver rows have `longitude = NaN` (`extract_between(html, 'longitude":', "}")` misses a variant). They are not outside
-   Ottawa; they cannot be placed at all.
+6. 25 silver rows have `longitude = NaN` (tracked in [STATUS.md](STATUS.md), known issues). They are not outside Ottawa;
+   they cannot be placed at all.
 
 7. **Active detail pages break two assumptions of the sold parser** (tested on 2713 Dupont St and 2691 Canaan Rd, 2026-10-18):
    * `parsing.extract_mls` takes the first `TREB #` on the page. 2691 Canaan Rd has three (X9239541, X9443724, X9516577) and the
@@ -72,7 +78,7 @@ terminal state**: once sold, a listing never changes, so its last page is its wh
 **`listed_properties` holds sold listings only**, and the timeline of every listing (sold or not) lives in observations,
 events and state.
 
-Definitions (as of a date `t`; for a sold listing `t` = sold date, which reproduces `metrics.py` exactly):
+Definitions (as of a date `t`; for a sold listing `t` = sold date, which reproduces `transform/metrics.py` exactly):
 
 * **DOM (current listing)**: `t − first Listed date of this MLS`. A same-MLS `Delisted`/`Relisted` gap is **counted**: the MLS
   number stayed the same, and the boards count it the same way. If Redfin's history has no `Listed` event for the MLS, use the first
@@ -132,7 +138,7 @@ bronze/search/<day>/manifest.json                written last: complete?, totals
 
 * `azure_store.list_bronze()` only accepts 3-part names, so the new 4-part `bronze/search/…` paths are **invisible to today's
   transform**. Nothing existing breaks.
-* **Measured on 2026-10-18 (see `census.py`):** the for-sale search page (`.../filter/viewport=...,no-outline`) embeds its results
+* **Measured on 2026-10-18 (see `extract/census.py`):** the for-sale search page (`.../filter/viewport=...,no-outline`) embeds its results
   as JSON in the page itself, so no separate API call is needed and none is made. Per home: `mlsId`, `mlsStatus`, `price`,
   `latLong`, `beds`, `baths`, `sqFt`, `dom`, `propertyId`, `listingId`, `propertyType`, `url`, ... (`parsing.census_row`). The page
   embeds at most **350** homes (the newest matches) however many there are, and page 2 returns the same 350, so pagination
@@ -184,7 +190,7 @@ the same way `sale_history.parquet` is today.
 
 ## 5. Gold
 
-Nothing is built yet (`gold/` is empty per ARCHITECTURE.md). Proposed tables, all rebuilt from silver each run:
+Nothing is built yet (`gold/` is empty). Proposed tables, all rebuilt from silver each run:
 
 | Table | Grain | Contents |
 |---|---|---|
@@ -206,7 +212,7 @@ censors them slightly overstates the chance of selling; if that matters later, s
 
 ## 6. Extract / refresh strategy
 
-`known_property_ids()` → **`fetch_plan()`**: the "state queue" that `scrape_properties_prod.py`'s docstring already promises.
+`known_property_ids()` → **`fetch_plan()`**: a state queue replacing the URL file as `extract.fetch_sold`'s source of pending pages.
 It is computed from `listing_state` + the latest census and nothing else:
 
 | Priority | Who | Why |
@@ -216,7 +222,7 @@ It is computed from `listing_state` + the latest census and nothing else:
 | 2 | listings first seen today | get Redfin's history, photo and attributes |
 | 3 | open listings whose `row_hash` changed to a new **state** | confirm the state with the recorded event |
 | 4 | open listings not fetched in `STALE_DAYS` (start at 30) | catches changes the census doesn't show |
-| 5 | sold backfill from `property_urls.txt` (today's queue) | historical and not time-sensitive |
+| 5 | sold backfill from `data/queue/property_urls.txt` (today's queue) | historical and not time-sensitive |
 
 Price-only changes need **no** detail fetch: the census already records the new price. The detail page is only fetched for them
 under priority 4.
@@ -247,10 +253,10 @@ absence only counts when every slice of that day succeeded. Otherwise one blocke
 
 ## 7. Discovery
 
-* `get_properties.py` gets `--mode sold|census`. `sold` is today's behaviour. `census` walks the price-band slices of the
-  for-sale search and writes `bronze/search/…` instead of URLs. The pagination and blocked-page code is shared.
+* Built differently than first planned: the census is its own module (`extract.census`), not a mode of discovery. The
+  shared browser code lives in `scraping/browser.py`.
 * **Separate queues.** The census needs no URL file: the census is the queue, and `fetch_plan()` reads it from silver.
-  `property_urls.txt` stays the sold-backfill queue only. Keep it out of the census path so a 4k-line daily list doesn't churn git
+  `data/queue/property_urls.txt` stays the sold-backfill queue only. Keep it out of the census path so a 4k-line daily list doesn't churn git
   history the way the "Add N newly discovered listing URLs" commits do.
 * **Ottawa filter:** `parsing.in_scope()` (Ontario, redfin.ca) stays as the URL gate. Add `parsing.in_ottawa(lat, lon)` applied in
   transform: a bounding box (lat 44.96–45.54, lon −76.36–−75.24) now, and the City of Ottawa boundary GeoJSON (Open Ottawa) +
@@ -259,10 +265,10 @@ absence only counts when every slice of that day succeeded. Otherwise one blocke
 
 ## 8. Tooling
 
-**Recommendation: keep pandas + Parquet on Azure Blob for silver, use DuckDB for gold and validation, skip dbt.**
+**Decided (DECISIONS D6): keep pandas + Parquet on Azure Blob for silver, use DuckDB for gold and validation, skip dbt.**
 
 * The data is small (MBs per day). Every stage already reads and writes whole Parquet files through `azure_store`, and tests are plain
-  pytest on pure functions (`tests/test_metrics.py`). The SCD2 fold is about 40 lines of pandas over a sorted event list, and fits
+  pytest on pure functions (`redfin/tests/test_metrics.py`). The SCD2 fold is about 40 lines of pandas over a sorted event list, and fits
   that pattern.
 * DuckDB is already a dependency (`app/main.py` uses it). Gold tables and validation checks read more clearly as SQL over
   `read_parquet('…/observations/*.parquet')` than as pandas.
@@ -291,7 +297,7 @@ touched until the comparison is clean.
 
 Implemented as `validate.py` (DuckDB SQL), run at the end of every workflow run, results appended to `gold/validation_log.parquet`.
 
-**(a) Against OREB / CREA monthly statistics** (entered by hand monthly into `app/Redfin/reference/oreb_monthly.csv`: month,
+**(a) Against OREB / CREA monthly statistics** (entered by hand monthly into `redfin/data/reference/oreb_monthly.csv`: month,
 property class, new listings, units sold, active inventory, DOM; source URL per row).
 
 | Metric | Our side | Tolerance |
@@ -326,20 +332,15 @@ layout vary). Requirement this puts on the code: transform never uses `now()`, o
 
 ## 11. Constraints
 
-* **Redfin's Terms of Use** prohibit automated access and scraping. The listing content is board/CREA MLS® data under the boards'
-  licence terms. This is a personal, non-commercial project. Keep request volume low (section 6), and do not redistribute raw listing
-  data.
-* **The container is publicly readable.** `app/main.py` builds image links as
-  `https://stredfinprod.blob.core.windows.net/redfin-data/<blob>`, which only works if the container allows public blob reads. Bronze (raw pages,
-  and soon daily snapshots of the whole market) sits in the same container, so anyone who guesses a blob name can download it.
-  Move `bronze/` and `silver/` to a private container and leave only `images/` public, before the census starts adding a full
-  daily copy of the market.
+* Redfin's Terms of Use and request limits: [../CLAUDE.md](../CLAUDE.md), "Redfin rate limits and Terms of Use".
+* The container is publicly readable, bronze included: [DECISIONS.md](DECISIONS.md) P2. Resolve it before the census adds
+  a full daily copy of the market.
 * Censored data is not sold data: anything shown publicly (the map) should label active and GONE listings as such.
 
 ## First slice (one weekend)
 
 1. **Done:** `census.py` (price-band slices → `bronze/search/<day>/`, manifest with `complete`) and `parsing.parse_search_page` / `census_row`, with tests.
-2. `transform_observations.py`: census → `silver/observations/<day>.parquet` + `in_ottawa` filter.
+2. `transform/observations.py`: census → `silver/observations/<day>.parquet` + `in_ottawa` filter.
 3. A DuckDB query: open listings today, `first_seen`, `gone` since yesterday.
 
 **Check that proves it works:** after 7 daily runs, (i) census slice totals are within 2% of `total_reported` every day, (ii) the

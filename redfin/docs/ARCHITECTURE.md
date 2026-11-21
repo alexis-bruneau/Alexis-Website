@@ -1,17 +1,20 @@
 # Redfin pipeline architecture
 
+Module names are relative to the `redfin` package (`redfin/src/redfin/`). Commands: [../CLAUDE.md](../CLAUDE.md). Current state: [STATUS.md](STATUS.md).
+
 ## Data flow
 
 ```mermaid
 flowchart LR
-    RF[redfin.ca] -->|get_properties.py<br/>discovery| Q[property_urls.txt<br/>pending URLs]
-    Q --> EX[scrape_properties_prod.py<br/>EXTRACT]
+    RF[redfin.ca] -->|extract.discover_sold| Q[data/queue/property_urls.txt<br/>pending URLs]
+    Q --> EX[extract.fetch_sold<br/>EXTRACT]
     RF -->|listing pages| EX
     EX -->|raw HTML, write-once| BR[(bronze/<br/>day/MLS.html.gz)]
-    BR --> TR[transform_silver.py<br/>TRANSFORM<br/>parsing.py - pure, no network]
+    BR --> TR[transform.sold<br/>TRANSFORM<br/>transform.parsing - pure, no network]
     TR --> SL[(silver/<br/>listed_properties.parquet)]
     TR --> SH[(silver/<br/>sale_history.parquet)]
     TR -->|photo URL from page| IM[(images/)]
+    BR --> TX[transform.text] --> LT[(silver/<br/>listing_text.parquet)]
     SL --> APP[Flask app / DuckDB]
     SH -.->|next: gold models| GD[(gold/<br/>insights)]
     SL -.-> GD
@@ -69,10 +72,10 @@ erDiagram
   the whole life of the home.
 * Event identity: `(property_id, event_date, event_type, source_id, price)`.
 
-## Sale metrics (metrics.py)
+## Sale metrics (transform/metrics.py)
 
 Computed per listing from the sold listing's **own** events (matched by MLS), never from earlier listings of the
-same home. Unit-tested in `tests/test_metrics.py`.
+same home. Unit-tested in `redfin/tests/test_metrics.py`.
 
 | Column | Definition |
 |---|---|
@@ -89,30 +92,32 @@ until the app reads the new names. Listings whose sold event has no MLS (e.g. So
 | Layer | Location | Written by | Mutable? |
 |---|---|---|---|
 | bronze | `bronze/<day>/<MLS or P+property_id>.html.gz` | extract | never (write-once) |
-| silver | `silver/<YYYY-MM>/listed_properties.parquet`, `silver/sale_history.parquet` | transform | rebuilt from bronze |
+| silver | `silver/<YYYY-MM>/listed_properties.parquet`, `silver/sale_history.parquet`, `silver/listing_text.parquet` | transform | rebuilt from bronze |
+| silver_v2 | same layout as silver | full rebuilds, for comparison (DECISIONS D3) | scratch |
 | images | `images/<key>_1.jpg` / `_sv.jpg` | transform | idempotent |
 | gold | not built yet | | |
+
+Also in the container: `silver_backup/<timestamp>/`, manual copies of silver made before full rewrites (read by nothing).
 
 ## Active listings (listings still for sale)
 
 Sold listings are final, so one fetch is the whole truth. Active ones change, so they get their own prefixes and are
 never mixed into the sold path: the sold transform reads every `bronze/<day>/*.html.gz`, and an active page parsed
-there would become a fake sale. Design and open questions: [ACTIVE_LISTINGS_DESIGN.md](ACTIVE_LISTINGS_DESIGN.md).
+there would become a fake sale. Design and planned tables: [ACTIVE_LISTINGS.md](ACTIVE_LISTINGS.md).
 
 ```
-census.py          for-sale search, sliced by price (a page embeds at most 350 homes)  -> bronze/search/<day>/*.json.gz + manifest.json
-fetch_active.py    detail page of a sample of the census (history of price changes)    -> bronze/active/<day>/<MLS>.html.gz
-transform_active.py  census row (identity, price, coordinates) + page events (metrics.active_metrics)
+extract.census     for-sale search, sliced by price (a page embeds at most 350 homes)  -> bronze/search/<day>/*.json.gz + manifest.json
+extract.fetch_active detail page of a sample of the census (history of price changes)    -> bronze/active/<day>/<MLS>.html.gz
+transform.active   census row (identity, price, coordinates) + page events (metrics.active_metrics)
                                                                                        -> silver/active/listings.parquet
 app/main.py        /ottawa_active page, POST /active-points (circle + filters + insights)
 ```
 
 * The census row is the identity of a listing (MLS, listingId, price, status); the detail page is only used for its events.
-  A page can name several MLS numbers (relists), so `fetch_active.py` checks the page contains the census row's `listingId`.
+  A page can name several MLS numbers (relists), so `extract.fetch_active` checks the page contains the census row's `listingId`.
 * Active listings are keyed by MLS. Redfin sometimes holds one MLS listing under two propertyIds; `census.read_census` keeps
   the lowest and records the others in `alt_property_ids`.
 * Days on market and price changes are computed from the events as of the census day (never the clock), with the same
   definitions as the sold metrics. Redfin's own `dom` restarts on a relist, so it is kept only as `dom_redfin`.
 * `silver/active/listings.parquet` is a snapshot of one day, rebuilt from bronze. It does not end in `listed_properties.parquet`,
   so the sold map never loads it.
-* Not wired into `daily_scrape.yml` yet.
