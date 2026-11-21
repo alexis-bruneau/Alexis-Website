@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 import os
+import sys
 import json
 import time
-import random
 import io
 import pandas as pd
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
+
+from parsing import property_id
 
 # ---------------- Config --------------------------------------------------
 load_dotenv()
@@ -27,45 +29,27 @@ WAIT_SEC = 2
 # ---------------- Helpers -------------------------------------------------
 
 def get_latest_azure_urls():
-    """Fetches the LATEST parquet file from Azure and returns a set of known URLs."""
+    """Returns the set of listing URLs already stored in ANY silver/<month>/ parquet in Azure."""
     if not AZURE_CONN_STR:
-        print("⚠️ No AZURE_STORAGE_CONNECTION_STRING. Skipping Azure check.")
+        print("No AZURE_STORAGE_CONNECTION_STRING. Skipping Azure check.")
         return set()
 
     try:
-        blob_service_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR)
-        container_client = blob_service_client.get_container_client(CONTAINER_NAME)
-        
-        # Find latest parquet in silver/
-        blobs = container_client.list_blobs(name_starts_with="silver/")
-        latest_blob = None
-        latest_time = None
-        
-        for blob in blobs:
-            if blob.name.endswith("listed_properties.parquet"):
-                if latest_time is None or blob.last_modified > latest_time:
-                    latest_time = blob.last_modified
-                    latest_blob = blob.name
-                    
-        if latest_blob:
-            print(f"✅ Found latest Azure data: {latest_blob}")
-            blob_client = container_client.get_blob_client(latest_blob)
-            data = blob_client.download_blob().readall()
-            
-            df = pd.read_parquet(io.BytesIO(data))
-            if "url" in df.columns:
-                urls = set(df["url"].dropna().tolist())
-                print(f"ℹ️ Loaded {len(urls)} existing URLs from Azure.")
-                return urls
-            else:
-                print("⚠️ Azure parquet missing 'url' column.")
-                return set()
-        else:
-            print("ℹ️ No existing parquet files in Azure.")
-            return set()
-            
+        container_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR).get_container_client(CONTAINER_NAME)
+        urls = set()
+        files = 0
+        for blob in container_client.list_blobs(name_starts_with="silver/"):
+            if not blob.name.endswith("listed_properties.parquet"):
+                continue
+            data = container_client.get_blob_client(blob.name).download_blob().readall()
+            df = pd.read_parquet(io.BytesIO(data), columns=["url"])
+            urls.update(df["url"].dropna())
+            files += 1
+        print(f"Loaded {len(urls)} known URLs from {files} Azure parquet file(s).")
+        return urls
+
     except Exception as e:
-        print(f"❌ Error fetching Azure data: {e}")
+        print(f"Error fetching Azure data: {e}")
         return set()
 
 def get_local_urls():
@@ -103,9 +87,11 @@ def main():
     local_urls = get_local_urls()
     
     known_urls = azure_urls.union(local_urls)
+    known_ids = {property_id(u) for u in known_urls}
     print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
     
     new_found = []
+    blocked = False
     
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -133,6 +119,8 @@ def main():
 
         current_url = START_URL
         page_num = 1
+        empty_pages_in_row = 0   # pages with 0 listing links (403 / challenge / end of results)
+        MAX_EMPTY_PAGES = 3
         
         while len(new_found) < MAX_NEW_URLS:
             print(f"\n--- Scraping Page {page_num} ---")
@@ -157,13 +145,21 @@ def main():
                 print(f"   [DEBUG] Found {len(links)} raw links on page.")
                 
                 if len(links) == 0:
-                    # Debug Screenshot
-                    debug_path = Path(f"app/Redfin/Output/debug_page_{page_num}.png")
+                    empty_pages_in_row += 1
+                    # One debug screenshot (overwritten) + title, to see whether we are blocked
+                    debug_path = Path("app/Redfin/Output/debug_blocked.png")
                     page.screenshot(path=str(debug_path))
-                    print(f"   ⚠️ Found 0 links. Saved screenshot to {debug_path}")
-                    
-                    # Also dump HTML title to see if we are blocked
+                    print(f"   Found 0 links. Saved screenshot to {debug_path}")
                     print(f"   [DEBUG] Page Title: {page.title()}")
+
+                    if empty_pages_in_row >= MAX_EMPTY_PAGES:
+                        print(f"STOPPING: {empty_pages_in_row} pages in a row had no listings. "
+                              "Redfin is probably blocking us (403 / expired aws-waf-token). "
+                              "Export fresh cookies - see app/Redfin/HOW_TO_FIX_403_ERROR.md")
+                        blocked = True
+                        break
+                else:
+                    empty_pages_in_row = 0
 
                 count_before = len(new_found)
                 
@@ -174,9 +170,10 @@ def main():
                     full_url = f"https://www.redfin.ca{href}" if href.startswith("/") else href
                     
                     # Dedupe
-                    if full_url not in known_urls and full_url not in new_found:
+                    pid = property_id(full_url)
+                    if pid not in known_ids and full_url not in new_found:
                         new_found.append(full_url)
-                        known_urls.add(full_url) 
+                        known_ids.add(pid)
                 
                 added = len(new_found) - count_before
                 print(f"   + Added {added} new properties (Total New: {len(new_found)})")
@@ -268,6 +265,9 @@ def main():
         save_urls(new_found)
     else:
         print("\n⚠️ No new URLs found in this run.")
+
+    if blocked:
+        sys.exit(2)
 
 if __name__ == "__main__":
     main()

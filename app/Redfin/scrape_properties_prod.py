@@ -1,56 +1,35 @@
 #!/usr/bin/env python3
-import os
-import io
+"""EXTRACT: fetch listing pages from redfin.ca and save the raw HTML to bronze/. Nothing else.
+
+No parsing happens here. Turning the HTML into rows (and fetching images) is transform_silver.py's job,
+so a parser fix never needs another visit to redfin.ca. Bronze pages are written once and never changed.
+
+Which URLs are pending: the ones in property_urls.txt that are not yet in silver. (Temporary: the state
+queue in step 3 of the refactor replaces this.) Run transform_silver.py afterwards so silver catches up,
+otherwise the next extract would fetch the same pages again.
+"""
+import argparse
 import json
+import os
 import time
-import zlib
-import re
-import pandas as pd
 from pathlib import Path
-from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from playwright.sync_api import sync_playwright, TimeoutError
-from azure.storage.blob import BlobServiceClient
-import requests
-from bs4 import BeautifulSoup
 
-# ---------------- config --------------------------------------------------
-from dotenv import load_dotenv
+from playwright.sync_api import sync_playwright
 
-# Explicitly load .env from current directory or parent
-env_path = Path(".env")
-if not env_path.exists():
-    env_path = Path("..") / ".env"
-    
-load_dotenv(dotenv_path=env_path)
-
-CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-CONTAINER_NAME = "redfin-data"
-
-# Test configurations
-TEST_MODE = False
-MAX_URLS = 1000
+import parsing
+import azure_store as store
 
 URLS_FILE = Path("app/Redfin/Output/property_urls.txt")
-BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-WAIT_SEC = 2
+USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
 
-# ---------------- Azure Client --------------------------------------------
-if not CONN_STR:
-    raise ValueError("Missing AZURE_STORAGE_CONNECTION_STRING in .env")
+# Run limits (all overridable from the environment / --limit):
+#   MAX_SCRAPE_COUNT  0 = fetch every pending URL (default). Set a number to cap a run.
+#   MAX_CONSECUTIVE_FAILURES  stop early when Redfin is clearly blocking us (expired cookies, 403s).
+MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", "0"))
+MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", "8"))
 
-# Initialize Azure Client
-try:
-    blob_service_client = BlobServiceClient.from_connection_string(CONN_STR)
-    container_client = blob_service_client.get_container_client(CONTAINER_NAME)
-    if not container_client.exists():
-        container_client.create_container()
-except Exception as e:
-    print(f"Azure Connection Error: {e}")
-    raise
-
-# ---------------- Helpers -------------------------------------------------
 
 def load_redfin_cookies():
     if not COOKIE_FILE.exists():
@@ -64,354 +43,91 @@ def load_redfin_cookies():
         if ".redfin.ca" in c.get("domain", "")
     ]
 
-def upload_bronze_html(html_content, mls):
-    """Saves compressed HTML to bronze/YYYY-MM-DD/mls.html.gz"""
-    today = datetime.now().strftime("%Y-%m-%d")
-    blob_name = f"bronze/{today}/{mls}.html.gz"
-    
-    # Check if exists (Idempotency)
-    try:
-        if container_client.get_blob_client(blob_name).exists():
-            return False # Skipped
-    except:
-        pass
 
-    # Compress
-    compressed = zlib.compress(html_content.encode("utf-8"))
-    
-    blob_client = container_client.get_blob_client(blob_name)
-    blob_client.upload_blob(compressed, overwrite=True)
-    return True # Uploaded
+def known_property_ids():
+    """Property ids already parsed into silver (matched by id: silver holds the page's canonical URL,
+    which can be spelled differently from the URL we discovered)."""
+    ids = set()
+    for blob in store.list_silver():
+        ids.update(parsing.property_id(u) for u in store.read_parquet(blob)["url"].dropna())
+    return ids
 
-def upload_image(mls, image_url):
-    """Uploads ONLY the first image to images/mls_1.jpg"""
-    blob_name = f"images/{mls}_1.jpg"
-    blob_client = container_client.get_blob_client(blob_name)
-    
-    # Check if exists to save bandwidth/cost
-    if blob_client.exists():
-        return 
-        
-    try:
-        resp = requests.get(image_url, timeout=10)
-        if resp.status_code == 200:
-            blob_client.upload_blob(resp.content, overwrite=True)
-            # print(f"   -> Saved Image: {blob_name}")
-    except Exception as e:
-        print(f"   -> Failed Image {mls}: {e}")
 
-# ---------------- Parsing Logic (Copied from scrape_properties.py) --------
-
-def extract_between(text, start, stop="\\"):
-    markers = [start] if '"' not in start else [start, start.replace('"', r"\"")]
-    for m in markers:
-        idx = text.find(m)
-        if idx != -1:
-            i = idx + len(m)
-            j = text.find(stop, i) if stop else -1
-            return text[i:j] if j != -1 else text[i:]
-    return "N/A"
-
-def parse_date(s):
-    try:
-        return datetime.strptime(s, "%b %d, %Y")
-    except:
-        return None
-
-money_re = re.compile(r"[^\d]")
-
-def money_to_int(s):
-    s_clean = money_re.sub("", s)
-    return int(s_clean) if s_clean else None
-
-def parse_sale_history(html, url):
-    start_marker = r'\"events\":[{'
-    
-    start_idx = html.find(start_marker)
-    if start_idx == -1:
-        start_marker = r'"events":[{'
-        start_idx = html.find(start_marker)
-    
-    if start_idx == -1:
-        return []
-
-    array_start_idx = start_idx + len(start_marker) - 2
-    candidate = html[array_start_idx : array_start_idx + 25000]
-    unescaped = candidate.replace(r'\"', '"').replace(r'\\', '\\')
-    
-    decoder = json.JSONDecoder()
-    try:
-        events_list, _ = decoder.raw_decode(unescaped)
-    except json.JSONDecodeError:
-        return []
-        
-    rows = []
-    for e in events_list:
-        ts = e.get("eventDate")
-        date_str = ""
-        if isinstance(ts, int):
-            date_str = datetime.fromtimestamp(ts / 1000).strftime("%b %d, %Y")
-            
-        rows.append({
-            "url": url,
-            "eventDate": date_str,
-            "eventType": e.get("eventDescription", ""),
-            "price": str(e.get("price", "")),
-            "MLS": e.get("sourceId", "")
-        })
-    return rows
-
-def find_genmid_values(html):
-    return list(dict.fromkeys(re.findall(r"genMid\.([A-Za-z0-9_]+\.jpg)", html)))
-
-def extract_price_from_json(html):
-    soup = BeautifulSoup(html, "lxml")
-    for script in soup.find_all("script"):
-        if not script.string:
-            continue
-        try:
-            data = json.loads(script.string)
-            stack = [data]
-            while stack:
-                curr = stack.pop()
-                if isinstance(curr, dict):
-                    if "price" in curr and "priceCurrency" in curr:
-                         return int(curr["price"])
-                    if "offers" in curr:
-                        stack.append(curr["offers"])
-                    for v in curr.values():
-                        if isinstance(v, (dict, list)):
-                            stack.append(v)     
-                elif isinstance(curr, list):
-                    for item in curr:
-                         if isinstance(item, (dict, list)):
-                             stack.append(item)
-        except:
-            continue
-    return None
-
-def safe_float(val):
-    try:
-        if isinstance(val, (float, int)):
-            return float(val)
-        return float(val) if val and val != "N/A" else None
-    except:
-        return None
-
-# ---------------- Core Logic ----------------------------------------------
-
-# ---------------- Core Logic ----------------------------------------------
-
-def process_property(url, context):
-    # 1. Scrape HTML using existing context
+def fetch_html(url, context):
+    """Returns the rendered HTML of one listing page, or None on error / login wall."""
     page = context.new_page()
-    
     # Block heavy resources
-    def block_heavy(route):
-        if route.request.resource_type in ["image", "media", "font"]:
-            route.abort()
-        else:
-            route.continue_()
-            
-    page.route("**/*", block_heavy)
-
+    page.route("**/*", lambda route: route.abort()
+               if route.request.resource_type in ("image", "media", "font") else route.continue_())
     try:
-        # domcontentloaded is much faster than load (doesn't wait for all assets)
         page.goto(url, wait_until="domcontentloaded", timeout=45000)
-        
-        # Short sleep to let JS hydrate (Redfin needs this)
-        time.sleep(1.5) 
-        
+        time.sleep(1.5)  # let JS hydrate (Redfin needs this)
         if "/login" in page.url:
             print(f"🔒 Login page encountered at {url}")
-            page.close()
             return None
-        html = page.content()
+        return page.content()
     except Exception as e:
         print(f"⚠️ Error/Timeout at {url}: {e}")
-        page.close()
         return None
-    
-    page.close()
-
-    # 2. Extract MLS
-    mls = extract_between(html, "TREB #", "<")
-    if not mls or mls == "N/A":
-        # Fallback if MLS not found (maybe different region)
-        mls = f"UNKNOWN_{int(time.time())}"
-    
-    # 3. Upload Bronze (HTLM) - Idempotent
-    uploaded = upload_bronze_html(html, mls)
-    if not uploaded:
-        print(f"   [Bronze] Skipped {mls} (Already done today)")
-    else:
-        print(f"   [Bronze] Uploaded {mls}")
-
-    # 4. Parse Data (Silver Logic)
-    # This logic matches your original scrape_properties.py
-    history = parse_sale_history(html, url)
-    history.sort(key=lambda h: parse_date(h["eventDate"]) or datetime.min)
-    
-    sold_evts = [h for h in history if "sold" in h["eventType"].lower()]
-    sold_evt = sold_evts[-1] if sold_evts else None
-    
-    listed_evts = [h for h in history if "listed" in h["eventType"].lower() and "delisted" not in h["eventType"].lower()]
-    first_listed_evt = listed_evts[0] if listed_evts else None
-    
-    sold_price = money_to_int(sold_evt["price"]) if sold_evt else None
-    if not sold_price:
-            json_price = extract_price_from_json(html)
-            if json_price:
-                sold_price = json_price
-    
-    first_list_price = money_to_int(first_listed_evt["price"]) if first_listed_evt else None
-    
-    beds = safe_float(extract_between(html, '"latestListingInfo":{"beds":', ","))
-    baths = safe_float(extract_between(html, '"baths":', ","))
-    lat = safe_float(extract_between(html, 'latitude":', ","))
-    lon = safe_float(extract_between(html, 'longitude":', "}"))
-    
-    days_on_market = None
-    sold_price_diff = None
-    
-    if sold_evt and first_listed_evt:
-        d_sold = parse_date(sold_evt["eventDate"])
-        d_listed = parse_date(first_listed_evt["eventDate"])
-        if d_sold and d_listed:
-            days_on_market = (d_sold - d_listed).days
-            
-    if sold_price and first_list_price:
-        sold_price_diff = sold_price - first_list_price
-
-    # 5. Handle Images (First one only)
-    mls_tail = mls[-3:] if len(mls) >= 3 else mls
-    image_filenames = find_genmid_values(html)
-    if image_filenames:
-        # Construct URL for the FIRST image
-        first_img_url = f"{BASE_IMAGE_URL}{mls_tail}/genMid.{image_filenames[0]}"
-        upload_image(mls, first_img_url)
-        first_image_blob = f"images/{mls}_1.jpg" # Reference for DB
-    else:
-        first_image_blob = None
-
-    # Extract Property Type securely
-    prop_type_match = re.search(r'"propertyType"\s*:\s*"([^"]+)"', html)
-    if prop_type_match:
-        property_type = prop_type_match.group(1).title()
-    else:
-        property_type = extract_between(html, 'Property Type","content":"', "\\")
-        if property_type == "N/A":
-            property_type = None
-
-    # 6. Return Data Record
-    record = {
-        "url": url,
-        "MLS": mls,
-        "Sold Price": sold_price,
-        "Number Beds": beds,
-        "Number Baths": baths,
-        "Sold Date": sold_evt["eventDate"] if sold_evt else extract_between(html, '"lastSaleDate":"'),
-        "Address": extract_between(html, 'assembledAddress":"', "\\"),
-        "Postal Code": extract_between(html, '"postalCode":"', '"'),
-        "Property Type": property_type,
-        "latitude": lat,
-        "longitude": lon,
-        "First Listed Date": first_listed_evt["eventDate"] if first_listed_evt else None,
-        "Days On Market": days_on_market,
-        "Sold Price Difference": sold_price_diff,
-        "photo_blob": first_image_blob, # Azure Path
-    }
-    return record
+    finally:
+        page.close()
 
 
-def main():
+def main(limit=None):
     start_time = time.time()
-    
-    # Load URLs
+    limit = MAX_SCRAPE_COUNT if limit is None else limit
+
     if not URLS_FILE.exists():
-        print("URL File not found!")
+        print("URL File not found! Run get_properties.py first.")
         return
 
+    print("Reading existing state from Azure...")
+    known = known_property_ids()
     with URLS_FILE.open("r", encoding="utf-8") as f:
-        urls = [u.strip() for u in f if u.strip()]
-    
-    print(f"🚀 Found {len(urls)} total URLs.")
-    
-    # LIMIT BATCH SIZE (Prevent timeouts)
-    MAX_SCRAPE_COUNT = int(os.getenv("MAX_SCRAPE_COUNT", 10))
-    if len(urls) > MAX_SCRAPE_COUNT:
-        print(f"⚠️ Limiting scrape to last {MAX_SCRAPE_COUNT} URLs (Configured by MAX_SCRAPE_COUNT)")
-        urls = urls[-MAX_SCRAPE_COUNT:]
-        
-    print(f"🚀 Starting scrape for {len(urls)} properties...")
+        all_urls = list(dict.fromkeys(u.strip() for u in f if u.strip()))
+    in_scope = [u for u in all_urls if parsing.in_scope(u)]
+    pending = [u for u in in_scope if parsing.property_id(u) not in known]
+    print(f"URL file: {len(all_urls)} URLs ({len(all_urls) - len(in_scope)} out of scope, ignored), "
+          f"{len(pending)} not yet in silver.")
 
-    results = []
-    
-    # Single Browser Instance for ALL URLs (Much Faster)
+    if limit and len(pending) > limit:
+        print(f"Limiting this run to the first {limit} pending URLs (newest first).")
+        pending = pending[:limit]
+    if not pending:
+        print("Nothing to fetch. Done.")
+        return
+
+    saved = failures_in_row = 0
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+        context = browser.new_context(user_agent=USER_AGENT)
         context.add_cookies(load_redfin_cookies())
-        
-        for url in urls:
-            res = process_property(url, context)
-            if res:
-                results.append(res)
-                print(f"✅ Processed {res.get('MLS', 'Unknown')}")
-        
+
+        print(f"Starting fetch for {len(pending)} pages...")
+        for i, url in enumerate(pending, 1):
+            html = fetch_html(url, context)
+            if html is None:
+                failures_in_row += 1
+                if failures_in_row >= MAX_CONSECUTIVE_FAILURES:
+                    print(f"Stopping: {failures_in_row} failures in a row (blocked or cookies expired?).")
+                    break
+                continue
+            failures_in_row = 0
+
+            # Named by MLS, or P<property_id> when the page has none: the same page always gets the same name
+            name = parsing.listing_key(parsing.property_id(url), parsing.extract_mls(html))
+            written = store.put_bronze(html, name, url)
+            saved += written
+            print(f"[{i}/{len(pending)}] {name} {'saved to bronze' if written else 'already in bronze today'}")
+
         browser.close()
-    
-    # 7. Save Silver (Parquet) to Azure
-    # 7. Save Silver (Parquet) to Azure
-    if results:
-        # Resolve FutureWarning: Wrap string in StringIO
-        new_df = pd.read_json(io.StringIO(json.dumps(results))) # Ensure types
-        
-        # Determine target blob name
-        today_month = datetime.now().strftime("%Y-%m")
-        blob_name = f"silver/{today_month}/listed_properties.parquet"
-        
-        # Check if blob exists and merge
-        try:
-            print(f"Checking for existing data in {blob_name}...")
-            blob_client = container_client.get_blob_client(blob_name)
-            
-            if blob_client.exists():
-                print("   -> Found existing file. Downloading to merge...")
-                existing_data = blob_client.download_blob().readall()
-                existing_df = pd.read_parquet(io.BytesIO(existing_data))
-                
-                # Combine and Deduplicate (Keep latest scrape for same MLS)
-                combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-                # Drop duplicates based on MLS, keeping the LAST occurrence (newest scrape)
-                combined_df = combined_df.drop_duplicates(subset=["MLS"], keep="last")
-                
-                print(f"   -> Merged {len(new_df)} new rows with {len(existing_df)} existing rows. Total: {len(combined_df)}")
-                final_df = combined_df
-            else:
-                print("   -> No existing file. Creating new.")
-                final_df = new_df
-                
-        except Exception as e:
-            print(f"⚠️ Error merging with existing blob: {e}")
-            print("   -> Falling back to saving ONLY new data to avoid total loss.")
-            final_df = new_df
 
-        # Save locally first
-        local_parquet = "temp_silver.parquet"
-        final_df.to_parquet(local_parquet, index=False)
-        
-        # Upload to Azure Silver
-        with open(local_parquet, "rb") as data:
-            container_client.upload_blob(name=blob_name, data=data, overwrite=True)
-            
-        print(f"\n🎉 Success! Uploaded {len(final_df)} rows to {blob_name}")
-        if os.path.exists(local_parquet):
-            os.remove(local_parquet)
-    else:
-        print("No valid results found.")
+    print(f"\nDone: {saved} new pages in bronze in {time.time() - start_time:.0f}s "
+          f"({len(pending) - saved} not saved). Now run transform_silver.py.")
 
-    print(f"⏱️ Total time: {time.time() - start_time:.1f}s")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Fetch pending Redfin listing pages into bronze/.")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="Max pages this run (default: MAX_SCRAPE_COUNT env, 0 = all pending)")
+    main(limit=parser.parse_args().limit)
