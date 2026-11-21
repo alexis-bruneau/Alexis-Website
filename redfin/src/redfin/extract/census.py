@@ -29,7 +29,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-from redfin import config
+from redfin import config, runstats
 from redfin.scraping.browser import USER_AGENT, load_redfin_cookies
 from redfin.transform import parsing
 
@@ -234,6 +234,8 @@ def main():
           f"complete={manifest['complete']}")
     for problem in manifest["problems"]:
         print("   PROBLEM:", problem)
+    runstats.report("census", day=args.day, complete=manifest["complete"], listings=manifest["distinct_listings"],
+                    mls=manifest["distinct_mls"], header_total=manifest["root_total"])
     sys.exit(0 if manifest["complete"] else 2)
 
 

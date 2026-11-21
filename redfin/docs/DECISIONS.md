@@ -112,6 +112,40 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Alternatives rejected**: keeping them unused.
 - **Status**: accepted. If the Flask app needs hosting again, that is a new decision.
 
+## D13. One daily command; the active list is the newest page per census MLS, minus homes already sold
+- **Date**: 2026-11-21 (branch `feature/daily-run`)
+- **Decision**:
+  1. `python -m redfin.daily` (run by hand, once a day) runs `discover_sold`, `fetch_sold` (`MAX_SCRAPE_COUNT` = `--limit-sold`,
+     default 200), `transform.sold --incremental --out-prefix silver`, `census`, `fetch_active --n <--limit-active>` (default
+     200) and `transform.active` as subprocesses, and prints one summary. Discovery failing skips only `fetch_sold`; the sold
+     and active blocks are independent; an incomplete census (exit 2) still feeds `fetch_active` and `transform.active`; a
+     census that fails outright skips `fetch_active` but not `transform.active`. Exit code 1 if any step exited non-zero.
+     The steps report their counts through a JSON file named in `REDFIN_STATS_FILE` (`redfin/runstats.py`; a no-op when unset),
+     because a subprocess cannot return numbers and `subprocess.call` cannot capture output.
+  2. `fetch_active` defaults to a "daily" selection: census rows that pass `eligible()` and have no `bronze/active/` page for
+     any day first (newest listings first, by Redfin's days on market), then those whose newest page is the oldest; listings
+     already fetched on the census day are skipped. `--sample` keeps the old biased test sample.
+  3. `transform.active` builds a row for every census MLS from the **newest page of that MLS across all days** (up to the census
+     day), with identity, price, status and coordinates from the census row and `as_of` = census day. New column `page_day`
+     says how old the page is. The default census day is now the latest census, not the latest day with pages.
+  4. Reconcile with sold, inside `transform.active`: a census MLS that is a sale in silver is left out of `listings.parquet`
+     and written to `silver/active/reconciled_out.parquet` (`mls, sold_date, reason`). **Matched on MLS only.** A
+     `listed_properties` row is a sale only with proof for its own MLS: a Sold/Closed event for that MLS in
+     `sale_history.parquet`, or a sale metric on the row (those exist only when the MLS has its own Sold event). `Sold Date`
+     alone is not proof, and `Sold-Conditional` / `Pending` are not sales.
+  5. `/active-points` shows only snapshot rows whose `status` is `Active` (a row with no status stays).
+- **Why**: a 200/day batch must add to the active list, not replace it with that day's 200. Matching on `property_id` would
+  hide a home relisted after a sale (same property, new MLS). The parser fills `Sold Date` from the previous sale or the
+  asking price (ACTIVE_LISTINGS.md findings 2 and 7), so it cannot say whether this MLS sold; hiding an active listing by
+  mistake is worse than showing a just-sold one for one more day. The census returns non-Active homes (the fixture has an
+  `Off Market` one).
+- **Alternatives rejected**: matching sold on `property_id`; trusting `Sold Date` alone as the sale test (see the proof rule
+  above); deleting reconciled rows instead of writing them aside;
+  parsing the steps' stdout for the summary; adding the daily run to `daily_scrape.yml` (not changed here: it needs the
+  census, which the Action has never run).
+- **Status**: accepted. Refines D8 (what the active snapshot contains). `daily_scrape.yml` is unchanged. A daily run edits the
+  committed `redfin/data/queue/property_urls.txt` (discovery appends to it).
+
 ---
 
 ## Proposed (open questions)

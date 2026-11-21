@@ -25,6 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
+from redfin import runstats
 from redfin.storage import azure_store as store
 from redfin.transform import metrics, parsing
 
@@ -132,6 +133,7 @@ def main():
         entries = [e for e in entries if e[1] not in done_names]
         print(f"Incremental: {len(entries)} listings not yet in {args.out_prefix}/.")
         if not entries:
+            runstats.report("transform.sold", rows_added=0)
             return
     if args.limit:
         entries = entries[-args.limit:]
@@ -180,6 +182,7 @@ def main():
 
     write_sale_history(results, args.out_prefix, args.incremental)
 
+    runstats.report("transform.sold", rows_added=len(results))
     print(f"Done in {time.time() - t0:.0f}s.")
 
 

@@ -11,6 +11,7 @@ Environment (read once, at import; `.env` at the repo root is loaded first, real
     CENSUS_SLICE_MAX          census: a price band with more results than this is split
     SAVE_STREETVIEW           "1" (default) = use Google Street View as the fallback photo
     REDFIN_COOKIE_FILE        override the cookie file location
+    REDFIN_STATS_FILE         set by redfin.daily: a JSON file the steps append their counts to (see runstats.py)
 """
 import os
 from pathlib import Path
@@ -44,3 +45,4 @@ MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", "8"))
 MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", "500"))
 CENSUS_SLICE_MAX = int(os.getenv("CENSUS_SLICE_MAX", "340"))
 SAVE_STREETVIEW = os.getenv("SAVE_STREETVIEW", "1") == "1"
+STATS_FILE = os.getenv("REDFIN_STATS_FILE")  # unset outside redfin.daily: steps then report nothing

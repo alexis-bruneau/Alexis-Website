@@ -107,9 +107,11 @@ there would become a fake sale. Design and planned tables: [ACTIVE_LISTINGS.md](
 
 ```
 extract.census     for-sale search, sliced by price (a page embeds at most 350 homes)  -> bronze/search/<day>/*.json.gz + manifest.json
-extract.fetch_active detail page of a sample of the census (history of price changes)    -> bronze/active/<day>/<MLS>.html.gz
-transform.active   census row (identity, price, coordinates) + page events (metrics.active_metrics)
+extract.fetch_active detail pages of census listings: never fetched first, then stalest (price history) -> bronze/active/<day>/<MLS>.html.gz
+transform.active   census row (identity, price, coordinates) + the NEWEST page of that MLS over all days
+                   (events: metrics.active_metrics), minus homes already sold (matched on MLS)
                                                                                        -> silver/active/listings.parquet
+                                                                                       -> silver/active/reconciled_out.parquet (mls, sold_date, reason)
 app/main.py        /ottawa_active page, POST /active-points (circle + filters + insights)
 ```
 
@@ -119,5 +121,8 @@ app/main.py        /ottawa_active page, POST /active-points (circle + filters + 
   the lowest and records the others in `alt_property_ids`.
 * Days on market and price changes are computed from the events as of the census day (never the clock), with the same
   definitions as the sold metrics. Redfin's own `dom` restarts on a relist, so it is kept only as `dom_redfin`.
-* `silver/active/listings.parquet` is a snapshot of one day, rebuilt from bronze. It does not end in `listed_properties.parquet`,
-  so the sold map never loads it.
+* `silver/active/listings.parquet` is a snapshot as of the census day (`as_of`), rebuilt from bronze: one row per census MLS that
+  has a detail page, built from that MLS's newest page (`page_day`). Neither it nor `reconciled_out.parquet` ends in
+  `listed_properties.parquet`, so the sold map never loads them. Reconcile rule (D13): matched on MLS only; a silver row is a
+  sale only with a Sold/Closed event for its MLS in `sale_history`, or a sale metric on the row; `Sold Date` alone is not proof.
+* `python -m redfin.daily` runs the whole chain; see [../CLAUDE.md](../CLAUDE.md), Commands.

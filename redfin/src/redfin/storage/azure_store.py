@@ -117,6 +117,28 @@ def list_active_pages(day):
             for b in container().list_blobs(name_starts_with=prefix) if b.name.endswith(".html.gz")}
 
 
+def list_active_pages_all():
+    """Every active-listing detail page of every day, as [(day, MLS, blob name)]."""
+    out = []
+    for b in container().list_blobs(name_starts_with="bronze/active/"):
+        parts = b.name.split("/")
+        if len(parts) == 4 and parts[3].endswith(".html.gz"):
+            out.append((parts[2], parts[3][:-len(".html.gz")], b.name))
+    return out
+
+
+def newest_page_per_mls(entries, upto_day=None):
+    """[(day, MLS, blob)] -> {MLS: (day, blob)}, the newest page of each MLS. Pure.
+    Pages after `upto_day` (YYYY-MM-DD) are ignored, so rebuilding for an older census day gives the same rows as then."""
+    newest = {}
+    for day, mls, blob in entries:
+        if upto_day is not None and day > upto_day:
+            continue
+        if mls not in newest or day > newest[mls][0]:
+            newest[mls] = (day, blob)
+    return newest
+
+
 def bronze_url_metadata(blob_name):
     return container().get_blob_client(blob_name).get_blob_properties().metadata.get("url")
 
