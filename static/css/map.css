@@ -1712,26 +1712,9 @@ body {
   }
 }
 
-.insight-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.insight-tab {
-  border: 1px solid transparent;
-  background: transparent;
-  color: #64748b;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.insight-tab:hover { background: #f1f5f9; }
-.insight-tab.active { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+/* The tabs are the sold chart's segmented control (.btn-group / .chart-btn); these only add what tabs need on top. */
+.insight-tabs { flex-wrap: wrap; }
+.insight-tab { font-family: inherit; }
 
 .insight-tab:focus-visible,
 .chip-btn:focus-visible {
@@ -1760,29 +1743,6 @@ body {
 }
 
 .pane-hint { margin-right: auto; }
-
-.scatter-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-}
-
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Same shapes as the chart's dots: ▼ cut, ▲ increase, ● unchanged */
-.legend-key {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-}
-
-.legend-key.down { background: #dc2626; clip-path: polygon(0 0, 100% 0, 50% 100%); }
-.legend-key.up { background: #059669; clip-path: polygon(50% 0, 0 100%, 100% 100%); }
-.legend-key.none { background: #94a3b8; border-radius: 50%; }
 
 .chart-box {
   position: relative;

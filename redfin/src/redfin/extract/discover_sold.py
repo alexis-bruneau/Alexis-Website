@@ -18,7 +18,7 @@ import pandas as pd
 from azure.storage.blob import BlobServiceClient
 from playwright.sync_api import sync_playwright
 
-from redfin import config
+from redfin import config, exclusions
 from redfin.scraping.browser import USER_AGENT, block_heavy, load_redfin_cookies
 from redfin.transform.parsing import property_id
 
@@ -74,7 +74,7 @@ def main():
     local_urls = get_local_urls()
     
     known_urls = azure_urls.union(local_urls)
-    known_ids = {property_id(u) for u in known_urls}
+    known_ids = {property_id(u) for u in known_urls} | exclusions.property_ids(exclusions.load())  # purged on purpose: not new
     print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
     
     new_found = []

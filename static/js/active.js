@@ -273,9 +273,16 @@ const CUT_BUCKETS = [
  *  total cut over the listing's life, not last_change_pct (only the latest change): a listing cut twice counts once,
  *  at its total. Null when there is no first asking price, so such a listing is in no cut bucket. */
 const cutPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.original_price - pt.price) / pt.original_price * 100 : null;
+/** The scatter's y value: the current asking price vs the FIRST asking price, signed (-5 = 5% below it, +3 = 3% above).
+ *  The mirror image of cutPct. Null when there is no first asking price: such a listing is not on the scatter. */
+const changeFromListed = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.price - pt.original_price) / pt.original_price * 100 : null;
+/** "+3%", "−5.5%", "0%" (a real minus sign; one decimal at most, so tick-spacing float noise never shows). */
+const signedPct = (v) => { const r = Number(v.toFixed(1)); return `${r > 0 ? "+" : r < 0 ? "−" : ""}${Math.abs(r)}%`; };
 const bucketIndex = (buckets, value) => value == null ? -1 : buckets.findIndex((b) => b.test(value));
-const inBrush = (pt, b) => pt.dom != null && pt.price != null
-  && pt.dom >= b.xMin && pt.dom <= b.xMax && pt.price >= b.yMin && pt.price <= b.yMax;
+const inBrush = (pt, b) => {
+  const y = changeFromListed(pt);
+  return pt.dom != null && y != null && pt.dom >= b.xMin && pt.dom <= b.xMax && y >= b.yMin && y <= b.yMax;
+};
 const hasChartSelection = () => chartSelection.dom.size > 0 || chartSelection.cut.size > 0 || chartSelection.brush !== null;
 
 function resetChartSelection() {
@@ -555,6 +562,7 @@ const CHANGE_COLORS = { down: "#dc2626", up: "#059669", none: "#94a3b8" };   // 
 const ACCENT = "#2563eb";
 const ACCENT_DIM = "#bfdbfe";
 const INK = "#1e293b";
+const SOLD_GRID = "rgba(0, 0, 0, 0.05)";   // the grid colour of the sold map's chart (map.js)
 const charts = {};   // scatter, dom, cut, curve
 const changeKind = (pt) => hasChange(pt) ? pt.last_change_direction : "none";
 const withAlpha = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; };
@@ -619,13 +627,13 @@ function updateSelectionBar() {
   if (dom.size) addChip(`Days: ${labels(dom, DOM_BUCKETS)}`, () => dom.clear());
   if (cut.size) addChip(`Cut: ${labels(cut, CUT_BUCKETS)}`, () => cut.clear());
   if (brush) {
-    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${compactPrice(brush.yMin)}–${compactPrice(brush.yMax)}`,
+    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${signedPct(brush.yMin)} to ${signedPct(brush.yMax)}`,
       () => { chartSelection.brush = null; });
   }
 }
 document.getElementById("clearSelection").addEventListener("click", () => { resetChartSelection(); refreshView(); });
 
-/* ---- 1. Scatter: asking price vs days on market ---- */
+/* ---- 1. Scatter: change from the first asking price vs days on market ---- */
 let brushDrag = null;       // { x0, y0, x1, y1 } in canvas pixels while a selection rectangle is being dragged
 let brushMode = false;      // touch screens: "Select area" turns a finger drag into a selection instead of a page scroll
 let suppressClick = false;  // the click that ends a drag must not also select the dot under the cursor
@@ -683,22 +691,31 @@ function initScatter() {
       responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
       interaction: { mode: "nearest", intersect: true },
       plugins: {
-        legend: { display: false },   // an HTML legend sits in the toolbar above the chart
+        // Same top legend as the sold chart; the key shapes match the dots (and the ▼ / ▲ badges). Clicking an entry hides that kind.
+        legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8 } },
         tooltip: {
           callbacks: {
             title: (items) => items[0].raw.pt.address || "Address not shown",
             label: (item) => {
               const pt = item.raw.pt;
-              const lines = [`${money(pt.price)} · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`, changeText(pt)];
+              const lines = [`${signedPct(item.raw.y)} vs first asking price · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`,
+                             `${money(pt.price)} now`];
               if (pt.original_price && pt.original_price !== pt.price) lines.push(`Listed at ${money(pt.original_price)}`);
+              if (pt.price_changes > 1) lines.push(`${pt.price_changes} price changes · latest ${changeText(pt)}`);
               return lines;
             }
           }
         }
       },
       scales: {
-        x: { type: "linear", min: 0, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
-        y: { title: { display: true, text: "Asking price" }, grace: "5%", ticks: { callback: (v) => compactPrice(v) }, grid: { color: "#f1f5f9" } }
+        x: { type: "linear", min: 0, title: { display: true, text: "Days on market" }, grid: { color: SOLD_GRID } },
+        y: {
+          title: { display: true, text: "Change from original listing price" },
+          grace: "10%",
+          ticks: { callback: (v) => signedPct(v) },
+          // The 0% line is the original asking price: dots below it were cut, dots above it were raised.
+          grid: { color: (ctx) => ctx.tick && ctx.tick.value === 0 ? "rgba(0,0,0,0.35)" : SOLD_GRID }
+        }
       }
     },
     plugins: [brushPlugin]
@@ -772,13 +789,14 @@ function initScatter() {
 
 function updateScatter() {
   // Every listing that passes the bucket picks; the brush only fades dots, it does not remove them.
-  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && pt.price != null);
+  // A listing with no first asking price has no % change, so it is not drawn.
+  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && changeFromListed(pt) != null);
   charts.scatter.data.datasets.forEach((ds) => {
-    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: pt.price, pt }));
+    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: changeFromListed(pt), pt }));
   });
   charts.scatter.update("none");
   charts.scatter.canvas.setAttribute("aria-label",
-    `Scatter chart of asking price against days on market: ${shown.length} active listings`);
+    `Scatter chart of the change from the original listing price against days on market: ${shown.length} active listings`);
 }
 
 /** Clicking a dot: show the list, scroll to the listing and highlight it (highlightListing also marks it on the curve). */
@@ -847,7 +865,7 @@ function initBuckets() {
         },
         scales: {
           x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f1f5f9" } }
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: SOLD_GRID } }
         }
       },
       plugins: [barCountPlugin]
@@ -957,8 +975,8 @@ function initCurve() {
         } }
       },
       scales: {
-        x: { type: "linear", min: 0, max: 180, ticks: { stepSize: 30 }, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
-        y: { min: 0, max: 100, ticks: { stepSize: 25, callback: (v) => `${v}%` }, title: { display: true, text: "Sold by then" }, grid: { color: "#f1f5f9" } }
+        x: { type: "linear", min: 0, max: 180, ticks: { stepSize: 30 }, title: { display: true, text: "Days on market" }, grid: { color: SOLD_GRID } },
+        y: { min: 0, max: 100, ticks: { stepSize: 25, callback: (v) => `${v}%` }, title: { display: true, text: "Sold by then" }, grid: { color: SOLD_GRID } }
       }
     },
     plugins: [curvePlugin]

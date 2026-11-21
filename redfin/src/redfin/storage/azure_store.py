@@ -192,6 +192,16 @@ def write_parquet(df, blob_name):
     container().upload_blob(name=blob_name, data=buf, overwrite=True)
 
 
+def delete_blob(blob_name):
+    """Deletes one blob. Returns False when it does not exist. Never used on bronze by the pipeline."""
+    from azure.core.exceptions import ResourceNotFoundError
+    try:
+        container().delete_blob(blob_name)
+    except ResourceNotFoundError:
+        return False
+    return True
+
+
 def list_silver(prefix="silver/"):
     return [b.name for b in container().list_blobs(name_starts_with=prefix)
             if b.name.endswith("listed_properties.parquet")]

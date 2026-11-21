@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
-from redfin import runstats
+from redfin import exclusions, runstats
 from redfin.storage import azure_store as store
 from redfin.transform import metrics, parsing
 
@@ -136,8 +136,9 @@ def main():
     args = ap.parse_args()
     t0 = time.time()
 
-    entries = latest_bronze_per_name(store.list_bronze())
-    print(f"Bronze: {len(entries)} distinct pages.")
+    excluded = exclusions.load()   # listings purged from silver on purpose: their bronze pages stay, but are not transformed
+    entries = exclusions.without_excluded_pages(latest_bronze_per_name(store.list_bronze()), excluded)
+    print(f"Bronze: {len(entries)} distinct pages ({len(excluded)} purged listings skipped).")
     existing = load_existing_output(args.out_prefix) if args.incremental else {}
     done = set()  # (property_id, MLS) already in the output
     if args.incremental:
@@ -169,7 +170,8 @@ def main():
     newest = {}
     for day, rec, events in sorted(results, key=lambda r: r[0]):
         newest[(rec["property_id"], rec["MLS"])] = (day, rec, events)
-    results = [v for k, v in newest.items() if k not in done]
+    excluded_keys = exclusions.keys(excluded)
+    results = [v for k, v in newest.items() if k not in done and k not in excluded_keys]
 
     print(f"Parsed {len(results)} listings; skipped {out_of_scope} out-of-scope pages and {len(errors)} unreadable ones.")
     for err in errors[:10]:

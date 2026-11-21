@@ -57,6 +57,8 @@ redfin/
 - **Keys**: sold listings `(property_id, MLS)` (MLS empty when the page has none); sale-history events
   `(property_id, event_date, event_type, source_id, price)`; active listings `MLS`.
 - Active detail pages live under `bronze/active/`, never `bronze/<day>/` (the sold transform would turn them into fake sales).
+- **Purged listings stay purged**: `data/queue/excluded_listings.txt` (D17) lists listings removed from silver on purpose;
+  discovery, fetch and the transforms skip them. Never delete bronze pages to "clean up"; purge from silver and exclude.
 
 ## Commands (from the repo root)
 
@@ -68,6 +70,9 @@ python -m redfin.run.daily                                  # THE daily run: up 
 python -m redfin.run.daily --limit-sold 150 --limit-active 150 [--skip-sold | --skip-active]   # how many listings / one block only
 python -m redfin.run.daily --transform-only                 # rebuild silver from the bronze already saved + check + reload the app (no redfin.ca)
 python -m redfin.run.verify                                 # read-only: is silver as new as bronze and the census? exit 1 if not
+
+python redfin/scripts/purge_sold_before.py --before 2025-06-01            # dry run: sold listings to remove (bronze is kept)
+python redfin/scripts/purge_sold_before.py --before 2025-06-01 --apply    # delete; commit data/queue/excluded_listings.txt after
 
 python -m redfin.extract.fetch_sold --limit 20          # one stage at a time; every module takes --help
 python -m redfin.extract.census --local-dir census_out  # census without Azure

@@ -20,7 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
-from redfin import runstats
+from redfin import exclusions, runstats
 from redfin.storage import azure_store as store
 from redfin.transform import parsing
 from redfin.transform.sold import KEY, latest_bronze_per_name
@@ -59,8 +59,8 @@ def main():
     if args.incremental and store.container().get_blob_client(blob).exists():
         existing = store.read_parquet(blob)
 
-    entries = latest_bronze_per_name(store.list_bronze())
-    print(f"Bronze: {len(entries)} distinct pages.")
+    entries = exclusions.without_excluded_pages(latest_bronze_per_name(store.list_bronze()), exclusions.load())
+    print(f"Bronze: {len(entries)} distinct pages (purged listings skipped).")
     if existing is not None:
         # Cheap pre-filter on the file name (the MLS, or P<property_id>); the exact key is re-checked after parsing.
         done_names = {parsing.listing_key(pid, mls) for pid, mls in zip(existing["property_id"], existing["MLS"].where(existing["MLS"].notna(), None))}

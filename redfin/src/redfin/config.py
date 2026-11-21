@@ -27,6 +27,9 @@ load_dotenv(REPO_ROOT / ".env")
 # ---------------- local files --------------------------------------------------
 # Sold-listing URLs found by discovery and waiting to be fetched (committed to git).
 URLS_FILE = PROJECT_DIR / "data" / "queue" / "property_urls.txt"
+# Listings removed from silver on purpose (scripts/purge_sold_before.py) and kept out: discovery, fetch and the transforms
+# skip them (see exclusions.py). Committed to git.
+EXCLUDED_FILE = PROJECT_DIR / "data" / "queue" / "excluded_listings.txt"
 # Redfin login cookies exported from Chrome (gitignored; the daily Action writes it from the REDFIN_COOKIES_JSON secret).
 COOKIE_FILE = Path(os.getenv("REDFIN_COOKIE_FILE") or PROJECT_DIR / "chrome_cookies.json")
 # Local, gitignored output (e.g. the screenshot discovery saves when Redfin blocks it).

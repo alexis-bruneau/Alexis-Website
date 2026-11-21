@@ -138,18 +138,22 @@
         </div>
 
         <div class="insights-right">
+          <!-- Same header as the sold map: a title, then a segmented button group -->
           <div class="chart-header">
-            <div class="insight-tabs" role="tablist" aria-label="Insight charts">
-              <button type="button" role="tab" class="insight-tab active" id="tab-scatter" data-pane="scatter"
-                aria-selected="true" aria-controls="pane-scatter">Price vs days</button>
-              <button type="button" role="tab" class="insight-tab" id="tab-buckets" data-pane="buckets"
-                aria-selected="false" aria-controls="pane-buckets" tabindex="-1">Days &amp; cuts</button>
-              <button type="button" role="tab" class="insight-tab" id="tab-curve" data-pane="curve"
-                aria-selected="false" aria-controls="pane-curve" tabindex="-1">Time to sell</button>
-              <button type="button" role="tab" class="insight-tab" id="tab-changes" data-pane="changes"
-                aria-selected="false" aria-controls="pane-changes" tabindex="-1">Latest price changes</button>
+            <span style="font-weight: 600; color: #555;">Market Trend</span>
+            <div class="chart-actions">
+              <span id="asOf" class="as-of"></span>
+              <div class="btn-group insight-tabs" role="tablist" aria-label="Insight charts">
+                <button type="button" role="tab" class="chart-btn insight-tab active" id="tab-scatter" data-pane="scatter"
+                  aria-selected="true" aria-controls="pane-scatter">Price change</button>
+                <button type="button" role="tab" class="chart-btn insight-tab" id="tab-buckets" data-pane="buckets"
+                  aria-selected="false" aria-controls="pane-buckets" tabindex="-1">Days &amp; cuts</button>
+                <button type="button" role="tab" class="chart-btn insight-tab" id="tab-curve" data-pane="curve"
+                  aria-selected="false" aria-controls="pane-curve" tabindex="-1">Time to sell</button>
+                <button type="button" role="tab" class="chart-btn insight-tab" id="tab-changes" data-pane="changes"
+                  aria-selected="false" aria-controls="pane-changes" tabindex="-1">Latest changes</button>
+              </div>
             </div>
-            <span id="asOf" class="as-of"></span>
           </div>
 
           <!-- What the charts are currently filtering the map and list by -->
@@ -159,21 +163,16 @@
             <button type="button" id="clearSelection" class="chip-btn">Clear selection</button>
           </div>
 
-          <!-- 1. Price vs days on market: hover = marker on the map, click = open in the list, drag = select -->
+          <!-- 1. % change from the original listing price vs days on market: hover = marker on the map, click = open in the list, drag = select.
+               The legend is drawn by Chart.js (top, like the sold chart). -->
           <div id="pane-scatter" class="insight-pane" role="tabpanel" aria-labelledby="tab-scatter">
             <div class="pane-toolbar">
-              <span class="pane-hint">Drag to select an area · click a dot to find the listing</span>
-              <!-- Legend: shapes as well as colours, matching the ▼ / ▲ price-change badges -->
-              <span class="scatter-legend">
-                <span class="legend-item"><i class="legend-key down"></i>Price cut</span>
-                <span class="legend-item"><i class="legend-key up"></i>Price increase</span>
-                <span class="legend-item"><i class="legend-key none"></i>No change</span>
-              </span>
+              <span class="pane-hint">Drag to select an area · click a dot to find the listing · line = original listing price</span>
               <button type="button" id="brushToggle" class="chip-btn brush-toggle" aria-pressed="false">Select area</button>
             </div>
             <div class="chart-box">
               <canvas id="scatterChart" role="img"
-                aria-label="Scatter chart of asking price against days on market, one dot per active listing"></canvas>
+                aria-label="Scatter chart of the change from the original listing price against days on market, one dot per active listing"></canvas>
             </div>
           </div>
 

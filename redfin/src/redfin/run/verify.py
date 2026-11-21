@@ -17,7 +17,7 @@ import argparse
 import math
 import sys
 
-from redfin import runstats
+from redfin import exclusions, runstats
 from redfin.storage import azure_store as store
 from redfin.transform import active, sold
 
@@ -44,7 +44,7 @@ def active_report(census_day, as_of, rows):
 
 
 def check_sold(prefix):
-    entries = sold.latest_bronze_per_name(store.list_bronze())
+    entries = exclusions.without_excluded_pages(sold.latest_bronze_per_name(store.list_bronze()), exclusions.load())
     pending = sold.pending_entries(entries, sold.done_keys(sold.load_existing_output(prefix)))
     r = sold_report(entries, pending)
     detail = f"newest bronze day {r['newest_day']}: {r['pages']} pages, {r['pending_newest']} not in {prefix}/ yet"

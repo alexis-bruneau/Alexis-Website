@@ -15,7 +15,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-from redfin import config, runstats
+from redfin import config, exclusions, runstats
 from redfin.scraping.browser import USER_AGENT, fetch_html, load_redfin_cookies
 from redfin.storage import azure_store as store
 from redfin.transform import parsing
@@ -43,7 +43,8 @@ def main(limit=None):
     with config.URLS_FILE.open("r", encoding="utf-8") as f:
         all_urls = list(dict.fromkeys(u.strip() for u in f if u.strip()))
     in_scope = [u for u in all_urls if parsing.in_scope(u)]
-    pending = [u for u in in_scope if parsing.property_id(u) not in known]
+    excluded = exclusions.property_ids(exclusions.load())  # purged from silver on purpose (see exclusions.py)
+    pending = [u for u in in_scope if parsing.property_id(u) not in known and parsing.property_id(u) not in excluded]
     print(f"URL file: {len(all_urls)} URLs ({len(all_urls) - len(in_scope)} out of scope, ignored), "
           f"{len(pending)} not yet in silver.")
 

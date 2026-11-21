@@ -194,6 +194,29 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   `scrape/` (edits `daily_scrape.yml`, a production change for a nicer name); flattening `src/redfin` to `redfin/redfin`.
 - **Status**: accepted. Refines D11.
 
+## D17. Old sold listings can be purged from silver; bronze is kept and an exclusion list keeps them out
+- **Date**: 2026-11-21 (branch `feature/purge-old-sold`)
+- **Decision**: `redfin/scripts/purge_sold_before.py --before YYYY-MM-DD [--apply]` (dry run by default) removes every listing
+  whose **own** sale (a Sold/Closed event for its MLS in `sale_history`) is before the date: its `listed_properties` row, its
+  `images/` photo(s), its `listing_text` row, and the `sale_history` events of its property when no other listing of that
+  property stays. **Bronze is not touched.** The purged listings are appended to the committed
+  `redfin/data/queue/excluded_listings.txt` (`property_id MLS sold_date`); `discover_sold` and `fetch_sold` skip those
+  property ids, `transform.sold` and `transform.text` skip those listings. `redfin.run.verify` ignores their pages. No backup
+  is made.
+- **Why**: the sold search covers 3 years, so without the list discovery would queue the listings again, `fetch_sold` would
+  fetch them again and `transform.sold` would rebuild them from the kept bronze pages. The `Sold Date` column is not the test
+  (the parser can fill it from an earlier sale); the own-MLS sale event is. First use: `--before 2025-06-01` removes 165 of
+  7,727 listings (sold 2021-04 to 2025-05), all in `silver/2026-02/`.
+- **Consequences**: the bronze write-once rule is unchanged (nothing in bronze is deleted). Because bronze stays, the purge is
+  reversible in effect: empty the exclusion list and `transform.sold` rebuilds the rows (images are downloaded again). A future
+  re-sale of a purged property is skipped too (discovery matches on property id), which is the same limit as the known
+  "re-sales of a known home are never fetched" issue. "Scraped before" a date was not an option: the oldest bronze day is
+  2026-02-19.
+- **Alternatives rejected**: deleting the bronze pages as well (irreversible, and it was declined); no exclusion list (the
+  listings come back); a backup copy in the container (declined); using the `Sold Date` column as the test.
+- **Status**: accepted. Touches `discover_sold`, `fetch_sold` and `transform.sold`, which `daily_scrape.yml` runs: the added
+  filter does nothing while the list is empty.
+
 ---
 
 ## Proposed (open questions)

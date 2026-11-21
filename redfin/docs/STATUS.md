@@ -19,6 +19,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
   the stalest page; `transform.active` uses the newest page per census MLS across all days (so the active list grows by
   ~200 a day) and moves homes that are already sold into `silver/active/reconciled_out.parquet`. `/active-points` hides
   non-Active census rows. Tests cover the selection, the reconcile and the orchestrator's order and failure rules.
+- **Purge of old sold listings** (D17): `redfin/scripts/purge_sold_before.py --before 2025-06-01` (dry run: 165 of 7,727 listings,
+  165 photos, 165 text rows, 477 history events; bronze untouched). Written and tested offline; **not applied yet** until it is run
+  with `--apply`. Purged listings go in `redfin/data/queue/excluded_listings.txt`, which discovery, fetch and the transforms honour.
 - **Folders show the lineage** (D16): `extract/` (1. scrape) -> `transform/` (2. bronze -> silver) -> `run/` (3. the commands:
   `python -m redfin.run.daily --limit-sold N --limit-active N`, `python -m redfin.run.verify`). `pipeline.py` was removed
   (`run.daily --skip-active` replaces it).
