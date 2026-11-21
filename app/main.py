@@ -489,6 +489,10 @@ def active_points():
             df = df[df["list_price"] >= int(filters["min_price"])]
         if "max_price" in filters:
             df = df[df["list_price"] <= int(filters["max_price"])]
+        if "min_dom" in filters:  # listings with no days-on-market value drop out once either bound is set
+            df = df[df["days_on_market"] >= int(filters["min_dom"])]
+        if "max_dom" in filters:
+            df = df[df["days_on_market"] <= int(filters["max_dom"])]
         if filters.get("beds"):  # the "5+" button sends 5 and means 5 or more
             df = df[df["beds"].isin(filters["beds"]) | (df["beds"] >= 5 if 5 in filters["beds"] else False)]
         if filters.get("ptypes"):
