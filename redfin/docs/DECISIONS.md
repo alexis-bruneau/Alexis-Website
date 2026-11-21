@@ -162,6 +162,23 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Status**: accepted. Refines D8 (what the active snapshot contains). `daily_scrape.yml` is unchanged. A daily run edits the
   committed `redfin/data/queue/property_urls.txt` (discovery appends to it).
 
+## D15. The daily run also refreshes text, checks that silver is fresh, and reloads the app
+- **Date**: 2026-11-21 (branch `feature/daily-run`)
+- **Decision**: `redfin.daily` gains, after the transforms: `transform.text --incremental --out-prefix silver`; `redfin.verify`
+  (read-only) as the last subprocess step; and a `POST /refresh-data` to the running Flask app (default
+  `http://127.0.0.1:5000/refresh-data`, `--refresh-url`, `--no-refresh`). `verify` fails the run when the newest bronze day has
+  more than max(3 pages, 5%) not in silver `listed_properties`, or when `silver/active/listings.parquet` is not as of the
+  latest census day or is empty. `--transform-only` skips discovery, fetches and the census and runs only the transforms,
+  the check and the refresh. An app that is not running is not a failure.
+- **Why**: the maps read silver and the app keeps an in-memory copy, so a fetch without its transform, or a transform
+  without a reload, changes nothing on screen and raises no error. That is what happened on 2026-11-21: 150 sold and 150
+  active pages were fetched, no transform ran, and both maps stayed on the 2026-10-18 data.
+- **Alternatives rejected**: only documenting "run the transforms after fetching" (the failure is silent); having the app
+  poll silver for changes (more moving parts than one POST); counting every bronze page not in silver (a few pages are
+  legitimately out of scope or unreadable and would fail every run); adding these steps to `daily_scrape.yml` (a production
+  change that needs its own decision; the Action stays sold-only).
+- **Status**: accepted. Refines D14.
+
 ---
 
 ## Proposed (open questions)

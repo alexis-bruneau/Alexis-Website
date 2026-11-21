@@ -125,7 +125,8 @@ app/main.py        /ottawa_active page, POST /active-points (circle + filters + 
   has a detail page, built from that MLS's newest page (`page_day`). Neither it nor `reconciled_out.parquet` ends in
   `listed_properties.parquet`, so the sold map never loads them. Reconcile rule (D14): matched on MLS only; a silver row is a
   sale only with a Sold/Closed event for its MLS in `sale_history`, or a sale metric on the row; `Sold Date` alone is not proof.
-* `python -m redfin.daily` runs the whole chain; see [../CLAUDE.md](../CLAUDE.md), Commands.
+* `python -m redfin.daily` runs the whole chain, then `redfin.verify` (silver is as new as bronze and the census) and a reload of
+  the running app; the maps read silver and the app caches it in memory. See [../CLAUDE.md](../CLAUDE.md), Commands, and D15.
 
 ### Insight charts on /ottawa_active (read time, nothing stored)
 

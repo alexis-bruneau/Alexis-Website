@@ -32,7 +32,8 @@ redfin/
     transform/             pure: parsing, metrics, sold, active, text
     analytics/             read-time helpers for the map (property_types)
     pipeline.py            local discover -> fetch_sold -> transform.sold
-    daily.py               the once-a-day command: sold block + active block + summary (python -m redfin.daily)
+    daily.py               the once-a-day command: sold block + active block + verify + app reload + summary (python -m redfin.daily)
+    verify.py              read-only freshness check (silver vs newest bronze day and latest census); daily.py runs it last
     runstats.py            steps report their counts to daily.py through a JSON file (no-op outside daily.py)
   scripts/                 one-off maintenance: backfill_images.py, compare_silver.py
   tests/ (+ fixtures/)     pure-function tests, no network, no Azure
@@ -62,6 +63,8 @@ python -m pytest redfin               # tests (offline, < 1 s)
 
 python -m redfin.daily                                  # THE daily run: up to 200 sold + 200 active pages, census, silver rebuilt
 python -m redfin.daily --limit-sold 50 --limit-active 50 [--skip-sold | --skip-active]   # smaller / one block only
+python -m redfin.daily --transform-only                 # rebuild silver from the bronze already saved + check + reload the app (no redfin.ca)
+python -m redfin.verify                                 # read-only: is silver as new as bronze and the census? exit 1 if not
 
 python -m redfin.pipeline --limit 20                    # local sold run: discover, fetch 20, transform into live silver
 python -m redfin.extract.fetch_sold --limit 20          # one stage at a time; every module takes --help

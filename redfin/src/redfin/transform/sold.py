@@ -86,6 +86,21 @@ def write_sale_history(results, out_prefix, incremental):
     print(f"   wrote {len(df):>5} events ({df['property_id'].nunique()} properties) -> {blob}")
 
 
+def done_keys(existing):
+    """{(property_id, MLS)} already written, from the frames load_existing_output returned."""
+    done = set()
+    for df in existing.values():
+        done.update(zip(df["property_id"], df["MLS"].where(df["MLS"].notna(), None)))
+    return done
+
+
+def pending_entries(entries, done):
+    """The bronze entries whose listing is not in `done` yet. A cheap check on the file name (the MLS, or
+    P<property_id>); legacy UNKNOWN_<time> pages can only be matched after parsing."""
+    done_names = {parsing.listing_key(pid, mls) for pid, mls in done}
+    return [e for e in entries if e[1] not in done_names]
+
+
 def attach_images(records, skip_images):
     """Sets photo_blob / photo_type on records whose image is (or becomes) available in Azure."""
     existing = store.load_existing_images()
@@ -126,11 +141,8 @@ def main():
     existing = load_existing_output(args.out_prefix) if args.incremental else {}
     done = set()  # (property_id, MLS) already in the output
     if args.incremental:
-        for df in existing.values():
-            done.update(zip(df["property_id"], df["MLS"].where(df["MLS"].notna(), None)))
-        # Cheap pre-filter on the file name; legacy UNKNOWN_<time> pages can only be matched after parsing.
-        done_names = {parsing.listing_key(pid, mls) for pid, mls in done}
-        entries = [e for e in entries if e[1] not in done_names]
+        done = done_keys(existing)
+        entries = pending_entries(entries, done)
         print(f"Incremental: {len(entries)} listings not yet in {args.out_prefix}/.")
         if not entries:
             runstats.report("transform.sold", rows_added=0)

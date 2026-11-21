@@ -19,18 +19,22 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
   the stalest page; `transform.active` uses the newest page per census MLS across all days (so the active list grows by
   ~200 a day) and moves homes that are already sold into `silver/active/reconciled_out.parquet`. `/active-points` hides
   non-Active census rows. Tests cover the selection, the reconcile and the orchestrator's order and failure rules.
+- **The daily run also finishes the job** (D15): after the transforms it runs `transform.text`, then `redfin.verify` (silver is as
+  new as the newest bronze day and the latest census, else the run fails) and asks the running app to reload
+  (`POST /refresh-data`). `python -m redfin.daily --transform-only` rebuilds silver from the bronze already saved without
+  contacting redfin.ca. Found on 2026-11-21: 150 sold and 150 active pages had been fetched but the transforms had not run, so
+  the maps still showed the 2026-10-18 data (50 active listings, no 2026-11 sold file).
 - **Listing text**: `transform.text` → `silver/listing_text.parquet` (already run against live silver).
 - **Package restructure** (2026-11-21): `redfin/` package, `config.py`, shared browser helpers, lazy Azure client, docs
   under `redfin/docs/`. See D11.
-- **Insight charts on /ottawa_active** (branch `feature/active-insights-charts`, not merged yet): price-vs-days scatter linked to
-  the map and list, clickable days-on-market and cut-depth histograms that cross-filter, and a sell-time curve from the sold
+- **Insight charts on /ottawa_active** (branch `feature/active-insights-charts`, not merged yet): scatter of % change from the
+  original listing price vs days on market (linked to the map and list; header, tabs, legend and grid styled like the sold chart), clickable days-on-market and cut-depth histograms that cross-filter, and a sell-time curve from the sold
   data (`redfin.analytics.sale_curve`, D13). Flask-only: not in the Pages build or the daily scrape.
 
 ## In progress
 
-- `feature/daily-run` (D13): branched from `refactor/redfin-package`, because `master` does not have the `redfin/` package yet;
-  merge the restructure first, or review this branch's PR against `refactor/redfin-package`.
-- `refactor/redfin-package` (the restructure): pushed, not merged.
+- `feature/daily-run` (D14, D15): the daily command, merged with master (which has the restructure). PR to master not merged yet.
+- `feature/active-insights-charts` (insight charts, D13).
 
 ## Next
 
@@ -58,6 +62,8 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 | A partial census shrinks the active list | `transform.active` | rows exist only for MLS in that day's census; `redfin.daily` says so in the summary |
 | Reconcile only knows sales that reached silver | `transform.active` | a home sold since the last `transform.sold` shows as active until the next run; matched on MLS only (`listed_properties` rows whose MLS is the page's first `TREB #` can differ from the sold MLS, ACTIVE_LISTINGS.md finding 7) |
 | `/active-points` hides every non-`Active` status, including `Pending` | `app/main.py` | only `Active` and `Off Market` have been seen (the 4-home fixture); check the real census before relying on it |
+| `redfin.daily` reloads the app at `http://127.0.0.1:5000/refresh-data` only | `daily.py` | `--refresh-url` for another address; an app that isn't running is not an error. A deployed copy is not refreshed |
+| `daily_scrape.yml` does not run `transform.text`, the census or the active path | workflow | the scheduled job stays sold-only; only `redfin.daily` (by hand) does the rest |
 | Container is publicly readable, including bronze/silver | Azure | P2 |
 | Manual backups under `silver_backup/<timestamp>/` contain `listed_properties` files | Azure | harmless (the map only reads `silver/`), but nothing documents or cleans them |
 | Map still reads the legacy columns `Days On Market` / `Sold Price Difference` | `app/main.py` | dropping them needs the app switched to the new names first |
