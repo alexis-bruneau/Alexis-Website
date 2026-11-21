@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 # The Redfin pipeline package (pip install -e redfin). These routes only read what it writes to Azure.
 from redfin import config as redfin_config
 from redfin.analytics.property_types import property_group
+from redfin.analytics.sale_curve import sale_curve
 
 # Windows consoles default to cp1252 and crash on the emoji in our log lines
 for _stream in (sys.stdout, sys.stderr):
@@ -193,6 +194,14 @@ def haversine_km(lon1, lat1, lon2, lat2):
     a = np.sin((lat2 - lat1) / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2.0) ** 2
     return 6371 * 2 * np.arcsin(np.sqrt(a))
 
+
+def beds_mask(beds, selected):
+    """True where `beds` is one of the selected counts; the "5+" button sends 5 and means 5 or more."""
+    mask = beds.isin(selected)
+    if 5 in selected:
+        mask = mask | (beds >= 5)
+    return mask
+
 # ---------------- App -----------------------------------------------------
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
@@ -204,7 +213,9 @@ def home():
 @app.route("/refresh-data", methods=["POST"])
 def refresh_data():
     """Trigger a data reload from Azure without restarting"""
+    global _sold_frame
     success, msg = load_data()
+    _sold_frame = None  # the sell-time curve re-reads the reloaded sold data
     active_ok, active_msg = load_active_data()
     return jsonify({"success": success, "message": msg, "active": {"success": active_ok, "message": active_msg}})
 
@@ -469,6 +480,58 @@ def filtered_points():
         sys.stderr.write(f"ERROR in filtered_points: {str(e)}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
+# The "how long do homes like these take to sell" curve is built from the sold data the sold map reads (the
+# 'properties' view), over the last SOLD_WINDOW_DAYS days of sales.
+SOLD_WINDOW_DAYS = 180
+_sold_frame = None  # parsed once per data load; refresh_data() clears it
+
+
+def sold_frame():
+    """Sold rows with parsed dates and numeric columns, for the sell-time curve. Cached until the next data load."""
+    global _sold_frame
+    if _sold_frame is None:
+        df = con.execute("""
+            SELECT latitude, longitude, "Sold Price" AS price, "Sold Date" AS sold_date, "Days On Market" AS dom,
+                   "Number Beds" AS beds, "Property Type" AS ptype
+            FROM properties
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        """).fetchdf()
+        for col in ("latitude", "longitude", "price", "dom", "beds"):
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        df["sold_date"] = pd.to_datetime(df["sold_date"], format="mixed", errors="coerce")
+        _sold_frame = df
+    return _sold_frame
+
+
+def comparable_sales(center_lat, center_lng, radius_km, filters):
+    """Days on market of the recent sales inside the circle that pass the price, beds and property-type filters.
+
+    The window is the SOLD_WINDOW_DAYS days ending on the latest sale in the data (not today's date, so it is the
+    same for everyone and it still has sales when the sold scrape is a few days behind). Returns
+    (days_on_market list, window_start, window_end); the dates are None when there is no sold data.
+
+    Only price, beds and property type are applied: they describe what a comparable home is. The active-only
+    filters (days on market, price changes) are not, because filtering sales by how long they took would bias the
+    curve. Rows with no days on market are left out."""
+    df = sold_frame()
+    window_end = df["sold_date"].max()
+    if pd.isna(window_end):
+        return [], None, None
+    window_start = window_end - pd.Timedelta(days=SOLD_WINDOW_DAYS - 1)
+    df = df[(df["sold_date"] >= window_start) & (df["sold_date"] <= window_end)]
+    if not df.empty:
+        df = df[haversine_km(center_lng, center_lat, df["longitude"], df["latitude"]) <= radius_km]
+    if "min_price" in filters:
+        df = df[df["price"] >= int(filters["min_price"])]
+    if "max_price" in filters:
+        df = df[df["price"] <= int(filters["max_price"])]
+    if filters.get("beds"):
+        df = df[beds_mask(df["beds"], filters["beds"])]
+    if filters.get("ptypes"):
+        df = df[df["ptype"].map(property_group).isin(filters["ptypes"])]
+    return df["dom"].dropna().tolist(), window_start.date().isoformat(), window_end.date().isoformat()
+
+
 @app.route("/active-points", methods=["POST"])
 def active_points():
     """Active listings inside the search circle (+ filters) and their insights: the counterpart of /filtered-points."""
@@ -492,8 +555,12 @@ def active_points():
             df = df[df["list_price"] >= int(filters["min_price"])]
         if "max_price" in filters:
             df = df[df["list_price"] <= int(filters["max_price"])]
-        if filters.get("beds"):  # the "5+" button sends 5 and means 5 or more
-            df = df[df["beds"].isin(filters["beds"]) | (df["beds"] >= 5 if 5 in filters["beds"] else False)]
+        if "min_dom" in filters:  # listings with no days-on-market value drop out once either bound is set
+            df = df[df["days_on_market"] >= int(filters["min_dom"])]
+        if "max_dom" in filters:
+            df = df[df["days_on_market"] <= int(filters["max_dom"])]
+        if filters.get("beds"):
+            df = df[beds_mask(df["beds"], filters["beds"])]
         if filters.get("ptypes"):
             df = df[df["property_type_name"].map(property_group).isin(filters["ptypes"])]
 
@@ -522,7 +589,19 @@ def active_points():
                            if len(changed) and changed["original_price"].notna().any() else None,
             "as_of": str(df["as_of"].max()) if len(df) and df["as_of"].notna().any() else None,
         }
-        return jsonify({"points": sanitize_json(points), "summary": sanitize_json(summary)})
+
+        # How long comparable homes took to sell. A failure here must not take the listings down with it.
+        sold = {"sold_curve": None, "sold_sample": 0, "sold_window": None}
+        try:
+            days, window_start, window_end = comparable_sales(center_lat, center_lng, radius_km, filters)
+            sold = {
+                "sold_curve": sale_curve(days),  # None below 20 sales
+                "sold_sample": len(days),        # sales in the window, also when too few for a curve
+                "sold_window": {"days": SOLD_WINDOW_DAYS, "start": window_start, "end": window_end},
+            }
+        except Exception as e:
+            sys.stderr.write(f"ERROR in active_points sold curve: {e}\n{traceback.format_exc()}\n")
+        return jsonify({"points": sanitize_json(points), "summary": sanitize_json(summary), **sanitize_json(sold)})
     except Exception as e:
         sys.stderr.write(f"ERROR in active_points: {e}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500

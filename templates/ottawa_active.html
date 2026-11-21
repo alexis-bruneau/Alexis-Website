@@ -48,6 +48,16 @@
         </div>
       </fieldset>
 
+      <!-- Days-on-market filter -->
+      <fieldset class="filter-section">
+        <legend><strong>Days on Market</strong></legend>
+        <div id="domRangeSlider"></div>
+        <div class="range-labels">
+          <span id="labelDomMin">0 days</span>
+          <span id="labelDomMax">180+ days</span>
+        </div>
+      </fieldset>
+
       <!-- Beds filter -->
       <fieldset class="filter-section">
         <legend><strong>Bedrooms</strong></legend>
@@ -113,7 +123,7 @@
       <div id="map"></div>
 
       <!-- ═══ INSIGHTS FOOTER ═══ -->
-      <div id="insights">
+      <div id="insights" class="insights-charts">
         <div class="insights-left">
           <div class="summary-cards">
             <div class="card"><strong>Active Listings</strong><span id="stat-count">–</span></div>
@@ -129,10 +139,80 @@
 
         <div class="insights-right">
           <div class="chart-header">
-            <span style="font-weight: 600; color: #555;">Latest Price Changes</span>
+            <div class="insight-tabs" role="tablist" aria-label="Insight charts">
+              <button type="button" role="tab" class="insight-tab active" id="tab-scatter" data-pane="scatter"
+                aria-selected="true" aria-controls="pane-scatter">Price vs days</button>
+              <button type="button" role="tab" class="insight-tab" id="tab-buckets" data-pane="buckets"
+                aria-selected="false" aria-controls="pane-buckets" tabindex="-1">Days &amp; cuts</button>
+              <button type="button" role="tab" class="insight-tab" id="tab-curve" data-pane="curve"
+                aria-selected="false" aria-controls="pane-curve" tabindex="-1">Time to sell</button>
+              <button type="button" role="tab" class="insight-tab" id="tab-changes" data-pane="changes"
+                aria-selected="false" aria-controls="pane-changes" tabindex="-1">Latest price changes</button>
+            </div>
             <span id="asOf" class="as-of"></span>
           </div>
-          <div id="recentChanges" class="recent-changes"></div>
+
+          <!-- What the charts are currently filtering the map and list by -->
+          <div id="selectionBar" class="selection-bar" hidden>
+            <span id="selectionSummary" class="selection-summary"></span>
+            <span id="selectionChips" class="selection-chips"></span>
+            <button type="button" id="clearSelection" class="chip-btn">Clear selection</button>
+          </div>
+
+          <!-- 1. Price vs days on market: hover = marker on the map, click = open in the list, drag = select -->
+          <div id="pane-scatter" class="insight-pane" role="tabpanel" aria-labelledby="tab-scatter">
+            <div class="pane-toolbar">
+              <span class="pane-hint">Drag to select an area · click a dot to find the listing</span>
+              <!-- Legend: shapes as well as colours, matching the ▼ / ▲ price-change badges -->
+              <span class="scatter-legend">
+                <span class="legend-item"><i class="legend-key down"></i>Price cut</span>
+                <span class="legend-item"><i class="legend-key up"></i>Price increase</span>
+                <span class="legend-item"><i class="legend-key none"></i>No change</span>
+              </span>
+              <button type="button" id="brushToggle" class="chip-btn brush-toggle" aria-pressed="false">Select area</button>
+            </div>
+            <div class="chart-box">
+              <canvas id="scatterChart" role="img"
+                aria-label="Scatter chart of asking price against days on market, one dot per active listing"></canvas>
+            </div>
+          </div>
+
+          <!-- 2. Histograms: click a bar to filter the map and list by that bucket -->
+          <div id="pane-buckets" class="insight-pane" role="tabpanel" aria-labelledby="tab-buckets" hidden>
+            <div class="pane-toolbar">
+              <span class="pane-hint">Click bars to filter · pick several to combine · the two charts combine too</span>
+            </div>
+            <div class="chart-pair">
+              <figure class="chart-fig">
+                <figcaption>Days on market</figcaption>
+                <div class="chart-box">
+                  <canvas id="domChart" role="img" aria-label="Histogram of active listings by days on market"></canvas>
+                </div>
+              </figure>
+              <figure class="chart-fig">
+                <figcaption>Price cut from first asking price</figcaption>
+                <div class="chart-box">
+                  <canvas id="cutChart" role="img" aria-label="Histogram of active listings by total price cut"></canvas>
+                </div>
+              </figure>
+            </div>
+          </div>
+
+          <!-- 3. How long comparable homes took to sell (sold data) -->
+          <div id="pane-curve" class="insight-pane" role="tabpanel" aria-labelledby="tab-curve" hidden>
+            <div class="pane-toolbar">
+              <span id="curveNote" class="curve-note">Click a listing on the map, in the list or in the scatter to see where it sits.</span>
+            </div>
+            <div class="chart-box">
+              <canvas id="curveChart" role="img"
+                aria-label="Share of comparable homes sold by number of days on market"></canvas>
+            </div>
+            <p id="curveFoot" class="curve-foot"></p>
+          </div>
+
+          <div id="pane-changes" class="insight-pane" role="tabpanel" aria-labelledby="tab-changes" hidden>
+            <div id="recentChanges" class="recent-changes"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -143,6 +223,9 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
+  <!-- Chart.js, pinned to an exact version and checked with an integrity hash -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"
+    integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t" crossorigin="anonymous"></script>
   <script src="/static/js/active.js"></script>
 </body>
 

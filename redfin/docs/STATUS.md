@@ -14,7 +14,7 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 - **Active listings (manual, not scheduled)**: `extract.census` (price-band slices, manifest), `extract.fetch_active`,
   `transform.active` → `silver/active/listings.parquet`; `/ottawa_active` map with a Sold | Active switch. One census
   before the daily command existed (2026-10-18); the live snapshot is still that one (50 listings) until the first daily run.
-- **`python -m redfin.daily`** (D13, written offline, **not yet run against redfin.ca**): one command a day: up to 200 new sold
+- **`python -m redfin.daily`** (D14, written offline, **not yet run against redfin.ca**): one command a day: up to 200 new sold
   listings + up to 200 active detail pages, census, silver rebuilt. `fetch_active` picks never-fetched listings first, then
   the stalest page; `transform.active` uses the newest page per census MLS across all days (so the active list grows by
   ~200 a day) and moves homes that are already sold into `silver/active/reconciled_out.parquet`. `/active-points` hides
@@ -22,6 +22,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 - **Listing text**: `transform.text` → `silver/listing_text.parquet` (already run against live silver).
 - **Package restructure** (2026-11-21): `redfin/` package, `config.py`, shared browser helpers, lazy Azure client, docs
   under `redfin/docs/`. See D11.
+- **Insight charts on /ottawa_active** (branch `feature/active-insights-charts`, not merged yet): price-vs-days scatter linked to
+  the map and list, clickable days-on-market and cut-depth histograms that cross-filter, and a sell-time curve from the sold
+  data (`redfin.analytics.sale_curve`, D13). Flask-only: not in the Pages build or the daily scrape.
 
 ## In progress
 
