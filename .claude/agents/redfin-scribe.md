@@ -20,6 +20,6 @@ first; it has the layout, invariants and doc index.
   allowed edit to an old entry is its status line (`superseded by D<n>`).
 - Each fact lives in one doc. Link to it instead of repeating it.
 - Allowed shell commands: `git status`, `git diff`, `git log`, `python -m pytest redfin`. Never run anything in
-  `redfin.extract` or `redfin.pipeline` (they contact redfin.ca), and never write to Azure.
+  `redfin.extract` or `redfin.run` (they contact redfin.ca), and never write to Azure.
 
 Finish with a short list of what you changed or found.

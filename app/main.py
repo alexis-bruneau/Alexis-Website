@@ -135,7 +135,7 @@ load_data()
 # One row per active listing we hold a detail page for (redfin.transform.active). Kept apart from the sold
 # 'properties' view: those rows are sales, these are asking prices.
 ACTIVE_BLOB = os.getenv("ACTIVE_BLOB", "silver/active/listings.parquet")
-ACTIVE_COLUMNS = ["mls", "address", "list_price", "beds", "baths", "latitude", "longitude", "url", "photo_blob",
+ACTIVE_COLUMNS = ["mls", "status", "address", "list_price", "beds", "baths", "latitude", "longitude", "url", "photo_blob",
                   "property_type_name", "days_on_market", "cumulative_dom", "original_price", "price_changes",
                   "last_change_amount", "last_change_pct", "last_change_date", "last_change_direction",
                   "price_vs_original", "as_of"]
@@ -542,6 +542,9 @@ def active_points():
         filters = data.get("filters", {})
 
         df = active_df.copy()
+        # The census can return homes that are no longer for sale (e.g. mlsStatus "Off Market"): show only "Active" ones.
+        # A row with no status (a snapshot written before the column existed) stays.
+        df = df[df["status"].isna() | (df["status"] == "Active")]
         for col in ("latitude", "longitude", "list_price", "beds", "baths", "days_on_market", "cumulative_dom",
                     "original_price", "price_changes", "last_change_amount", "last_change_pct", "price_vs_original"):
             df[col] = pd.to_numeric(df[col], errors="coerce")

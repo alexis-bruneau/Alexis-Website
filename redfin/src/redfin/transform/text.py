@@ -20,6 +20,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
+from redfin import runstats
 from redfin.storage import azure_store as store
 from redfin.transform import parsing
 from redfin.transform.sold import KEY, latest_bronze_per_name
@@ -66,6 +67,7 @@ def main():
         entries = [e for e in entries if e[1] not in done_names]
         print(f"Incremental: {len(entries)} pages not yet in {blob}.")
         if not entries:
+            runstats.report("transform.text", rows_added=0)
             return
     if args.limit:
         entries = entries[-args.limit:]
@@ -99,11 +101,13 @@ def main():
         print(f"   skipped: {err}")
     if df.empty:
         print("Nothing to write.")
+        runstats.report("transform.text", rows_added=0)
         return
     store.write_parquet(df, blob)
     lengths = df["text"].str.len()
     print(f"   wrote {len(df):>5} rows -> {blob}  (text length min/median/max: "
           f"{lengths.min()}/{int(lengths.median())}/{lengths.max()})")
+    runstats.report("transform.text", rows_added=int(status["ok"]))
     print(f"Done in {time.time() - t0:.0f}s.")
 
 

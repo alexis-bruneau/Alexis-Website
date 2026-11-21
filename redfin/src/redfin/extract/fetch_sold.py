@@ -15,7 +15,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-from redfin import config
+from redfin import config, runstats
 from redfin.scraping.browser import USER_AGENT, fetch_html, load_redfin_cookies
 from redfin.storage import azure_store as store
 from redfin.transform import parsing
@@ -52,9 +52,11 @@ def main(limit=None):
         pending = pending[:limit]
     if not pending:
         print("Nothing to fetch. Done.")
+        runstats.report("fetch_sold", pending=0, saved=0, stopped_early=False)
         return
 
     saved = failures_in_row = 0
+    stopped_early = False
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(user_agent=USER_AGENT)
@@ -67,6 +69,7 @@ def main(limit=None):
                 failures_in_row += 1
                 if failures_in_row >= config.MAX_CONSECUTIVE_FAILURES:
                     print(f"Stopping: {failures_in_row} failures in a row (blocked or cookies expired?).")
+                    stopped_early = True
                     break
                 continue
             failures_in_row = 0
@@ -79,6 +82,7 @@ def main(limit=None):
 
         browser.close()
 
+    runstats.report("fetch_sold", pending=len(pending), saved=int(saved), stopped_early=stopped_early)
     print(f"\nDone: {saved} new pages in bronze in {time.time() - start_time:.0f}s "
           f"({len(pending) - saved} not saved). Now run python -m redfin.transform.sold.")
 
