@@ -16,7 +16,7 @@ are fetched. --sample keeps the old behaviour: a reproducible test sample of --n
 days.
 
     python -m redfin.extract.fetch_active                 # 50 listings from the latest census in Azure
-    python -m redfin.extract.fetch_active --n 200         # what redfin.daily runs
+    python -m redfin.extract.fetch_active --n 200         # what redfin.run.daily runs
     python -m redfin.extract.fetch_active --sample --n 10 --local-dir census_out
 """
 import argparse

@@ -8,10 +8,10 @@ error, so this check compares what the fetch steps saved with what silver holds:
           yet? Stale when more than max(3 pages, 5%) are missing (a few pages are legitimately unreadable or out of scope).
   active  silver/active/listings.parquet must be as of the latest census day (its `as_of`), and must not be empty.
 
-Exit code 1 when anything is stale. redfin.daily runs it as its last step.
+Exit code 1 when anything is stale. redfin.run.daily runs it as its last step.
 
-    python -m redfin.verify                 # sold and active
-    python -m redfin.verify --sold          # only the sold side
+    python -m redfin.run.verify                 # sold and active
+    python -m redfin.run.verify --sold          # only the sold side
 """
 import argparse
 import math

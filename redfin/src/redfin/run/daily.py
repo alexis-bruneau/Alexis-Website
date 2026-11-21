@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The daily run, by hand: new SOLD listings, then today's ACTIVE listings, then silver is rebuilt and the app reloaded.
 
-Each step is a subprocess (like redfin.pipeline). Needs AZURE_STORAGE_CONNECTION_STRING and the Redfin cookies, like the
+Each step is a subprocess. Needs AZURE_STORAGE_CONNECTION_STRING and the Redfin cookies, like the
 steps themselves. This contacts redfin.ca (discovery, 200 sold pages, the ~41-page census, 200 active pages): run it
 yourself, once a day, not in a loop.
 
@@ -24,11 +24,11 @@ fetch_active and transform.active with what was saved, and the summary says so. 
 is skipped (it would work from an old census) and transform.active still runs. An app that is not running is not a
 failure (it loads the new data when it starts). The exit code is 1 when any step exited non-zero.
 
-    python -m redfin.daily
-    python -m redfin.daily --limit-sold 50 --limit-active 50
-    python -m redfin.daily --skip-sold          # active block only
-    python -m redfin.daily --skip-active        # sold block only
-    python -m redfin.daily --transform-only     # rebuild silver from the bronze already saved; does NOT contact redfin.ca
+    python -m redfin.run.daily
+    python -m redfin.run.daily --limit-sold 50 --limit-active 50
+    python -m redfin.run.daily --skip-sold          # active block only
+    python -m redfin.run.daily --skip-active        # sold block only
+    python -m redfin.run.daily --transform-only     # rebuild silver from the bronze already saved; does NOT contact redfin.ca
 """
 import argparse
 import os
@@ -47,7 +47,7 @@ TRANSFORM_TEXT = "redfin.transform.text"
 CENSUS = "redfin.extract.census"
 FETCH_ACTIVE = "redfin.extract.fetch_active"
 TRANSFORM_ACTIVE = "redfin.transform.active"
-VERIFY = "redfin.verify"
+VERIFY = "redfin.run.verify"
 REFRESH = "app.refresh"       # not a subprocess: a request to the running Flask app
 STEPS = (DISCOVER, FETCH_SOLD, TRANSFORM_SOLD, TRANSFORM_TEXT, CENSUS, FETCH_ACTIVE, TRANSFORM_ACTIVE, VERIFY, REFRESH)
 SOLD_STEPS = (DISCOVER, FETCH_SOLD, TRANSFORM_SOLD, TRANSFORM_TEXT)

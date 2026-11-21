@@ -1,6 +1,6 @@
-"""Optional, machine-readable results of a pipeline step, so `redfin.daily` can print one summary.
+"""Optional, machine-readable results of a pipeline step, so `redfin.run.daily` can print one summary.
 
-The steps run as subprocesses, so their counts cannot be returned. When REDFIN_STATS_FILE is set (only redfin.daily
+The steps run as subprocesses, so their counts cannot be returned. When REDFIN_STATS_FILE is set (only redfin.run.daily
 sets it), each step merges its numbers into that JSON file under its own name; otherwise report() does nothing and
 every step behaves exactly as before.
 

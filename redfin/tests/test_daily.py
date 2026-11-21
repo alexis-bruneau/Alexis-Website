@@ -1,4 +1,4 @@
-"""Tests for redfin.daily: step order, failure rules, flags, exit code, summary and the app refresh. subprocess.call and
+"""Tests for redfin.run.daily: step order, failure rules, flags, exit code, summary and the app refresh. subprocess.call and
 requests.post are mocked, so nothing runs and nothing touches redfin.ca, Azure or the app. Run:  python -m pytest redfin"""
 import contextlib
 import io
@@ -11,7 +11,8 @@ from unittest import mock
 
 import requests
 
-from redfin import config, daily, runstats
+from redfin import config, runstats
+from redfin.run import daily
 
 ALL = [daily.DISCOVER, daily.FETCH_SOLD, daily.TRANSFORM_SOLD, daily.TRANSFORM_TEXT,
        daily.CENSUS, daily.FETCH_ACTIVE, daily.TRANSFORM_ACTIVE, daily.VERIFY]
@@ -91,7 +92,7 @@ class DailyTest(unittest.TestCase):
             return post(*args, **kwargs)
 
         out = io.StringIO()
-        with mock.patch("subprocess.call", fake), mock.patch("redfin.daily.requests.post", recording_post), \
+        with mock.patch("subprocess.call", fake), mock.patch("redfin.run.daily.requests.post", recording_post), \
                 contextlib.redirect_stdout(out):
             code = daily.main(list(argv))
         return code, fake, out.getvalue(), post
@@ -224,14 +225,14 @@ class DailyTest(unittest.TestCase):
         code, _, out, _ = self.run_daily(codes={daily.VERIFY: 1}, stats={**STATS, "verify": STALE})
         summary = out[out.index("=== summary ==="):]
         self.assertEqual(code, 1)
-        self.assertIn("verify                 STALE (silver is behind)", summary)
+        self.assertIn("run.verify             STALE (silver is behind)", summary)
         self.assertIn("sold                     NO (150 of the 187 pages of bronze day 2026-11-21 are not in silver)", summary)
         self.assertIn("active                   NO (snapshot as of 2026-10-18, 1,204 rows; latest census 2026-11-21)", summary)
 
     def test_a_verify_that_crashed_is_reported_as_failed_not_stale(self):
         stats = {k: v for k, v in STATS.items() if k != "verify"}
         _, _, out, _ = self.run_daily(codes={daily.VERIFY: 1}, stats=stats)
-        self.assertIn("verify                 FAILED (exit 1)", out)
+        self.assertIn("run.verify             FAILED (exit 1)", out)
 
     def test_verify_checks_only_the_blocks_that_ran(self):
         _, fake, _, _ = self.run_daily("--transform-only", "--skip-sold")

@@ -179,6 +179,21 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   change that needs its own decision; the Action stays sold-only).
 - **Status**: accepted. Refines D14.
 
+## D16. The commands you run live in `redfin/run/`; `pipeline.py` is removed
+- **Date**: 2026-11-21 (branch `feature/daily-run`)
+- **Decision**: the lineage is three folders in `redfin/src/redfin/`: `extract/` (1. scrape, the only code that contacts
+  redfin.ca), `transform/` (2. bronze -> silver) and `run/` (3. execute). `daily.py` and `verify.py` moved there, so the
+  commands are `python -m redfin.run.daily --limit-sold N --limit-active N` and `python -m redfin.run.verify`
+  (D14 and D15 name them `redfin.daily` / `redfin.verify`, their names when written). `redfin/pipeline.py` (sold-only
+  discover, fetch, transform) is deleted: `run.daily --skip-active` does the same and also checks silver.
+  `extract/` and `transform/` keep their names and module paths, so `daily_scrape.yml` is unchanged.
+- **Why**: the entry points were loose files next to the layer folders, so the order of the lineage was not visible, and two
+  runners overlapped. The `src/` layout (`redfin/src/redfin`) stays: it is the layout the Python packaging guide recommends
+  and tests, CI and the editable install already depend on it.
+- **Alternatives rejected**: numbered folders (`1_extract`: not importable with a normal `import`); renaming `extract/` to
+  `scrape/` (edits `daily_scrape.yml`, a production change for a nicer name); flattening `src/redfin` to `redfin/redfin`.
+- **Status**: accepted. Refines D11.
+
 ---
 
 ## Proposed (open questions)

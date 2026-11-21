@@ -28,13 +28,16 @@ redfin/
     config.py              ALL paths, env vars and run caps. Paths resolve from the checkout, never the cwd
     storage/azure_store.py every blob read/write; connects lazily on first use
     scraping/browser.py    user agent, cookies, fetch_html (shared by every fetcher)
-    extract/               the ONLY code that contacts redfin.ca: discover_sold, fetch_sold, census, fetch_active
-    transform/             pure: parsing, metrics, sold, active, text
-    analytics/             read-time helpers for the map (property_types)
-    pipeline.py            local discover -> fetch_sold -> transform.sold
-    daily.py               the once-a-day command: sold block + active block + verify + app reload + summary (python -m redfin.daily)
-    verify.py              read-only freshness check (silver vs newest bronze day and latest census); daily.py runs it last
-    runstats.py            steps report their counts to daily.py through a JSON file (no-op outside daily.py)
+
+    # the lineage, in order:
+    extract/               1. SCRAPE: the ONLY code that contacts redfin.ca (discover_sold, fetch_sold, census, fetch_active) -> bronze
+    transform/             2. TRANSFORM: pure; bronze -> silver (parsing, metrics, sold, active, text)
+    run/                   3. EXECUTE: the commands you run; they start the steps above, check the result, reload the app
+      daily.py               the once-a-day command, with how many listings to take (--limit-sold, --limit-active)
+      verify.py              read-only freshness check (silver vs newest bronze day and latest census); daily.py runs it last
+
+    analytics/             read-time helpers for the map (property_types, sale_curve)
+    runstats.py            steps report their counts to run/daily.py through a JSON file (no-op outside it)
   scripts/                 one-off maintenance: backfill_images.py, compare_silver.py
   tests/ (+ fixtures/)     pure-function tests, no network, no Azure
   data/queue/              property_urls.txt (sold-URL queue, committed)
@@ -61,12 +64,11 @@ redfin/
 pip install -e "./redfin[dev]"        # once; also: playwright install chromium
 python -m pytest redfin               # tests (offline, < 1 s)
 
-python -m redfin.daily                                  # THE daily run: up to 200 sold + 200 active pages, census, silver rebuilt
-python -m redfin.daily --limit-sold 50 --limit-active 50 [--skip-sold | --skip-active]   # smaller / one block only
-python -m redfin.daily --transform-only                 # rebuild silver from the bronze already saved + check + reload the app (no redfin.ca)
-python -m redfin.verify                                 # read-only: is silver as new as bronze and the census? exit 1 if not
+python -m redfin.run.daily                                  # THE daily run: up to 200 sold + 200 active pages, census, silver rebuilt
+python -m redfin.run.daily --limit-sold 150 --limit-active 150 [--skip-sold | --skip-active]   # how many listings / one block only
+python -m redfin.run.daily --transform-only                 # rebuild silver from the bronze already saved + check + reload the app (no redfin.ca)
+python -m redfin.run.verify                                 # read-only: is silver as new as bronze and the census? exit 1 if not
 
-python -m redfin.pipeline --limit 20                    # local sold run: discover, fetch 20, transform into live silver
 python -m redfin.extract.fetch_sold --limit 20          # one stage at a time; every module takes --help
 python -m redfin.extract.census --local-dir census_out  # census without Azure
 
@@ -88,8 +90,8 @@ Production is `.github/workflows/daily_scrape.yml` on **master** (06:00 UTC): di
   redistribute raw listing data (board/CREA MLS® content).
 - Caps live in `config.py`: 300 detail pages per scheduled run, stop after 8 failed fetches in a row, discovery stops after
   3 empty pages, census pauses 3–5 s between its ~41 page loads.
-- **Do not run anything in `extract/`, `pipeline.py` or `daily.py` unless the user asks for it in this session.** (`daily.py`
-  runs the census plus up to 400 detail pages, and edits the committed `data/queue/property_urls.txt`.) No loops, no
+- **Do not run anything in `extract/` or `run/daily.py` (without `--transform-only`) unless the user asks for it in this session.**
+  (`run/daily.py` runs the census plus up to 400 detail pages, and edits the committed `data/queue/property_urls.txt`.) No loops, no
   parallel fetchers, no retries beyond what the code does. Tests and transforms never touch redfin.ca.
 - Blocked (403, empty pages, login wall): [docs/runbooks/fix-403.md](docs/runbooks/fix-403.md).
 

@@ -1,10 +1,10 @@
-"""Tests for redfin.verify (is silver as new as bronze and the census?) and the pending-page helper it shares with
+"""Tests for redfin.run.verify (is silver as new as bronze and the census?) and the pending-page helper it shares with
 transform.sold. Pure functions only: no Azure. Run:  python -m pytest redfin"""
 import unittest
 
 import pandas as pd
 
-from redfin import verify
+from redfin.run import verify
 from redfin.transform import sold
 
 
