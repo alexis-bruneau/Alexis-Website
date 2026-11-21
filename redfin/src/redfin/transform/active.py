@@ -9,20 +9,18 @@ same rows.
 The output is a snapshot of one day, not a history. It lives under silver/active/ and does not end in
 listed_properties.parquet, so the map of sold homes never loads it.
 
-    python app/Redfin/transform_active.py                 # latest census day that has active pages
-    python app/Redfin/transform_active.py --day 2026-10-18 --skip-images
+    python -m redfin.transform.active                 # latest census day that has active pages
+    python -m redfin.transform.active --day 2026-10-18 --skip-images
 """
 import argparse
 import sys
 from datetime import date
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import census  # noqa: E402
-import metrics  # noqa: E402
-import parsing  # noqa: E402
+from redfin.extract import census
+from redfin.storage import azure_store as store
+from redfin.transform import metrics, parsing
 
 OUT_BLOB = "silver/active/listings.parquet"
 
@@ -49,7 +47,7 @@ def build_row(census_row, html, as_of, streetview=False):
 def latest_day_with_pages(store):
     days = [d for d in reversed(store.list_search_days()) if store.list_active_pages(d)]
     if not days:
-        sys.exit("No census day has active pages yet. Run census.py and fetch_active.py first.")
+        sys.exit("No census day has active pages yet. Run python -m redfin.extract.census and python -m redfin.extract.fetch_active first.")
     return days[0]
 
 
@@ -60,7 +58,6 @@ def main():
     ap.add_argument("--out-blob", default=OUT_BLOB)
     args = ap.parse_args()
 
-    import azure_store as store
     day = args.day or latest_day_with_pages(store)
     as_of = date.fromisoformat(day)
     by_mls = {r["mls"]: r for r in census.read_census(census.AzureSink(), day)}

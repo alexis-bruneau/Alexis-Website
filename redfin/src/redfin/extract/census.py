@@ -13,14 +13,13 @@ the homes: parsing.census_row() does that later, so a parser fix never needs ano
 
 A band already saved for today is reused, so a run that was blocked partway can be re-run and continues.
 
-    python app/Redfin/census.py                          # fetch today's census into Azure bronze/search/
-    python app/Redfin/census.py --local-dir census_out   # same, but write to a local folder (no Azure needed)
-    python app/Redfin/census.py --headed                 # show the browser
-    python app/Redfin/census.py --max-slices 5           # stop after 5 page loads (smoke test)
+    python -m redfin.extract.census                          # fetch today's census into Azure bronze/search/
+    python -m redfin.extract.census --local-dir census_out   # same, but write to a local folder (no Azure needed)
+    python -m redfin.extract.census --headed                 # show the browser
+    python -m redfin.extract.census --max-slices 5           # stop after 5 page loads (smoke test)
 """
 import argparse
 import json
-import os
 import random
 import sys
 import time
@@ -30,29 +29,17 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-sys.path.insert(0, str(Path(__file__).parent))
-import parsing  # noqa: E402
+from redfin import config
+from redfin.scraping.browser import USER_AGENT, load_redfin_cookies
+from redfin.transform import parsing
 
 # The map window of "all of Ottawa" in the for-sale search (lat N : lat S : lon E : lon W). It also covers
 # neighbouring towns (e.g. Clarence-Rockland); keeping only the City of Ottawa is a later, silver-layer step.
 VIEWPORT = "viewport=45.5849:45.04992:-75.12143:-76.14796"
 SEARCH_BASE = "https://www.redfin.ca/on/ottawa/filter/"
-COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-              "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-
-CENSUS_SLICE_MAX = int(os.getenv("CENSUS_SLICE_MAX", "340"))  # a band with more results than this gets split
+CENSUS_SLICE_MAX = config.CENSUS_SLICE_MAX  # a band with more results than this gets split
 MAX_RETRIES = 1          # one retry (after a pause) when a page has no result header, then call it blocked
 COVERAGE_TOLERANCE = 0.02  # distinct MLS numbers vs the unfiltered header count
-
-
-def load_redfin_cookies():
-    if not COOKIE_FILE.exists():
-        return []
-    with COOKIE_FILE.open(encoding="utf-8") as fh:
-        raw = json.load(fh)
-    expire = int(time.time()) + 30 * 24 * 3600
-    return [{**c, "sameSite": "Lax", "expires": expire} for c in raw if ".redfin.ca" in c.get("domain", "")]
 
 
 def band_name(lo, hi):
@@ -94,7 +81,7 @@ class LocalSink:
 
 class AzureSink:
     def __init__(self):
-        import azure_store  # imported here so --local-dir works without an Azure connection string
+        from redfin.storage import azure_store  # connects lazily, so --local-dir never needs Azure
         self.store = azure_store
 
     def read(self, day, name):

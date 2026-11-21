@@ -22,7 +22,7 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -e ./redfin
 
       - name: Install Playwright Browsers
         run: |
@@ -33,7 +33,7 @@ jobs:
           REDFIN_COOKIES_JSON: ${{ secrets.REDFIN_COOKIES_JSON }}
         run: |
           if [ -n "$REDFIN_COOKIES_JSON" ]; then
-            printf '%s' "$REDFIN_COOKIES_JSON" > app/Redfin/chrome_cookies.json
+            printf '%s' "$REDFIN_COOKIES_JSON" > redfin/chrome_cookies.json
           else
             echo "No REDFIN_COOKIES_JSON secret set; continuing without cookies."
           fi
@@ -42,7 +42,7 @@ jobs:
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         run: |
-          python app/Redfin/get_properties.py
+          python -m redfin.extract.discover_sold
 
       - name: Extract (fetch pages into bronze)
         env:
@@ -50,7 +50,7 @@ jobs:
           # Cap per scheduled run so it always finishes; locally the default is "all pending".
           MAX_SCRAPE_COUNT: 300
         run: |
-          python app/Redfin/scrape_properties_prod.py
+          python -m redfin.extract.fetch_sold
 
       - name: Transform (bronze to silver)
         # Also runs when extract stopped early, so pages already saved still reach silver.
@@ -58,4 +58,4 @@ jobs:
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         run: |
-          python app/Redfin/transform_silver.py --incremental --out-prefix silver
+          python -m redfin.transform.sold --incremental --out-prefix silver

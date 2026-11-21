@@ -7,10 +7,9 @@ import sys
 import traceback
 from dotenv import load_dotenv
 
-try:  # served as app.main (gunicorn) or run as a script from app/
-    from app.property_types import property_group
-except ImportError:
-    from property_types import property_group
+# The Redfin pipeline package (pip install -e redfin). These routes only read what it writes to Azure.
+from redfin import config as redfin_config
+from redfin.analytics.property_types import property_group
 
 # Windows consoles default to cp1252 and crash on the emoji in our log lines
 for _stream in (sys.stdout, sys.stderr):
@@ -23,10 +22,9 @@ for _stream in (sys.stdout, sys.stderr):
 load_dotenv()
 
 # Azure Storage Helper Config
-AZURE_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-CONTAINER_NAME = "redfin-data"
-ACCOUNT_NAME = "stredfinprod" 
-BASE_IMG_URL = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_NAME}/"
+AZURE_CONN_STR = redfin_config.AZURE_CONN_STR
+CONTAINER_NAME = redfin_config.CONTAINER_NAME
+BASE_IMG_URL = redfin_config.PUBLIC_BLOB_URL
 SILVER_PREFIX = os.getenv("SILVER_PREFIX", "silver")  # e.g. SILVER_PREFIX=silver_v2 to preview a rebuilt silver
 
 # What the sold price is compared with: the final asking price when it sold, or the first asking price.
@@ -133,7 +131,7 @@ def load_data():
 load_data()
 
 # ---------------- Active listings ------------------------------------------
-# One row per active listing we hold a detail page for (app/Redfin/transform_active.py). Kept apart from the sold
+# One row per active listing we hold a detail page for (redfin.transform.active). Kept apart from the sold
 # 'properties' view: those rows are sales, these are asking prices.
 ACTIVE_BLOB = os.getenv("ACTIVE_BLOB", "silver/active/listings.parquet")
 ACTIVE_COLUMNS = ["mls", "address", "list_price", "beds", "baths", "latitude", "longitude", "url", "photo_blob",

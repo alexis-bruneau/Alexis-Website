@@ -1,41 +1,41 @@
 #!/usr/bin/env python3
-import os
-import sys
-import json
-import time
+"""DISCOVERY (sold): page through redfin.ca's "sold in the last 3 years" search, newest sale first, and append
+listing URLs that are not yet known (in silver or in the queue) to the queue file (config.URLS_FILE).
+
+Stops after MAX_NEW_URLS new URLs, at the end of the results, or after 3 pages in a row without listings
+(Redfin is blocking us). When blocked it saves one screenshot to config.DEBUG_SCREENSHOT and exits with code 2.
+
+    python -m redfin.extract.discover_sold                   # up to MAX_NEW_URLS (default 500) new URLs
+    MAX_NEW_URLS=50 python -m redfin.extract.discover_sold   # smaller run
+"""
+import argparse
 import io
+import re
+import sys
+import time
+
 import pandas as pd
-from pathlib import Path
-from playwright.sync_api import sync_playwright
 from azure.storage.blob import BlobServiceClient
-from dotenv import load_dotenv
+from playwright.sync_api import sync_playwright
 
-from parsing import property_id
+from redfin import config
+from redfin.scraping.browser import USER_AGENT, block_heavy, load_redfin_cookies
+from redfin.transform.parsing import property_id
 
-# ---------------- Config --------------------------------------------------
-load_dotenv()
-
-# Azure Config
-AZURE_CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-CONTAINER_NAME = "redfin-data"
-
-# Redfin Config
 # "Sold 3yr, Sort by Sale Date (High to Low)"
 START_URL = "https://www.redfin.ca/on/ottawa/filter/sort=hi-sale-date,include=sold-3yr"
-OUTPUT_FILE = Path("app/Redfin/Output/property_urls.txt")
-MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", 500)) 
 WAIT_SEC = 2
 
 # ---------------- Helpers -------------------------------------------------
 
 def get_latest_azure_urls():
     """Returns the set of listing URLs already stored in ANY silver/<month>/ parquet in Azure."""
-    if not AZURE_CONN_STR:
+    if not config.AZURE_CONN_STR:
         print("No AZURE_STORAGE_CONNECTION_STRING. Skipping Azure check.")
         return set()
 
     try:
-        container_client = BlobServiceClient.from_connection_string(AZURE_CONN_STR).get_container_client(CONTAINER_NAME)
+        container_client = BlobServiceClient.from_connection_string(config.AZURE_CONN_STR).get_container_client(config.CONTAINER_NAME)
         urls = set()
         files = 0
         for blob in container_client.list_blobs(name_starts_with="silver/"):
@@ -53,35 +53,22 @@ def get_latest_azure_urls():
         return set()
 
 def get_local_urls():
-    if not OUTPUT_FILE.exists():
+    if not config.URLS_FILE.exists():
         return set()
-    with OUTPUT_FILE.open("r", encoding="utf-8") as f:
+    with config.URLS_FILE.open("r", encoding="utf-8") as f:
         return set(line.strip() for line in f if line.strip())
 
 def save_urls(new_urls):
     # Append to file
-    with OUTPUT_FILE.open("a", encoding="utf-8") as f:
+    with config.URLS_FILE.open("a", encoding="utf-8") as f:
         for url in new_urls:
             f.write(f"{url}\n")
-    print(f"✅ Saved {len(new_urls)} new URLs to {OUTPUT_FILE}")
-
-COOKIE_FILE = Path("app/Redfin/chrome_cookies.json")
-
-def load_redfin_cookies():
-    if not COOKIE_FILE.exists():
-        return []
-    with COOKIE_FILE.open(encoding="utf-8") as fh:
-        raw = json.load(fh)
-    expire = int(time.time()) + 30 * 24 * 3600
-    return [
-        {**c, "sameSite": "Lax", "expires": expire}
-        for c in raw
-        if ".redfin.ca" in c.get("domain", "")
-    ]
+    print(f"✅ Saved {len(new_urls)} new URLs to {config.URLS_FILE}")
 
 # ---------------- Main Logic ----------------------------------------------
 
 def main():
+    argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
     # 1. Load Ignore List
     azure_urls = get_latest_azure_urls()
     local_urls = get_local_urls()
@@ -97,7 +84,7 @@ def main():
         browser = p.chromium.launch(headless=True)
         # Use a realistic user agent
         context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            user_agent=USER_AGENT,
             viewport={"width": 1280, "height": 800}
         )
         
@@ -109,20 +96,14 @@ def main():
             
         page = context.new_page()
         
-        # Optimization: Block heavy resources for faster loading
-        def block_heavy(route):
-            if route.request.resource_type in ["image", "media", "font"]:
-                route.abort()
-            else:
-                route.continue_()
-        page.route("**/*", block_heavy)
+        page.route("**/*", block_heavy)  # skip images/media/fonts
 
         current_url = START_URL
         page_num = 1
         empty_pages_in_row = 0   # pages with 0 listing links (403 / challenge / end of results)
         MAX_EMPTY_PAGES = 3
         
-        while len(new_found) < MAX_NEW_URLS:
+        while len(new_found) < config.MAX_NEW_URLS:
             print(f"\n--- Scraping Page {page_num} ---")
             print(f"URL: {current_url}")
             
@@ -147,7 +128,8 @@ def main():
                 if len(links) == 0:
                     empty_pages_in_row += 1
                     # One debug screenshot (overwritten) + title, to see whether we are blocked
-                    debug_path = Path("app/Redfin/Output/debug_blocked.png")
+                    debug_path = config.DEBUG_SCREENSHOT
+                    debug_path.parent.mkdir(parents=True, exist_ok=True)
                     page.screenshot(path=str(debug_path))
                     print(f"   Found 0 links. Saved screenshot to {debug_path}")
                     print(f"   [DEBUG] Page Title: {page.title()}")
@@ -155,7 +137,7 @@ def main():
                     if empty_pages_in_row >= MAX_EMPTY_PAGES:
                         print(f"STOPPING: {empty_pages_in_row} pages in a row had no listings. "
                               "Redfin is probably blocking us (403 / expired aws-waf-token). "
-                              "Export fresh cookies - see app/Redfin/HOW_TO_FIX_403_ERROR.md")
+                              "Export fresh cookies - see redfin/docs/runbooks/fix-403.md")
                         blocked = True
                         break
                 else:
@@ -178,7 +160,7 @@ def main():
                 added = len(new_found) - count_before
                 print(f"   + Added {added} new properties (Total New: {len(new_found)})")
                 
-                if len(new_found) >= MAX_NEW_URLS:
+                if len(new_found) >= config.MAX_NEW_URLS:
                     print("🛑 Reached MAX_NEW_URLS limit.")
                     break
 
@@ -218,7 +200,6 @@ def main():
                     # Base: .../filter/...
                     # Page 2: .../filter/.../page-2
                     if "/page-" in current_url:
-                        import re
                         current_url = re.sub(r'/page-\d+', f'/page-{page_num}', current_url)
                     else:
                         current_url = f"{current_url}/page-{page_num}"
@@ -247,7 +228,6 @@ def main():
                     # If wait fails, maybe we just assume it worked or fallback to manual
                     print("   -> URL didn't change after click (or timeout). Forcing manual URL update.")
                     if "/page-" in current_url:
-                        import re
                         current_url = re.sub(r'/page-\d+', f'/page-{page_num}', current_url)
                     else:
                         current_url = f"{current_url}/page-{page_num}"

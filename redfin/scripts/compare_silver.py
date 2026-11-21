@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """Compare a rebuilt silver (default silver_v2/) against the live silver/, joined on (property_id, MLS).
 
-Read-only. Use it after transform_silver.py to see whether the rebuild reproduces what the old scraper
+Read-only. Use it after `python -m redfin.transform.sold` to see whether the rebuild reproduces what the old scraper
 wrote, column by column:
-    python app/Redfin/compare_silver.py
-    python app/Redfin/compare_silver.py --new silver_v2 --old silver --show 5
+    python redfin/scripts/compare_silver.py
+    python redfin/scripts/compare_silver.py --new silver_v2 --old silver --show 5
 """
 import argparse
 import sys
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import azure_store as store  # noqa: E402
-import parsing  # noqa: E402
+from redfin.storage import azure_store as store
+from redfin.transform import parsing
 
 
 def load(prefix):

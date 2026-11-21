@@ -1,15 +1,12 @@
-"""Tests for the search-results parsing in app/Redfin/parsing.py. Run from the project root:
-    python -m unittest discover -s tests -v
+"""Tests for the search-results parsing in redfin.transform.parsing. Run:  python -m pytest redfin
 
-The fixture is four real homes from a redfin.ca search (tests/fixtures/search_homes.json); the page around them
+The fixture is four real homes from a redfin.ca search (redfin/tests/fixtures/search_homes.json); the page around them
 is rebuilt in the escaped form Redfin uses for its page state."""
 import json
-import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "Redfin"))
-import parsing  # noqa: E402
+from redfin.transform import parsing
 
 HOMES = json.loads((Path(__file__).parent / "fixtures" / "search_homes.json").read_text(encoding="utf-8"))
 

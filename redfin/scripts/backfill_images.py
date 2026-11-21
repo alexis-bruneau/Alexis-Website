@@ -5,29 +5,25 @@ For every silver row without a working photo it re-reads the raw HTML that was s
 picks the best image (the listing's own photo, else Redfin's Street View image) and uploads it.
 DRY RUN by default: nothing is written until you pass --apply.
 
-Run from the project root (needs AZURE_STORAGE_CONNECTION_STRING in .env):
-    python app/Redfin/backfill_images.py                       # dry run: what would be recovered
-    python app/Redfin/backfill_images.py --apply               # download images, update parquet files
-    python app/Redfin/backfill_images.py --no-streetview --apply   # listing photos only
-    python app/Redfin/backfill_images.py --drop-streetview --apply # delete ALL Street View images + flags
+Run from the repo root (needs AZURE_STORAGE_CONNECTION_STRING in .env):
+    python redfin/scripts/backfill_images.py                       # dry run: what would be recovered
+    python redfin/scripts/backfill_images.py --apply               # download images, update parquet files
+    python redfin/scripts/backfill_images.py --no-streetview --apply   # listing photos only
+    python redfin/scripts/backfill_images.py --drop-streetview --apply # delete ALL Street View images + flags
 """
 import argparse
 import io
-import os
-import sys
 import zlib
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import azure_store as store  # noqa: E402  (connects to Azure, shares the image helpers)
-import parsing  # noqa: E402
+from redfin import config
+from redfin.storage import azure_store as store
+from redfin.transform import parsing
 
-container = store.container_client
 # Street View as the fallback photo (SAVE_STREETVIEW=0 or --no-streetview switches it off)
-STREETVIEW = os.getenv("SAVE_STREETVIEW", "1") == "1"
+STREETVIEW = config.SAVE_STREETVIEW
 MISSING = {"", "None", "nan"}
 
 
@@ -36,25 +32,25 @@ def is_missing(value):
 
 
 def silver_files():
-    return [b.name for b in container.list_blobs(name_starts_with="silver/")
+    return [b.name for b in store.container().list_blobs(name_starts_with="silver/")
             if b.name.endswith("listed_properties.parquet")]
 
 
 def read_parquet(name):
-    return pd.read_parquet(io.BytesIO(container.get_blob_client(name).download_blob().readall()))
+    return pd.read_parquet(io.BytesIO(store.container().get_blob_client(name).download_blob().readall()))
 
 
 def write_parquet(df, name):
     buf = io.BytesIO()
     df.to_parquet(buf, index=False)
     buf.seek(0)
-    container.upload_blob(name=name, data=buf, overwrite=True)
+    store.container().upload_blob(name=name, data=buf, overwrite=True)
 
 
 def latest_bronze_by_mls():
     """MLS -> blob name of its most recent saved HTML (bronze/<date>/<MLS>.html.gz)."""
     latest = {}
-    for b in container.list_blobs(name_starts_with="bronze/"):
+    for b in store.container().list_blobs(name_starts_with="bronze/"):
         parts = b.name.split("/")
         if len(parts) != 3 or not parts[2].endswith(".html.gz"):
             continue
@@ -65,7 +61,7 @@ def latest_bronze_by_mls():
 
 
 def drop_streetview(apply):
-    sv_blobs = [b.name for b in container.list_blobs(name_starts_with="images/") if b.name.endswith("_sv.jpg")]
+    sv_blobs = [b.name for b in store.container().list_blobs(name_starts_with="images/") if b.name.endswith("_sv.jpg")]
     print(f"Street View images in Azure: {len(sv_blobs)}")
     total_rows = 0
     for name in silver_files():
@@ -80,14 +76,14 @@ def drop_streetview(apply):
             write_parquet(df, name)
     if apply:
         for blob in sv_blobs:
-            container.delete_blob(blob)
+            store.container().delete_blob(blob)
         print(f"Deleted {len(sv_blobs)} images and cleared {total_rows} rows.")
     else:
         print(f"DRY RUN: would delete {len(sv_blobs)} images and clear {total_rows} rows. Re-run with --apply.")
 
 
 def backfill(apply):
-    existing_images = set(store._existing_images) or {b.name for b in container.list_blobs(name_starts_with="images/")}
+    existing_images = set(store._existing_images) or {b.name for b in store.container().list_blobs(name_starts_with="images/")}
     store._existing_images.update(existing_images)
     bronze = latest_bronze_by_mls()
     print(f"Saved HTML pages in bronze/: {len(bronze)}")
@@ -110,7 +106,7 @@ def backfill(apply):
             if mls not in bronze:
                 stats["no_bronze"] += 1
                 continue
-            html = zlib.decompress(container.get_blob_client(bronze[mls]).download_blob().readall()).decode("utf-8", "ignore")
+            html = zlib.decompress(store.container().get_blob_client(bronze[mls]).download_blob().readall()).decode("utf-8", "ignore")
             url, kind = parsing.pick_image(mls, html, STREETVIEW)
             if not url:
                 stats["no_image"] += 1

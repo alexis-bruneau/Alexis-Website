@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "redfin"
+version = "0.1.0"
+description = "Ottawa Redfin listings (sold + active) into a bronze/silver pipeline on Azure Blob"
+requires-python = ">=3.10"
+dependencies = [
+    "azure-storage-blob",
+    "beautifulsoup4",
+    "pandas",
+    "playwright",
+    "pyarrow",
+    "python-dotenv",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

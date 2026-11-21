@@ -1,14 +1,10 @@
-"""Tests for parsing.extract_remarks (the listing description). Run from the project root:
-    python -m unittest discover -s tests -v
+"""Tests for parsing.extract_remarks (the listing description). Run:  python -m pytest redfin
 
 The page fragments copy the structure of real redfin.ca listing pages: the description sits in
 #marketing-remarks-scroll, inside a #marketingRemarks-preview wrapper that also holds a "Show more" button."""
-import sys
 import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "Redfin"))
-import parsing  # noqa: E402
+from redfin.transform import parsing
 
 SHOW_MORE = ('<div class="ExpandableLink__bottomLink"><button aria-expanded="false" class="ExpandableLink clickable" '
              'type="button">Show more<svg><path d="M1 1"></path></svg></button></div>')

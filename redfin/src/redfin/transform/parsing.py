@@ -2,7 +2,7 @@
 
 This is the "transform" half of the pipeline: given the raw HTML saved in bronze/ it returns the
 silver record plus the sale-history events. Because it is pure, fixing a parser bug and re-running
-transform_silver.py rebuilds every listing from the raw HTML without contacting redfin.ca again.
+redfin.transform.sold rebuilds every listing from the raw HTML without contacting redfin.ca again.
 """
 import html as htmllib
 import json
@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 
 from bs4 import BeautifulSoup
 
-from metrics import listing_metrics
+from redfin.transform.metrics import listing_metrics
 
 BASE_IMAGE_URL = "https://ssl.cdn-redfin.com/photo/248/mbphotov3/"
 

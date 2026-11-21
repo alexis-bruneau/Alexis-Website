@@ -1,36 +1,32 @@
 #!/usr/bin/env python3
-"""TRANSFORM: rebuild the silver parquet files from the raw HTML in bronze/. Never contacts redfin.ca.
+"""TRANSFORM (sold): rebuild the silver parquet files from the raw HTML in bronze/. Never contacts redfin.ca.
 
 A listing is identified by (property_id, MLS): property_id is the number in the URL, MLS is the real MLS
 number or empty when the page has none. For each listing the most recent bronze page wins. Pages that are
-not Ontario pages on redfin.ca (e.g. US redfin.com listings) are skipped. Pages are parsed with parsing.py, so fixing a
+not Ontario pages on redfin.ca (e.g. US redfin.com listings) are skipped. Pages are parsed with redfin.transform.parsing, so fixing a
 parser bug and re-running this script corrects every listing, old and new.
 
 Output goes to <out-prefix>/<YYYY-MM>/listed_properties.parquet (month of the bronze page), plus
 <out-prefix>/sale_history.parquet: one row per sale-history event (listed, price change, sold, ...), linked
 to the listings by property_id (and by mls where the event has one). The default
 prefix is `silver_v2`, NOT the live `silver/`, so you can compare before switching:
-    python app/Redfin/transform_silver.py --limit 200            # quick trial on 200 listings
-    python app/Redfin/transform_silver.py                        # full rebuild into silver_v2/
-    python app/Redfin/compare_silver.py                          # check silver_v2 against silver
-    python app/Redfin/transform_silver.py --incremental --out-prefix silver   # daily run: only new listings
-    python app/Redfin/transform_silver.py --out-prefix silver    # full rewrite of live silver (back it up first)
+    python -m redfin.transform.sold --limit 200            # quick trial on 200 listings
+    python -m redfin.transform.sold                        # full rebuild into silver_v2/
+    python redfin/scripts/compare_silver.py                # check silver_v2 against silver
+    python -m redfin.transform.sold --incremental --out-prefix silver   # daily run: only new listings
+    python -m redfin.transform.sold --out-prefix silver    # full rewrite of live silver (back it up first)
 
 Images: a listing's photo is attached when it already exists in images/. Missing ones are downloaded
 from the CDN (not redfin.ca pages) unless you pass --skip-images.
 """
 import argparse
-import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import azure_store as store  # noqa: E402
-import metrics  # noqa: E402
-import parsing  # noqa: E402
+from redfin.storage import azure_store as store
+from redfin.transform import metrics, parsing
 
 MISSING = {"", "None", "nan"}
 KEY = ["property_id", "MLS"]
@@ -78,7 +74,7 @@ def write_sale_history(results, out_prefix, incremental):
     rows = [event for _, _, events in results for event in events]
     df = pd.DataFrame(rows)
     blob = f"{out_prefix}/sale_history.parquet"
-    if incremental and store.container_client.get_blob_client(blob).exists():
+    if incremental and store.container().get_blob_client(blob).exists():
         df = pd.concat([store.read_parquet(blob), df], ignore_index=True)
     if df.empty:
         return

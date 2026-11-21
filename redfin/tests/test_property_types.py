@@ -1,10 +1,8 @@
-"""Tests for app/property_types.py. Run from the project root:  python -m unittest discover -s tests -v"""
-import sys
+"""Tests for redfin.analytics.property_types. Run:  python -m pytest redfin"""
 import unittest
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app"))
-from property_types import property_group  # noqa: E402
+from redfin.analytics.property_types import property_group
+from redfin.config import REPO_ROOT
 
 
 class PropertyGroupTest(unittest.TestCase):
@@ -24,7 +22,7 @@ class PropertyGroupTest(unittest.TestCase):
             self.assertEqual(property_group(raw), "Other")
 
     def test_groups_match_the_filter_buttons(self):
-        html = (Path(__file__).resolve().parents[1] / "templates" / "ottawa_map.html").read_text(encoding="utf-8")
+        html = (REPO_ROOT / "templates" / "ottawa_map.html").read_text(encoding="utf-8")
         for group in ("Condo", "Townhome", "Single-family", "Multi-family"):
             self.assertIn(f'data-ptype="{group}"', html)
 

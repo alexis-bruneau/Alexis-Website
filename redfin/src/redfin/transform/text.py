@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """TRANSFORM: listing descriptions from the raw HTML in bronze/ -> <out-prefix>/listing_text.parquet. Never contacts redfin.ca.
 
-One row per listing (property_id, MLS), same key and same page-selection rule as transform_silver.py (the newest
+One row per listing (property_id, MLS), same key and same page-selection rule as redfin.transform.sold (the newest
 bronze page wins, out-of-scope pages are skipped). Columns: property_id, MLS, text, bronze_day. Listings whose page
 has no description are left out and counted in the coverage report.
 
@@ -9,23 +9,20 @@ This is a separate, text-only pass on purpose: it downloads and parses pages but
 and no listed_properties files, so it can backfill every page already in bronze without touching the other silver
 tables. The file name does not end in `listed_properties.parquet`, so the sold map never loads it.
 
-    python app/Redfin/transform_text.py --limit 200                  # quick trial into silver_v2/
-    python app/Redfin/transform_text.py                              # full rebuild into silver_v2/
-    python app/Redfin/transform_text.py --incremental --out-prefix silver   # daily run: only listings not yet there
+    python -m redfin.transform.text --limit 200                  # quick trial into silver_v2/
+    python -m redfin.transform.text                              # full rebuild into silver_v2/
+    python -m redfin.transform.text --incremental --out-prefix silver   # daily run: only listings not yet there
 """
 import argparse
-import sys
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import azure_store as store  # noqa: E402
-import parsing  # noqa: E402
-from transform_silver import KEY, latest_bronze_per_name  # noqa: E402
+from redfin.storage import azure_store as store
+from redfin.transform import parsing
+from redfin.transform.sold import KEY, latest_bronze_per_name
 
 
 def text_one(entry):
@@ -58,7 +55,7 @@ def main():
 
     blob = f"{args.out_prefix}/listing_text.parquet"
     existing = None
-    if args.incremental and store.container_client.get_blob_client(blob).exists():
+    if args.incremental and store.container().get_blob_client(blob).exists():
         existing = store.read_parquet(blob)
 
     entries = latest_bronze_per_name(store.list_bronze())

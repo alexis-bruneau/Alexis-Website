@@ -1,11 +1,8 @@
-"""Tests for metrics.active_metrics in app/Redfin/metrics.py. Run from the project root:  python -m unittest discover -s tests -v"""
-import sys
+"""Tests for metrics.active_metrics in redfin/transform/metrics.py. Run:  python -m pytest redfin"""
 import unittest
 from datetime import date
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "Redfin"))
-import metrics  # noqa: E402
+from redfin.transform import metrics
 
 TODAY = date(2026, 10, 18)
 

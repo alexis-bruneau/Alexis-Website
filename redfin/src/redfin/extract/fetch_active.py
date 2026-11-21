@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """EXTRACT (active listings): fetch the detail pages of a sample of the day's census into bronze/active/<day>/.
 
-The census (census.py) says what is on the market; the detail page adds the listing's price history, which the
+The census (redfin.extract.census) says what is on the market; the detail page adds the listing's price history, which the
 search results do not carry. Pages go to bronze/active/, NOT bronze/<day>/: the sold transform reads every page in
 bronze/<day>/ and would turn an active listing into a fake sale.
 
@@ -9,24 +9,23 @@ Each page is checked against the census: it must contain the census row's listin
 neighbouring or older record, and the page's own 'TREB #' list can name several MLS numbers, so the census row is
 the identity of the listing and the page is only used for its events.
 
-    python app/Redfin/fetch_active.py                 # 50 listings from the latest census in Azure
-    python app/Redfin/fetch_active.py --n 10 --local-dir census_out
+    python -m redfin.extract.fetch_active                 # 50 listings from the latest census in Azure
+    python -m redfin.extract.fetch_active --n 10 --local-dir census_out
 """
 import argparse
 import random
 import re
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-sys.path.insert(0, str(Path(__file__).parent))
-import census  # noqa: E402
-import parsing  # noqa: E402
+from redfin import config
+from redfin.extract import census
+from redfin.scraping.browser import USER_AGENT, fetch_html, load_redfin_cookies
+from redfin.storage import azure_store as store
+from redfin.transform import parsing
 
-MAX_CONSECUTIVE_FAILURES = 8
 OLDER_SHARE = 0.6        # share of the sample that has been listed 30+ days (those are the ones with price history)
 OLDER_DAYS = 30
 # The map is limited to this window (static/js/map.js ottawaBounds); a listing outside it could never be shown.
@@ -67,13 +66,10 @@ def main():
     ap.add_argument("--headed", action="store_true")
     args = ap.parse_args()
 
-    import azure_store as store
-    from scrape_properties_prod import USER_AGENT, fetch_html, load_redfin_cookies
-
     sink = census.LocalSink(args.local_dir) if args.local_dir else census.AzureSink()
     day = args.day or (sink.days() or [None])[-1]
     if not day:
-        sys.exit("No census found. Run census.py first.")
+        sys.exit("No census found. Run python -m redfin.extract.census first.")
     rows = census.read_census(sink, day)
     sample = pick_sample(rows, args.n, seed=day)
     have = store.list_active_pages(day)
@@ -89,7 +85,7 @@ def main():
             html = fetch_html(row["url"], context)
             if html is None:
                 failures_in_row += 1
-                if failures_in_row >= MAX_CONSECUTIVE_FAILURES:
+                if failures_in_row >= config.MAX_CONSECUTIVE_FAILURES:
                     print(f"Stopping: {failures_in_row} failures in a row (blocked or cookies expired?).")
                     break
                 continue
@@ -104,7 +100,7 @@ def main():
         browser.close()
 
     print(f"\nDone: {saved} pages saved, {mismatches} wrong-listing pages skipped, "
-          f"{len(todo) - saved - mismatches} not fetched. Now run transform_active.py.")
+          f"{len(todo) - saved - mismatches} not fetched. Now run python -m redfin.transform.active.")
     sys.exit(0 if saved + mismatches == len(todo) else 2)
 
 
