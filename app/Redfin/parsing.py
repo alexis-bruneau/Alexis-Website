@@ -225,6 +225,23 @@ def extract_property_type(html):
     return None if property_type == "N/A" else property_type
 
 
+def extract_remarks(html):
+    """The agent's description of the home ("remarks"), or None when the page has none.
+
+    Read from the inner `#marketing-remarks-scroll` block, not the outer `#marketingRemarks-preview` wrapper:
+    the wrapper also holds the "Show more" button. Paragraphs are joined with a space, inline tags (e.g. the
+    highlighted keywords) are flattened without adding spaces, and whitespace is collapsed. Leading/trailing
+    `*` banner decoration ("*  * OPEN HOUSE ... *  *") is trimmed; the promo sentence itself is kept, because
+    removing it reliably is a job for the embedding step, not for the raw text."""
+    block = BeautifulSoup(html, "html.parser").select_one("#marketing-remarks-scroll")
+    if block is None:
+        return None
+    paragraphs = block.find_all("p")
+    parts = [p.get_text("") for p in paragraphs] if paragraphs else [block.get_text("")]
+    text = " ".join(" ".join(parts).split()).strip(" *")
+    return text or None
+
+
 def parse_listing(html, url, mls, streetview=True):
     """Turns one listing page into (record, events): the silver row and the property's sale-history rows.
 

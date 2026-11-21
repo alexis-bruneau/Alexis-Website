@@ -998,10 +998,18 @@ function updateStats(summary, points) {
               grid: { drawOnChartArea: true, color: "rgba(0,0,0,0.05)" },
               title: { display: false },
               ticks: {
-                callback: function (value) {
+                callback: function (value, index, ticks) {
                   if (currentChartMetric === "price") return `$${Math.round(value / 1000)}k`;
                   if (currentChartMetric === "dom") return `${Math.round(value)}d`;
-                  if (currentChartMetric === "diff") return `${value}%`;
+                  if (currentChartMetric === "diff") {
+                    // Only as many decimals as the tick spacing needs (0.5 step -> 1, 0.25 -> 2, 2 -> 0),
+                    // so float noise like -0.4000000000000001 never reaches the label.
+                    const step = ticks.length > 1 ? Math.abs(ticks[1].value - ticks[0].value) : 1;
+                    let decimals = 0;
+                    while (decimals < 3 && Math.abs(step * 10 ** decimals - Math.round(step * 10 ** decimals)) > 1e-6) decimals++;
+                    const rounded = Number(value.toFixed(decimals));
+                    return `${Object.is(rounded, -0) ? 0 : rounded.toFixed(decimals)}%`;
+                  }
                   return value;
                 }
               }
@@ -1016,7 +1024,7 @@ function updateStats(summary, points) {
                   const val = ctx.raw;
                   if (label === "Average Price") return `${label}: $${Math.round(val).toLocaleString()}`;
                   if (label === "Avg Days on Market") return `${label}: ${Math.round(val)} days`;
-                  if (label === "Avg Sold vs List %") return `${label}: ${val.toFixed(2)}%`;
+                  if (label.startsWith("Avg Sold vs")) return `${label}: ${val.toFixed(2)}%`;
                   return `${label}: ${val}`;
                 }
               }
