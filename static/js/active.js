@@ -11,6 +11,13 @@ let selectedPTypes = [];
 let selectedChanges = [];    // ["down"], ["up"], both, or none
 let selectedLocationKey = null;
 let currentView = "insights";
+let basePoints = [];         // what the server returned, after the price-change filter, before the chart selections
+let serverSummary = null;    // the server's summary of the points it returned
+let soldInfo = { curve: null, sample: 0, window: null };   // sell-time curve for the current circle and filters
+let focusedMls = null;       // the listing marked on the sell-time curve (last one clicked on the map, list or scatter)
+// What is picked in the insight charts. One object, so the scatter brush and both histograms cross-filter through
+// applySelection(). dom / cut hold bucket indexes (see the BUCKETS section); brush is a rectangle in data units.
+const chartSelection = { dom: new Set(), cut: new Set(), brush: null };   // brush: { xMin, xMax, yMin, yMax }
 const ITEMS_PER_PAGE = 20;
 const MIN_PRICE = 0;
 const MAX_PRICE = 2000000;
@@ -108,6 +115,7 @@ function setView(view) {
     mainPanel.classList.remove("full-map");
   }
   setTimeout(() => map.invalidateSize(), 310);
+  if (view === "insights") setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
 }
 document.getElementById("toggleListings").addEventListener("click", () => setView("listings"));
 document.getElementById("viewInsightsBtn").addEventListener("click", () => setView(currentView === "insights" ? "listings" : "insights"));
@@ -180,6 +188,7 @@ document.querySelectorAll("#changeFilter .ptype-btn").forEach((btn) => btn.addEv
 }));
 
 /************** DATA **************/
+let fetchSeq = 0;
 async function fetchActivePoints() {
   const center = circle.getLatLng();
   const [minPrice, maxPrice] = priceSlider.noUiSlider.get().map((v) => Math.round(v));
@@ -189,24 +198,84 @@ async function fetchActivePoints() {
   if (selectedBeds.length) filters.beds = selectedBeds;
   if (selectedPTypes.length) filters.ptypes = selectedPTypes;
 
+  const seq = ++fetchSeq;
   try {
     const res = await fetch("/active-points", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ center: [center.lat, center.lng], radius_km: circle.getRadius() / 1000, filters })
     });
-    const { points, summary, error } = await res.json();
+    const { points, summary, error, sold_curve, sold_sample, sold_window } = await res.json();
     if (error) throw new Error(error);
+    if (seq !== fetchSeq) return;   // a newer search (circle dragged, filter changed) is already on its way
     // The price-change filter is applied here: it only needs fields already on each point.
-    currentPoints = selectedChanges.length ? points.filter((p) => selectedChanges.includes(p.last_change_direction)) : points;
-    currentPage = 1;
-    selectedLocationKey = null;
-    updateMapMarkers(currentPoints);
-    updateInsights(selectedChanges.length ? summarise(currentPoints, summary) : summary, currentPoints);
-    updateListingsSidebar();
+    basePoints = selectedChanges.length ? points.filter((p) => selectedChanges.includes(p.last_change_direction)) : points;
+    serverSummary = summary;
+    soldInfo = { curve: sold_curve, sample: sold_sample ?? 0, window: sold_window };
+    // The circle or a filter changed, so the listings did. A brush rectangle, bucket picks or a marked listing made
+    // on the old set would hide or point at the wrong things in the new one, so every fetch starts clean.
+    resetChartSelection();
+    focusedMls = null;
+    refreshView();
   } catch (err) {
     console.error("Failed to fetch active listings:", err);
   }
+}
+
+/** Applies the chart selections to basePoints and redraws everything that shows listings: markers, cards, list, charts. */
+function refreshView() {
+  currentPoints = applySelection(basePoints);
+  currentPage = 1;
+  selectedLocationKey = null;
+  const narrowed = selectedChanges.length > 0 || hasChartSelection();
+  updateMapMarkers(currentPoints);
+  updateInsights(narrowed ? summarise(currentPoints, serverSummary) : serverSummary, currentPoints);
+  updateListingsSidebar();
+  updateCharts();
+}
+
+/************** BUCKETS AND CHART SELECTION **************/
+// Each bucket includes its lower bound and excludes its upper one: a listing at exactly 7 days is in "7–30".
+const DOM_BUCKETS = [
+  { label: "<7", desc: "Under 7 days", test: (v) => v < 7 },
+  { label: "7–30", desc: "7 to under 30 days", test: (v) => v >= 7 && v < 30 },
+  { label: "30–60", desc: "30 to under 60 days", test: (v) => v >= 30 && v < 60 },
+  { label: "60–90", desc: "60 to under 90 days", test: (v) => v >= 60 && v < 90 },
+  { label: "90+", desc: "90 days or more", test: (v) => v >= 90 }
+];
+const CUT_BUCKETS = [
+  { label: "No cut", desc: "No cut (or priced at or above the first asking price)", test: (v) => v <= 0 },
+  { label: "<3%", desc: "Under 3% below the first asking price", test: (v) => v > 0 && v < 3 },
+  { label: "3–5%", desc: "3% to under 5% below the first asking price", test: (v) => v >= 3 && v < 5 },
+  { label: "5–10%", desc: "5% to under 10% below the first asking price", test: (v) => v >= 5 && v < 10 },
+  { label: ">10%", desc: "10% or more below the first asking price", test: (v) => v >= 10 }
+];
+/** Cut depth: how far the asking price is below the FIRST asking price (original_price), as a % of it. This is the
+ *  total cut over the listing's life, not last_change_pct (only the latest change): a listing cut twice counts once,
+ *  at its total. Null when there is no first asking price, so such a listing is in no cut bucket. */
+const cutPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.original_price - pt.price) / pt.original_price * 100 : null;
+const bucketIndex = (buckets, value) => value == null ? -1 : buckets.findIndex((b) => b.test(value));
+const inBrush = (pt, b) => pt.dom != null && pt.price != null
+  && pt.dom >= b.xMin && pt.dom <= b.xMax && pt.price >= b.yMin && pt.price <= b.yMax;
+const hasChartSelection = () => chartSelection.dom.size > 0 || chartSelection.cut.size > 0 || chartSelection.brush !== null;
+
+function resetChartSelection() {
+  chartSelection.dom.clear();
+  chartSelection.cut.clear();
+  chartSelection.brush = null;
+}
+
+/** The one place the chart selections become a list of listings. Buckets within a chart OR together, the three
+ *  selections (days, cut, brush) AND together. `skip` ("dom", "cut" or "brush") leaves that one selection out: each
+ *  chart draws the listings that pass the OTHER selections, so it can show what picking something in it would give. */
+function applySelection(points, skip) {
+  const { dom, cut, brush } = chartSelection;
+  return points.filter((pt) => {
+    if (skip !== "dom" && dom.size && !dom.has(bucketIndex(DOM_BUCKETS, pt.dom))) return false;
+    if (skip !== "cut" && cut.size && !cut.has(bucketIndex(CUT_BUCKETS, cutPct(pt)))) return false;
+    if (skip !== "brush" && brush && !inBrush(pt, brush)) return false;
+    return true;
+  });
 }
 
 const mean = (xs) => xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
@@ -232,8 +301,27 @@ function summarise(points, base) {
 }
 
 /************** MARKERS **************/
+let markerByKey = new Map();                    // location key -> its Leaflet marker, rebuilt with the markers
+const emphasised = { "is-linked": [], "is-pulsing": [] };   // marker elements currently carrying each highlight class
+let pulseKey = null;                            // "dom:2" while the markers of that histogram bar pulse
+
+/** Highlights the markers of `points` with a CSS class; replaces whatever the class was on before (pass [] to clear).
+ *  A marker inside a cluster has no element of its own, so the cluster that holds it is highlighted instead. */
+function setEmphasis(cls, points) {
+  emphasised[cls].forEach((el) => el.classList.remove(cls));
+  emphasised[cls] = [];
+  points.forEach((pt) => {
+    const marker = markerByKey.get(locationKey(pt));
+    const shown = marker && markersCluster.getVisibleParent(marker);
+    const el = shown && shown.getElement();
+    if (el) { el.classList.add(cls); emphasised[cls].push(el); }
+  });
+}
+
 function updateMapMarkers(points) {
   markersCluster.clearLayers();
+  markerByKey = new Map();
+  emphasised["is-linked"] = []; emphasised["is-pulsing"] = []; pulseKey = null;   // the old elements are gone
   const byLocation = new Map();
   points.forEach((pt) => {
     if (pt.latitude == null || pt.longitude == null) return;
@@ -269,6 +357,7 @@ function updateMapMarkers(points) {
       updateListingsSidebar();
       if (group.length === 1) setTimeout(() => highlightListing(first.mls), 150);
     });
+    markerByKey.set(key, marker);
     markersCluster.addLayer(marker);
   });
 }
@@ -295,17 +384,33 @@ function sortedList() {
   return list;
 }
 
+/** Opens the page of the list that holds a listing, highlights its row and marks it on the sell-time curve. */
 function highlightListing(mls) {
   const list = sortedList();
   const idx = list.findIndex((pt) => pt.mls === mls);
   if (idx === -1) return;
+  focusedMls = mls;
   currentPage = Math.floor(idx / ITEMS_PER_PAGE) + 1;
-  updateListingsSidebar();
+  updateListingsSidebar();   // draws the row highlighted (markFocusedRow)
+  updateCurve();
   const row = document.getElementById(`listing-${mls}`);
-  if (!row) return;
+  if (row) row.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
+const focusedPoint = () => focusedMls ? basePoints.find((p) => p.mls === focusedMls) : undefined;
+
+/** Highlights the focused listing's row (if it is on this page) and adds the "x% of comparable homes sold by..." note. */
+function markFocusedRow() {
   document.querySelectorAll("#listingRows .highlight").forEach((el) => el.classList.remove("highlight"));
+  document.querySelectorAll("#listingRows .sell-note").forEach((el) => el.remove());
+  const pt = focusedPoint();
+  const row = pt && document.getElementById(`listing-${pt.mls}`);
+  if (!row) return;
   row.classList.add("highlight");
-  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  const note = document.createElement("p");
+  note.className = "sell-note";
+  note.textContent = sellNote(pt);
+  row.querySelector(".listing-info").insertBefore(note, row.querySelector(".view-btn"));
 }
 
 function clearLocationSelection() {
@@ -353,12 +458,16 @@ function updateListingsSidebar() {
         <p>${dom}${pt.original_price && pt.original_price !== pt.price ? ` · listed at ${money(pt.original_price)}` : ""}</p>
         <a href="${escapeHtml(pt.url)}" target="_blank" rel="noopener" class="view-btn">View Details</a>
       </div>`;
+    // Clicking a row marks it on the sell-time curve; "View Details" is what opens the listing page.
     row.addEventListener("click", (e) => {
       if (e.target.closest(".view-btn")) return;
-      window.open(pt.url, "_blank", "noopener,noreferrer");
+      focusedMls = pt.mls;
+      markFocusedRow();
+      updateCurve();
     });
     container.appendChild(row);
   });
+  markFocusedRow();
 
   renderPagination(document.getElementById("paginationControls"), currentPage, totalPages, list.length, (page) => {
     currentPage = page;
@@ -417,6 +526,461 @@ function updateInsights(s, points) {
     a.innerHTML = `${changeBadge(pt)}<span class="recent-addr">${pt.address ? escapeHtml(pt.address) : "Address not shown"}</span>
       <span class="recent-date">${formatDate(pt.last_change_date)}</span>`;
     box.appendChild(a);
+  });
+}
+
+/************** INSIGHT CHARTS **************/
+// Chart.js comes from a CDN. If it is blocked the map and the list still work and the chart panes say so.
+const chartsReady = typeof Chart !== "undefined";
+const CHANGE_COLORS = { down: "#dc2626", up: "#059669", none: "#94a3b8" };   // the colours of the .chg price-change badges
+const ACCENT = "#2563eb";
+const ACCENT_DIM = "#bfdbfe";
+const INK = "#1e293b";
+const charts = {};   // scatter, dom, cut, curve
+const changeKind = (pt) => hasChange(pt) ? pt.last_change_direction : "none";
+const withAlpha = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; };
+/** Plain-text twin of changeBadge(), for chart tooltips (canvas text, not HTML). */
+const changeText = (pt) => hasChange(pt)
+  ? `${pt.last_change_direction === "up" ? "▲" : "▼"} ${money(Math.abs(pt.last_change_amount))} (${Math.abs(pt.last_change_pct).toFixed(1)}%)`
+  : "No price change";
+
+function resizeCharts() { Object.values(charts).forEach((c) => c.resize()); }
+
+function updateCharts() {
+  updateSelectionBar();
+  updateCurve();   // its text works without Chart.js
+  if (!chartsReady) return;
+  updateScatter();
+  updateBuckets();
+}
+
+/* ---- Tabs ---- */
+const insightTabs = [...document.querySelectorAll(".insight-tab")];
+function showPane(name) {
+  insightTabs.forEach((tab) => {
+    const on = tab.dataset.pane === name;
+    tab.classList.toggle("active", on);
+    tab.setAttribute("aria-selected", on);
+    tab.tabIndex = on ? 0 : -1;
+    document.getElementById(`pane-${tab.dataset.pane}`).hidden = !on;
+  });
+  setEmphasis("is-linked", []); setEmphasis("is-pulsing", []); pulseKey = null;
+  resizeCharts();
+}
+insightTabs.forEach((tab, i) => {
+  tab.addEventListener("click", () => showPane(tab.dataset.pane));
+  tab.addEventListener("keydown", (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    const next = insightTabs[(i + step + insightTabs.length) % insightTabs.length];
+    next.focus();
+    showPane(next.dataset.pane);
+  });
+});
+
+/* ---- Selection bar: what the charts are filtering by, and how to undo it ---- */
+function updateSelectionBar() {
+  const bar = document.getElementById("selectionBar");
+  bar.hidden = !hasChartSelection();
+  if (bar.hidden) return;
+  document.getElementById("selectionSummary").textContent = `${currentPoints.length} of ${basePoints.length} listings`;
+  const chips = document.getElementById("selectionChips");
+  chips.replaceChildren();
+  const addChip = (text, clear) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip-btn chip";
+    b.title = "Remove this selection";
+    b.textContent = `${text} ✕`;
+    b.addEventListener("click", () => { clear(); refreshView(); });
+    chips.appendChild(b);
+  };
+  const labels = (set, buckets) => [...set].sort((a, b) => a - b).map((i) => buckets[i].label).join(", ");
+  const { dom, cut, brush } = chartSelection;
+  if (dom.size) addChip(`Days: ${labels(dom, DOM_BUCKETS)}`, () => dom.clear());
+  if (cut.size) addChip(`Cut: ${labels(cut, CUT_BUCKETS)}`, () => cut.clear());
+  if (brush) {
+    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${compactPrice(brush.yMin)}–${compactPrice(brush.yMax)}`,
+      () => { chartSelection.brush = null; });
+  }
+}
+document.getElementById("clearSelection").addEventListener("click", () => { resetChartSelection(); refreshView(); });
+
+/* ---- 1. Scatter: asking price vs days on market ---- */
+let brushDrag = null;       // { x0, y0, x1, y1 } in canvas pixels while a selection rectangle is being dragged
+let brushMode = false;      // touch screens: "Select area" turns a finger drag into a selection instead of a page scroll
+let suppressClick = false;  // the click that ends a drag must not also select the dot under the cursor
+
+/** Draws the selection rectangle: the one being dragged, else the current brush (kept in data units so it survives resizes). */
+const brushPlugin = {
+  id: "brush",
+  afterDatasetsDraw(chart) {
+    const a = chart.chartArea;
+    let r = null;
+    if (brushDrag) {
+      r = { l: Math.min(brushDrag.x0, brushDrag.x1), r: Math.max(brushDrag.x0, brushDrag.x1),
+            t: Math.min(brushDrag.y0, brushDrag.y1), b: Math.max(brushDrag.y0, brushDrag.y1) };
+    } else if (chartSelection.brush) {
+      const { xMin, xMax, yMin, yMax } = chartSelection.brush;
+      const { x, y } = chart.scales;
+      r = { l: x.getPixelForValue(xMin), r: x.getPixelForValue(xMax), t: y.getPixelForValue(yMax), b: y.getPixelForValue(yMin) };
+    }
+    if (!r) return;
+    const left = Math.max(r.l, a.left), right = Math.min(r.r, a.right), top = Math.max(r.t, a.top), bottom = Math.min(r.b, a.bottom);
+    if (right <= left || bottom <= top) return;
+    const { ctx } = chart;
+    ctx.save();
+    ctx.fillStyle = withAlpha(ACCENT, 0.1);
+    ctx.strokeStyle = ACCENT;
+    ctx.setLineDash([5, 3]);
+    ctx.fillRect(left, top, right - left, bottom - top);
+    ctx.strokeRect(left, top, right - left, bottom - top);
+    ctx.restore();
+  }
+};
+
+function scatterDataset(kind, label, pointStyle, pointRotation) {
+  // Dots outside the brush stay on the chart (so the rectangle can be adjusted) but fade.
+  const faded = (ctx) => ctx.raw && chartSelection.brush && !inBrush(ctx.raw.pt, chartSelection.brush);
+  return {
+    kind, label, pointStyle, pointRotation, data: [],
+    pointRadius: 5, pointHoverRadius: 7, pointHitRadius: 8, pointBorderWidth: 1.5,
+    pointBackgroundColor: (ctx) => withAlpha(CHANGE_COLORS[kind], faded(ctx) ? 0.12 : 0.75),
+    pointBorderColor: (ctx) => withAlpha(CHANGE_COLORS[kind], faded(ctx) ? 0.25 : 1)
+  };
+}
+
+function initScatter() {
+  const canvas = document.getElementById("scatterChart");
+  // The shapes match the badges (▼ cut, ▲ increase) so the three kinds are not told apart by red/green alone.
+  charts.scatter = new Chart(canvas, {
+    type: "scatter",
+    data: { datasets: [
+      scatterDataset("down", "Price cut", "triangle", 180),
+      scatterDataset("up", "Price increase", "triangle", 0),
+      scatterDataset("none", "No change", "circle", 0)
+    ] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+      interaction: { mode: "nearest", intersect: true },
+      plugins: {
+        legend: { display: false },   // an HTML legend sits in the toolbar above the chart
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].raw.pt.address || "Address not shown",
+            label: (item) => {
+              const pt = item.raw.pt;
+              const lines = [`${money(pt.price)} · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`, changeText(pt)];
+              if (pt.original_price && pt.original_price !== pt.price) lines.push(`Listed at ${money(pt.original_price)}`);
+              return lines;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { type: "linear", min: 0, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
+        y: { title: { display: true, text: "Asking price" }, grace: "5%", ticks: { callback: (v) => compactPrice(v) }, grid: { color: "#f1f5f9" } }
+      }
+    },
+    plugins: [brushPlugin]
+  });
+  const chart = charts.scatter;
+
+  const xy = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const inArea = (p) => p.x >= chart.chartArea.left && p.x <= chart.chartArea.right && p.y >= chart.chartArea.top && p.y <= chart.chartArea.bottom;
+  const clamp = (p) => ({ x: Math.min(Math.max(p.x, chart.chartArea.left), chart.chartArea.right),
+                          y: Math.min(Math.max(p.y, chart.chartArea.top), chart.chartArea.bottom) });
+  const pointAt = (e) => {
+    const hit = chart.getElementsAtEventForMode(e, "nearest", { intersect: true }, false)[0];
+    return hit ? chart.data.datasets[hit.datasetIndex].data[hit.index].pt : null;
+  };
+
+  // Hover: the listing's marker lights up on the map. Click: open it in the list.
+  canvas.addEventListener("mousemove", (e) => {
+    if (brushDrag) return;
+    const pt = pointAt(e);
+    canvas.style.cursor = pt ? "pointer" : "crosshair";
+    setEmphasis("is-linked", pt ? [pt] : []);
+  });
+  canvas.addEventListener("mouseleave", () => setEmphasis("is-linked", []));
+  canvas.addEventListener("click", (e) => {
+    if (suppressClick) return;
+    const pt = pointAt(e);
+    if (pt) openListing(pt);
+  });
+  canvas.addEventListener("dblclick", () => {
+    if (chartSelection.brush) { chartSelection.brush = null; refreshView(); }
+  });
+
+  // Drag: select an area. Fingers scroll the page unless "Select area" is on (CSS: .brushing sets touch-action: none).
+  canvas.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 || (e.pointerType === "touch" && !brushMode)) return;
+    const p = xy(e);
+    if (!inArea(p)) return;
+    brushDrag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y };
+    canvas.setPointerCapture(e.pointerId);
+    setEmphasis("is-linked", []);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!brushDrag) return;
+    const p = clamp(xy(e));
+    brushDrag.x1 = p.x; brushDrag.y1 = p.y;
+    chart.draw();
+  });
+  canvas.addEventListener("pointerup", () => {
+    if (!brushDrag) return;
+    const d = brushDrag;
+    brushDrag = null;
+    if (Math.abs(d.x1 - d.x0) < 5 || Math.abs(d.y1 - d.y0) < 5) { chart.draw(); return; }   // a click, not a drag
+    suppressClick = true;
+    setTimeout(() => { suppressClick = false; }, 50);
+    const { x, y } = chart.scales;
+    const [xa, xb] = [x.getValueForPixel(d.x0), x.getValueForPixel(d.x1)];
+    const [ya, yb] = [y.getValueForPixel(d.y0), y.getValueForPixel(d.y1)];
+    chartSelection.brush = { xMin: Math.min(xa, xb), xMax: Math.max(xa, xb), yMin: Math.min(ya, yb), yMax: Math.max(ya, yb) };
+    refreshView();
+  });
+  canvas.addEventListener("pointercancel", () => { brushDrag = null; chart.draw(); });
+
+  const toggle = document.getElementById("brushToggle");
+  toggle.addEventListener("click", () => {
+    brushMode = !brushMode;
+    toggle.setAttribute("aria-pressed", brushMode);
+    toggle.classList.toggle("on", brushMode);
+    canvas.classList.toggle("brushing", brushMode);
+  });
+}
+
+function updateScatter() {
+  // Every listing that passes the bucket picks; the brush only fades dots, it does not remove them.
+  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && pt.price != null);
+  charts.scatter.data.datasets.forEach((ds) => {
+    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: pt.price, pt }));
+  });
+  charts.scatter.update("none");
+  charts.scatter.canvas.setAttribute("aria-label",
+    `Scatter chart of asking price against days on market: ${shown.length} active listings`);
+}
+
+/** Clicking a dot: show the list, scroll to the listing and highlight it (highlightListing also marks it on the curve). */
+function openListing(pt) {
+  if (!currentPoints.some((p) => p.mls === pt.mls)) {   // a faded dot outside the brush: drop the brush so the row exists
+    chartSelection.brush = null;
+    refreshView();
+  }
+  // Anything else that could hide the row in the list
+  selectedLocationKey = null;
+  if (searchQuery) { searchQuery = ""; searchInput.value = ""; }
+  setEmphasis("is-linked", []);
+  if (currentView === "insights") setView("listings");
+  updateListingsSidebar();
+  setTimeout(() => highlightListing(pt.mls), 150);
+}
+
+/* ---- 2. Histograms: days on market and cut depth. Click a bar to filter. ---- */
+const BUCKET_CHARTS = [
+  { key: "dom", canvasId: "domChart", buckets: DOM_BUCKETS, valueOf: (pt) => pt.dom },
+  { key: "cut", canvasId: "cutChart", buckets: CUT_BUCKETS, valueOf: cutPct }
+];
+
+/** Draws each bar's count just above it. */
+const barCountPlugin = {
+  id: "barCount",
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart;
+    ctx.save();
+    ctx.fillStyle = INK;
+    ctx.font = `600 11px ${Chart.defaults.font.family}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    chart.getDatasetMeta(0).data.forEach((bar, i) => ctx.fillText(String(chart.data.datasets[0].data[i]), bar.x, bar.y - 3));
+    ctx.restore();
+  }
+};
+
+/** Pulses the markers of the listings in one histogram bar (i = -1 stops). Only listings that are on the map pulse. */
+function pulseBucket(cfg, i) {
+  const id = i < 0 ? null : `${cfg.key}:${i}`;
+  if (id === pulseKey) return;   // re-adding the class on every mouse move would restart the animation
+  pulseKey = id;
+  if (id === null) { setEmphasis("is-pulsing", []); return; }
+  const onMap = new Set(currentPoints.map((p) => p.mls));
+  setEmphasis("is-pulsing", applySelection(basePoints, cfg.key)
+    .filter((pt) => bucketIndex(cfg.buckets, cfg.valueOf(pt)) === i && onMap.has(pt.mls)));
+}
+
+function initBuckets() {
+  BUCKET_CHARTS.forEach((cfg) => {
+    const canvas = document.getElementById(cfg.canvasId);
+    const chart = new Chart(canvas, {
+      type: "bar",
+      data: { labels: cfg.buckets.map((b) => b.label), datasets: [{ data: cfg.buckets.map(() => 0), borderRadius: 3, maxBarThickness: 56 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+        layout: { padding: { top: 18 } },   // room for the count above the tallest bar
+        interaction: { mode: "index", intersect: false },   // the whole column is the target, also for short or empty bars
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            title: (items) => cfg.buckets[items[0].dataIndex].desc,
+            label: (item) => `${item.raw} listing${item.raw === 1 ? "" : "s"}`
+          } }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f1f5f9" } }
+        }
+      },
+      plugins: [barCountPlugin]
+    });
+    charts[cfg.key] = chart;
+
+    const bucketAt = (e) => {
+      const hit = chart.getElementsAtEventForMode(e, "index", { intersect: false }, false)[0];
+      return hit ? hit.index : -1;
+    };
+    canvas.style.cursor = "pointer";
+    canvas.addEventListener("mousemove", (e) => pulseBucket(cfg, bucketAt(e)));
+    canvas.addEventListener("mouseleave", () => pulseBucket(cfg, -1));
+    canvas.addEventListener("click", (e) => {
+      const i = bucketAt(e);
+      const picked = chartSelection[cfg.key];
+      // An empty bar can't be added (it would just blank the map) but a picked one can always be removed.
+      if (i < 0 || (!picked.has(i) && chart.data.datasets[0].data[i] === 0)) return;
+      if (!picked.delete(i)) picked.add(i);
+      refreshView();
+      pulseKey = null;
+      pulseBucket(cfg, i);   // refreshView rebuilt the markers; light up the ones this bar now stands for
+    });
+  });
+}
+
+function updateBuckets() {
+  BUCKET_CHARTS.forEach((cfg) => {
+    // Counts are of the listings that pass the OTHER selections, so a bar shows what picking it would add.
+    const counts = cfg.buckets.map(() => 0);
+    applySelection(basePoints, cfg.key).forEach((pt) => {
+      const i = bucketIndex(cfg.buckets, cfg.valueOf(pt));
+      if (i >= 0) counts[i]++;
+    });
+    const picked = chartSelection[cfg.key];
+    const ds = charts[cfg.key].data.datasets[0];
+    ds.data = counts;
+    ds.backgroundColor = counts.map((_, i) => (!picked.size || picked.has(i)) ? ACCENT : ACCENT_DIM);
+    charts[cfg.key].update("none");
+  });
+}
+
+/* ---- 3. How long do homes like these take to sell (sold data) ---- */
+/** "80% of comparable homes sold by day 52; this one is at day 71." */
+function sellNote(pt) {
+  const { curve } = soldInfo;
+  if (!curve) return "Too few comparable sales nearby to compare this listing's time on market.";
+  if (pt.dom == null) return "Days on market is not known for this listing.";
+  const day = Math.round(pt.dom);
+  const at = day > curve.max_days ? `day ${day} (past the ${curve.max_days}-day chart)` : `day ${day}`;
+  const head = curve.p80_days == null
+    ? `Fewer than 80% of comparable homes sold within ${curve.max_days} days`
+    : `80% of comparable homes sold by day ${curve.p80_days}`;
+  return `${head}; this one is at ${at}.`;
+}
+
+/** Vertical marker at the focused listing's days on market, with a dot where it meets the curve. Also the empty state. */
+const curvePlugin = {
+  id: "curveMarker",
+  afterDatasetsDraw(chart) {
+    const { curve } = soldInfo;
+    const pt = focusedPoint();
+    if (!curve || !pt || pt.dom == null) return;
+    const { ctx, chartArea: a, scales: { x, y } } = chart;
+    const day = Math.min(Math.round(pt.dom), curve.max_days);
+    const px = x.getPixelForValue(day);
+    ctx.save();
+    ctx.strokeStyle = INK;
+    ctx.fillStyle = INK;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(px, a.top); ctx.lineTo(px, a.bottom); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(px, y.getPixelForValue(curve.share[day] * 100), 4, 0, 2 * Math.PI); ctx.fill();
+    ctx.font = `600 11px ${Chart.defaults.font.family}`;
+    ctx.textBaseline = "top";
+    ctx.textAlign = px > (a.left + a.right) / 2 ? "right" : "left";
+    ctx.fillText(`this listing: day ${Math.round(pt.dom)}`, px + (ctx.textAlign === "right" ? -6 : 6), a.top + 4);
+    ctx.restore();
+  },
+  afterDraw(chart) {
+    if (soldInfo.curve) return;
+    const { ctx, chartArea: a } = chart;
+    ctx.save();
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = `13px ${Chart.defaults.font.family}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Not enough comparable sales to draw a curve", (a.left + a.right) / 2, (a.top + a.bottom) / 2);
+    ctx.restore();
+  }
+};
+
+function initCurve() {
+  charts.curve = new Chart(document.getElementById("curveChart"), {
+    type: "line",
+    data: { datasets: [{ data: [], borderColor: ACCENT, backgroundColor: withAlpha(ACCENT, 0.12), fill: true,
+                         pointRadius: 0, pointHitRadius: 6, borderWidth: 2, tension: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 150 },
+      interaction: { mode: "nearest", axis: "x", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          title: () => "",
+          label: (item) => `${Math.round(item.parsed.y)}% of comparable homes sold by day ${item.parsed.x}`
+        } }
+      },
+      scales: {
+        x: { type: "linear", min: 0, max: 180, ticks: { stepSize: 30 }, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
+        y: { min: 0, max: 100, ticks: { stepSize: 25, callback: (v) => `${v}%` }, title: { display: true, text: "Sold by then" }, grid: { color: "#f1f5f9" } }
+      }
+    },
+    plugins: [curvePlugin]
+  });
+}
+
+function updateCurve() {
+  const { curve, sample, window: win } = soldInfo;
+  const pt = focusedPoint();
+  let note = "Click a listing on the map, in the list or in the scatter to see where it sits.";
+  if (pt) note = sellNote(pt);
+  else if (!curve) note = sample ? `Only ${sample} comparable sale${sample === 1 ? "" : "s"} in this area; at least 20 are needed for a curve.`
+                              : "No comparable sales in this area.";
+  document.getElementById("curveNote").textContent = note;
+  const period = win && win.start ? `${formatDate(win.start)} to ${formatDate(win.end)} (the last ${win.days} days of sold data)` : "";
+  let foot = "";
+  if (period && curve) {
+    foot = `Based on ${sample} sales inside the search circle, ${period}, with the same price, bedroom and property-type filters. `
+      + `Only homes that sold are counted: unsold and withdrawn listings are not in the data, so real waits run longer than this curve shows.`;
+  } else if (period) {
+    foot = `${sample} sale${sample === 1 ? "" : "s"} inside the search circle, ${period}, with the same price, bedroom and property-type filters.`;
+  }
+  document.getElementById("curveFoot").textContent = foot;
+  if (!chartsReady) return;
+  charts.curve.data.datasets[0].data = curve ? curve.share.map((s, n) => ({ x: n, y: s * 100 })) : [];
+  charts.curve.options.scales.x.max = curve ? curve.max_days : 180;
+  charts.curve.update("none");
+}
+
+if (chartsReady) {
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = "#64748b";
+  initScatter();
+  initBuckets();
+  initCurve();
+} else {
+  console.warn("Chart.js did not load; the insight charts are unavailable.");
+  document.querySelectorAll(".chart-box").forEach((box) => {
+    box.className = "empty-note";
+    box.textContent = "The charts could not be loaded (Chart.js is blocked or offline). The map and list still work.";
   });
 }
 

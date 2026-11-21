@@ -1701,3 +1701,273 @@ body {
   font-weight: 600;
   color: #475569;
 }
+
+/* ─── 13. ACTIVE LISTINGS: INSIGHT CHARTS ───────────────────── */
+
+/* The footer holds charts now, so it gets more of the screen. Scoped: the sold page shares #insights. */
+@media (min-width: 1101px) {
+  #insights.insights-charts {
+    height: 42vh;
+    min-height: 340px;
+  }
+}
+
+.insight-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.insight-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.insight-tab:hover { background: #f1f5f9; }
+.insight-tab.active { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+
+.insight-tab:focus-visible,
+.chip-btn:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.insight-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.insight-pane[hidden] { display: none; }
+
+.pane-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 22px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.pane-hint { margin-right: auto; }
+
+.scatter-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Same shapes as the chart's dots: ▼ cut, ▲ increase, ● unchanged */
+.legend-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+}
+
+.legend-key.down { background: #dc2626; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.legend-key.up { background: #059669; clip-path: polygon(50% 0, 0 100%, 100% 100%); }
+.legend-key.none { background: #94a3b8; border-radius: 50%; }
+
+.chart-box {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.chart-pair {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.chart-fig {
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-fig figcaption {
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.curve-note { font-weight: 600; color: #1e293b; }
+
+.curve-foot {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+/* What the charts are filtering by */
+.selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #1e3a8a;
+}
+
+.selection-bar[hidden] { display: none; }
+.selection-summary { font-weight: 700; }
+.selection-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+#clearSelection { margin-left: auto; }
+
+.chip-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.chip-btn:hover { background: #f1f5f9; }
+
+/* Touch screens only: a finger drag scrolls the page, so selecting an area needs its own mode */
+.brush-toggle { display: none; }
+@media (hover: none) { .brush-toggle { display: inline-block; } }
+.brush-toggle.on { background: #2563eb; border-color: #2563eb; color: #ffffff; }
+canvas.brushing { touch-action: none; }
+
+/* "80% of comparable homes sold by day 52; this one is at day 71" on the clicked listing's row */
+.listing-info .sell-note {
+  margin: 4px 0;
+  padding: 4px 6px;
+  background: #f1f5f9;
+  border-left: 3px solid #1e293b;
+  border-radius: 3px;
+  font-size: 12px;
+  color: #334155;
+}
+
+/* Markers the charts point at: is-linked = steady (hovering a dot), is-pulsing = animated (hovering a histogram bar) */
+.is-linked,
+.is-pulsing {
+  z-index: 9000 !important;
+}
+
+.price-marker.is-linked .price-label {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
+  transform: scale(1.12);
+}
+
+.price-marker.is-linked .price-label .arrow { color: #ffffff; }
+
+.count-marker.is-linked .count-label,
+.cluster-marker.is-linked .cluster-label {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45);
+  transform: scale(1.12);
+}
+
+@keyframes marker-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.75); transform: scale(1); }
+  50% { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0); transform: scale(1.12); }
+}
+
+.is-pulsing .price-label,
+.is-pulsing .count-label,
+.is-pulsing .cluster-label {
+  animation: marker-pulse 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-pulsing .price-label,
+  .is-pulsing .count-label,
+  .is-pulsing .cluster-label {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.9);
+  }
+}
+
+/* Tablets: a narrower cards column gives the charts room (the sold page keeps its 450px) */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .insights-charts .insights-left {
+    flex-basis: 300px;
+  }
+}
+
+/* Phones (portrait and landscape): the footer scrolls, so each chart gets a fixed height instead of filling it */
+@media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
+  .insights-charts .insights-right {
+    min-height: 0;
+  }
+
+  .insight-tabs {
+    width: 100%;
+  }
+
+  .insight-tab {
+    flex: 1 1 auto;
+    padding: 8px 6px;
+    text-align: center;
+  }
+
+  .insight-pane {
+    flex: none;
+  }
+
+  .insight-pane .chart-box {
+    flex: none;
+    height: 240px;
+  }
+
+  .chart-pair {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    gap: 12px;
+  }
+
+  .chart-pair .chart-box {
+    height: 190px;
+  }
+
+  .selection-bar {
+    font-size: 11px;
+  }
+
+  #clearSelection {
+    margin-left: 0;
+  }
+
+  .pane-toolbar {
+    flex-wrap: wrap;
+  }
+}

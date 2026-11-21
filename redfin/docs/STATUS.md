@@ -17,10 +17,13 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 - **Listing text**: `transform.text` → `silver/listing_text.parquet` (already run against live silver).
 - **Package restructure** (2026-11-21): `redfin/` package, `config.py`, shared browser helpers, lazy Azure client, docs
   under `redfin/docs/`. See D11.
+- **Insight charts on /ottawa_active** (branch `feature/active-insights-charts`, not merged yet): price-vs-days scatter linked to
+  the map and list, clickable days-on-market and cut-depth histograms that cross-filter, and a sell-time curve from the sold
+  data (`redfin.analytics.sale_curve`, D13). Flask-only: not in the Pages build or the daily scrape.
 
 ## In progress
 
-- Nothing open on a branch beyond `refactor/redfin-package` (this restructure).
+- Nothing open on a branch beyond `refactor/redfin-package` (this restructure) and the insight-charts branch above.
 
 ## Next
 

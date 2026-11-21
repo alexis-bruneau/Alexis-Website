@@ -112,6 +112,22 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Alternatives rejected**: keeping them unused.
 - **Status**: accepted. If the Flask app needs hosting again, that is a new decision.
 
+## D13. The "how long do homes take to sell" curve is computed at read time from the sold rows, not stored
+- **Date**: 2026-11-21
+- **Decision**: `POST /active-points` also reads the sold `properties` view (the one the sold map uses) and returns
+  `sold_curve`, `sold_sample` and `sold_window`. The curve is the share of sales with `days_on_market <= N` for N = 0..180,
+  from sales inside the same circle that pass the price, beds and property-type filters, in the 180 days ending on the
+  latest sale in the data (not the clock, so the result is reproducible). Below 20 sales the curve is `null`. The maths is
+  the pure helper `redfin.analytics.sale_curve` (unit-tested); windowing and filtering stay in `app/main.py`.
+- **Why**: it has to follow the search circle and filters on every request, the sold set is small (a few thousand rows,
+  already in memory), and there is no gold layer yet to hold precomputed curves.
+- **Known limit**: it only counts homes that sold. Withdrawn, expired and still-unsold listings are not in the data, so it
+  understates how long a typical listing takes (survivorship bias). The page says so.
+- **Alternatives rejected**: a precomputed gold table (nothing to build it in yet, and a free circle plus filters makes the
+  set of curves too big to precompute); a survival estimate that treats active listings as censored (the right fix for the
+  bias, but it needs listing history we do not keep; revisit with the observations table in ACTIVE_LISTINGS.md).
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)

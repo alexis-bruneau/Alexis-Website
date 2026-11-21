@@ -121,3 +121,13 @@ app/main.py        /ottawa_active page, POST /active-points (circle + filters + 
   definitions as the sold metrics. Redfin's own `dom` restarts on a relist, so it is kept only as `dom_redfin`.
 * `silver/active/listings.parquet` is a snapshot of one day, rebuilt from bronze. It does not end in `listed_properties.parquet`,
   so the sold map never loads it.
+
+### Insight charts on /ottawa_active (read time, nothing stored)
+
+Computed in the browser (`static/js/active.js`) from the points `/active-points` returns, plus one server-side curve:
+
+| Chart | Definition |
+|---|---|
+| Days-on-market buckets | `days_on_market` in under 7 / 7-30 / 30-60 / 60-90 / 90+ (lower bound included: 7 is in "7-30") |
+| Cut-depth buckets | `(original_price - list_price) / original_price`, the **total** cut since the first asking price (not `last_change_pct`, which is only the latest change): no cut (zero or priced above the first ask) / under 3% / 3-5% / 5-10% / 10%+ |
+| Sell-time curve | `redfin.analytics.sale_curve`: for N = 0..180, the share of sales whose `days_on_market <= N`. Sales = rows of the sold `properties` view inside the search circle and passing the price / beds / property-type filters, sold in the 180 days ending on the **latest sale in the data** (not today's date). `null` below 20 sales. Counts sales only, so it is survivorship-biased: withdrawn and unsold listings are not in the data |
