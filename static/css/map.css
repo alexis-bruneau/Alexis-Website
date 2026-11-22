@@ -2594,3 +2594,9 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 }
 
 .insight-pane .chart-box { min-height: 140px; }
+
+/* Phone layouts: the cards take the height of their text (the footer scrolls), they do not stretch to fill it */
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  .summary-cards { flex: none; grid-auto-rows: auto; }
+  .insights-left { flex: none; }
+}
