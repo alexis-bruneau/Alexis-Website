@@ -380,6 +380,34 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 
 ---
 
+## D25. Master pushes deploy the web app to Azure Container Apps (blue-green, OpenID Connect)
+- **Date**: 2026-11-22 (`feature/docker`, step 2 of the hosting plan; first run happens when the branch is merged)
+- **Decision**: `.github/workflows/deploy_azure.yml` runs on pushes to master that touch `app/`, `templates/`, `static/`,
+  `redfin/` (not its docs, tests, scripts, data/queue: all in `.dockerignore`), `requirements.txt`, `Dockerfile`,
+  `.dockerignore` or the workflow files, and on manual dispatch (`build_only` option). One job: `az acr build` into
+  `acralexisbruneau` tagged with the commit SHA (an existing tag is never rebuilt), then `az containerapp update` creates a new
+  revision of `ca-alexis-web`, which is tested on its own revision address, gets 100% of the traffic, and is then smoke tested
+  on `quartierinsights.ca` (`/`, `/ottawa_map`) and `www.quartierinsights.ca`. Concurrency group `deploy-azure`,
+  `cancel-in-progress: false` (a running deploy finishes; only the newest waiting one is kept).
+- **Why Multiple revision mode**: the previous revision stays running with 0% traffic, so a rollback is a traffic change in the
+  portal, and a failed test after the switch sends the traffic back automatically. In Single mode only the newest is kept and
+  there is no test before visitors arrive. The workflow stops with a message if the app is still in Single mode. Revisions
+  older than the previous one are deactivated to bound memory and cost.
+- **Authentication**: OpenID Connect with `azure/login` (federated credential for `repo:alexis-bruneau/Alexis-Website:ref:refs/heads/master`);
+  no client secret exists. Only `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` are stored in GitHub (identifiers, not
+  passwords). `permissions: id-token: write, contents: read`. The storage connection string stays in the Container App secret
+  `conn`; the workflow never reads it.
+- **Least privilege**: Contributor on the resource group `rg-alexis-web` only (also covers registry push/pull). Narrower
+  role sets were not adopted because their exact minimum could not be verified without running against Azure.
+- **Consequences**: a third workflow triggered by master pushes (next to `daily_scrape.yml` and `deploy_pages.yml`, both unchanged);
+  new `docs/AZURE_DEPLOY.md` and `.github/scripts/wait_for_200.sh`. The Azure steps were written without being run: the first
+  real run is the merge. Open point: the running app loads its data only at start, so new daily-scrape data reaches the
+  site only after a deploy or restart; `/refresh-data` has no authentication and must be protected before anything calls it
+  from outside (to be decided separately, see STATUS "Next").
+- **Status**: accepted
+
+---
+
 ## Proposed (open questions)
 
 ## P1. RAG / Q&A design over listings and insights

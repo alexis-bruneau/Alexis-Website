@@ -51,14 +51,23 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 - **Docker image for the web app** (D24, `feature/docker`): runs locally (`docker run --env-file .env`), about 250 MB of memory,
   not deployed yet. Root `requirements.txt` is now web-only, which also removes the old `requests==2.24.0` pin. Guide: `docs/DOCKER.md`.
 
+- **Automatic deploy to Azure** (D25, `feature/docker`, written offline, **not yet run**): `.github/workflows/deploy_azure.yml` builds the image
+  in `acralexisbruneau` (tag = commit SHA) on master pushes, creates a new revision of `ca-alexis-web`, tests it, moves the traffic,
+  smoke tests quartierinsights.ca, and rolls the traffic back if that fails. Needs the one-time setup in `docs/AZURE_DEPLOY.md`
+  (Multiple revision mode, app registration with a federated credential, Contributor on `rg-alexis-web`, three GitHub secrets).
+  The first run is the merge of this branch.
+
 ## In progress
 
+- `feature/docker` (D24, D25): Docker image and Azure deploy workflow; PR to master not opened yet. Azure/GitHub setup per `docs/AZURE_DEPLOY.md` first.
 - `feature/daily-run` (D14, D15): the daily command, merged with master (which has the restructure). PR to master not merged yet.
 - `feature/active-insights-charts` (insight charts, D13).
 - `feature/neighbourhoods` (D17, D18): PR to master not merged yet.
 
 ## Next
 
+0. After the first successful deploy: make the running app pick up the daily scrape's data (the app loads data only at start). Options and a
+   recommendation to be given before any code change; `/refresh-data` is unauthenticated and must not be left open.
 1. Wire `transform.text --incremental --out-prefix silver` into `daily_scrape.yml` after the sold transform.
 2. Implement D7 (sold-only `listed_properties`): rebuild into `silver_v2`, expect `compare_silver.py` to show only the ~113
    unsold keys dropped, then switch.
@@ -90,7 +99,7 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 | A partial census shrinks the active list | `transform.active` | rows exist only for MLS in that day's census; `redfin.run.daily` says so in the summary |
 | Reconcile only knows sales that reached silver | `transform.active` | a home sold since the last `transform.sold` shows as active until the next run; matched on MLS only (`listed_properties` rows whose MLS is the page's first `TREB #` can differ from the sold MLS, ACTIVE_LISTINGS.md finding 7) |
 | `/active-points` hides every non-`Active` status, including `Pending` | `app/main.py` | only `Active` and `Off Market` have been seen (the 4-home fixture); check the real census before relying on it |
-| `redfin.run.daily` reloads the app at `http://127.0.0.1:5000/refresh-data` only | `daily.py` | `--refresh-url` for another address; an app that isn't running is not an error. A deployed copy is not refreshed |
+| `redfin.run.daily` reloads the app at `http://127.0.0.1:5000/refresh-data` only | `daily.py` | `--refresh-url` for another address; an app that isn't running is not an error. A deployed copy is not refreshed (the Azure app only sees new data after a deploy or restart, D25) |
 | `daily_scrape.yml` does not run `transform.text`, the census or the active path | workflow | the scheduled job stays sold-only; only `redfin.run.daily` (by hand) does the rest |
 | Container is publicly readable, including bronze/silver | Azure | P2 |
 | Manual backups under `silver_backup/<timestamp>/` contain `listed_properties` files | Azure | harmless (the map only reads `silver/`), but nothing documents or cleans them |

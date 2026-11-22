@@ -1,0 +1,169 @@
+name: Deploy to Azure
+
+# Rebuilds the Docker image in Azure Container Registry and updates the Container App when the web app changes on master.
+# Guide (one-time Azure/GitHub setup, rollback, turning it off): docs/AZURE_DEPLOY.md
+#
+# Blue-green on a Container App in "Multiple" revision mode:
+#   1. build the image, tagged with the commit SHA
+#   2. create a NEW revision that gets 0% of the traffic, and test it on its own address
+#   3. move 100% of the traffic to it, then test the public site
+#   4. if anything after step 2 fails, the traffic goes back to the previous revision
+# The previous revision stays running, so a rollback in the portal is a traffic change, not a rebuild.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "app/**"
+      - "templates/**"
+      - "static/**"
+      - "redfin/**"
+      # these are in .dockerignore, so changing them cannot change the image
+      - "!redfin/docs/**"
+      - "!redfin/tests/**"
+      - "!redfin/scripts/**"
+      - "!redfin/data/queue/**"
+      - "requirements.txt"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/deploy_azure.yml"
+      - ".github/scripts/wait_for_200.sh"
+  workflow_dispatch:
+    inputs:
+      build_only:
+        description: "Only build the image in the registry; do not touch the Container App"
+        type: boolean
+        default: false
+
+# id-token: lets GitHub hand this run a short-lived token that Azure trusts (OpenID Connect). No stored password.
+permissions:
+  id-token: write
+  contents: read
+
+# One deploy at a time. A running deploy is never interrupted; if several pushes arrive meanwhile, only the newest waits.
+concurrency:
+  group: deploy-azure
+  cancel-in-progress: false
+
+env:
+  AZ_RG: rg-alexis-web
+  ACR_NAME: acralexisbruneau
+  APP_NAME: ca-alexis-web
+  IMAGE_REPO: alexis-website
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure (OpenID Connect)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install the Azure CLI containerapp extension
+        run: az extension add --name containerapp --upgrade --yes
+
+      - name: Check the app is in Multiple revision mode
+        if: ${{ !inputs.build_only }}
+        run: |
+          mode=$(az containerapp show -n "$APP_NAME" -g "$AZ_RG" --query properties.configuration.activeRevisionsMode -o tsv)
+          echo "Revision mode: $mode"
+          if [ "${mode,,}" != "multiple" ]; then
+            echo "::error::$APP_NAME is in '$mode' revision mode. Switch it to Multiple in the portal (docs/AZURE_DEPLOY.md, part 1)."
+            exit 1
+          fi
+
+      - name: Build the image in the registry (tag = commit SHA)
+        run: |
+          IMAGE="$IMAGE_REPO:$GITHUB_SHA"
+          # Tags are never reused: when a run is repeated for the same commit, the image already built is kept as it is.
+          if az acr repository show --name "$ACR_NAME" --image "$IMAGE" --output none 2>/dev/null; then
+            echo "Image $IMAGE already exists in $ACR_NAME; not rebuilding."
+          else
+            # az acr build uploads the folder (minus .dockerignore) and builds in Azure; no Docker needed on the runner.
+            az acr build --registry "$ACR_NAME" --image "$IMAGE" --file Dockerfile .
+          fi
+
+      - name: Remember which revision serves the site now, and pin the traffic to it
+        if: ${{ !inputs.build_only }}
+        run: |
+          prev=$(az containerapp ingress traffic show -n "$APP_NAME" -g "$AZ_RG" -o json \
+            | jq -r 'sort_by(.weight) | last | .revisionName // empty')
+          if [ -z "$prev" ]; then
+            # traffic follows "latest revision": that revision is the live one
+            prev=$(az containerapp show -n "$APP_NAME" -g "$AZ_RG" --query properties.latestReadyRevisionName -o tsv)
+          fi
+          if [ -z "$prev" ]; then
+            echo "::error::Could not find the revision that currently serves traffic."
+            exit 1
+          fi
+          echo "PREV_REVISION=$prev" >> "$GITHUB_ENV"
+          echo "Live revision: $prev"
+          # From here on a new revision gets 0% until we say otherwise.
+          az containerapp ingress traffic set -n "$APP_NAME" -g "$AZ_RG" --revision-weight "$prev=100" -o none
+
+      - name: Create the new revision (no traffic yet)
+        if: ${{ !inputs.build_only }}
+        run: |
+          suffix="s${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          az containerapp update -n "$APP_NAME" -g "$AZ_RG" \
+            --image "$ACR_NAME.azurecr.io/$IMAGE_REPO:$GITHUB_SHA" \
+            --revision-suffix "$suffix" -o none
+          echo "NEW_REVISION=$APP_NAME--$suffix" >> "$GITHUB_ENV"
+          echo "New revision: $APP_NAME--$suffix"
+
+      - name: Test the new revision on its own address
+        if: ${{ !inputs.build_only }}
+        run: |
+          fqdn=$(az containerapp revision show -n "$APP_NAME" -g "$AZ_RG" --revision "$NEW_REVISION" --query properties.fqdn -o tsv)
+          if [ -z "$fqdn" ]; then
+            echo "::warning::No revision address returned; skipping the pre-switch test. The public test below still runs and rolls back on failure."
+          else
+            # First start downloads the data from Azure Storage and the first /ottawa_map builds a cache (about 6 s).
+            bash .github/scripts/wait_for_200.sh 360 "https://$fqdn/" "https://$fqdn/ottawa_map"
+          fi
+
+      - name: Send all traffic to the new revision
+        if: ${{ !inputs.build_only }}
+        run: az containerapp ingress traffic set -n "$APP_NAME" -g "$AZ_RG" --revision-weight "$NEW_REVISION=100" -o none
+
+      - name: Smoke test the public site
+        if: ${{ !inputs.build_only }}
+        run: |
+          bash .github/scripts/wait_for_200.sh 300 \
+            "https://quartierinsights.ca/" \
+            "https://quartierinsights.ca/ottawa_map" \
+            "https://www.quartierinsights.ca/"
+
+      - name: Keep the previous revision, switch off older ones
+        if: ${{ !inputs.build_only }}
+        run: |
+          az containerapp revision list -n "$APP_NAME" -g "$AZ_RG" --query "[?properties.active].name" -o tsv \
+            | tr -d '\r' | while read -r rev; do
+                if [ -n "$rev" ] && [ "$rev" != "$NEW_REVISION" ] && [ "$rev" != "$PREV_REVISION" ]; then
+                  echo "Deactivating old revision $rev"
+                  az containerapp revision deactivate -n "$APP_NAME" -g "$AZ_RG" --revision "$rev" -o none
+                fi
+              done
+
+      - name: Summary
+        if: ${{ !inputs.build_only }}
+        run: |
+          {
+            echo "### Deployed"
+            echo "- Image: \`$ACR_NAME.azurecr.io/$IMAGE_REPO:$GITHUB_SHA\`"
+            echo "- Live revision: \`$NEW_REVISION\`"
+            echo "- Previous revision (rollback target): \`$PREV_REVISION\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Roll the traffic back to the previous revision
+        if: ${{ failure() && env.PREV_REVISION != '' }}
+        run: |
+          echo "::error::Deploy failed; sending the traffic back to $PREV_REVISION."
+          az containerapp ingress traffic set -n "$APP_NAME" -g "$AZ_RG" --revision-weight "$PREV_REVISION=100" -o none

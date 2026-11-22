@@ -18,10 +18,14 @@ python app/main.py                    # local Flask app (needs AZURE_STORAGE_CON
 
 The web app also builds as a Docker image (`Dockerfile`, `.dockerignore`; guide: [docs/DOCKER.md](docs/DOCKER.md)):
 `docker build -t alexis-website .` then `docker run --rm -p 8000:8000 --env-file .env alexis-website`. `requirements.txt`
-is web-only (no playwright); the workflows do not use it.
+is web-only (no playwright); the scrape and Pages workflows do not use it.
+
+`.github/workflows/deploy_azure.yml` rebuilds that image in Azure and updates the Container App on master pushes that touch the
+web app (one-time setup, rollback, switching it off: [docs/AZURE_DEPLOY.md](docs/AZURE_DEPLOY.md)). **Never put the storage
+connection string in the repo, a workflow or a log**: it lives only in the Container App secret `conn`.
 
 ## Branch workflow
 
 - Work on feature branches and open a PR to **master**. Don't push to master directly, and don't merge PRs yourself.
 - **master is production**: the scheduled `daily_scrape.yml` runs from master, and `deploy_pages.yml` publishes the site
-  from master. Mention in the PR when a change affects either one.
+  from master, and `deploy_azure.yml` deploys the web app from master. Mention in the PR when a change affects any of them.
