@@ -1,0 +1,301 @@
+/* ═══════════════════════════════════════════════════════════
+   V1 · ANALYST DASHBOARD
+   Dense and always on: a dark header carries the Sold | Active switch and the time period, a flat toolbar carries the area
+   and filters, and a numeric rail on the right keeps the key figures and the chart in view next to the map.
+   Loaded after map.css; everything here is a re-skin or a re-layout of the same elements.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --line: #dbe3ec;
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --muted: #526071;
+  --accent: #2563eb;
+  --accent-dim: #c7d7f7;
+  --hdr: #0b1220;
+  --hdr-2: #1e293b;
+  --hdr-text: #cbd5e1;
+  --hdr-muted: #94a3b8;
+  --signal: #38bdf8;
+  --up: #047857;
+  --down: #b91c1c;
+  --flat: #64748b;
+  --chart-text: #475569;
+  --chart-grid: #e9eef5;
+  --chart-bar: #2563eb;
+  --chart-bar-fill: rgba(37, 99, 235, 0.16);
+  --chart-line: #0f172a;
+  --chart-line-fill: rgba(15, 23, 42, 0.08);
+  --chart-line-dom: #b45309;
+  --chart-line-dom-fill: rgba(180, 83, 9, 0.1);
+  --chart-line-diff: #6d28d9;
+  --chart-line-diff-fill: rgba(109, 40, 217, 0.1);
+}
+
+body { background: var(--bg); color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ── Header ─────────────────────────────────────────────── */
+#appHeader {
+  position: relative;
+  z-index: 10010;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--hdr);
+  color: var(--hdr-text);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand-mark { width: 10px; height: 10px; border-radius: 2px; background: var(--signal); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25); }
+
+#appHeader .mode-tabs {
+  position: static !important;
+  padding: 3px;
+  gap: 2px;
+  margin: 0;
+  background: var(--hdr-2);
+  border-radius: 8px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+#appHeader .mode-tabs a {
+  padding: 5px 16px;
+  border-radius: 6px;
+  color: var(--hdr-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+#appHeader .mode-tabs a:hover { background: #334155; }
+#appHeader .mode-tabs a.active { background: #f8fafc; color: var(--ink); background-image: none; }
+
+.period-bar { margin-left: auto; display: flex; align-items: center; gap: 14px; min-width: 0; }
+.period-seg { display: inline-flex; gap: 2px; padding: 3px; background: var(--hdr-2); border-radius: 8px; }
+.period-btn {
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--hdr-text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.period-btn:hover { background: #334155; }
+.period-btn.is-active { background: var(--signal); color: #082f49; }
+.period-btn:focus-visible, #appHeader .mode-tabs a:focus-visible, .brand:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; box-shadow: none; }
+.period-label { min-width: 250px; color: var(--hdr-muted); font-size: 12.5px; text-align: right; white-space: nowrap; }
+
+.period-dock {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 16px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  padding: 14px 16px 16px;
+  background: #ffffff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.28);
+}
+
+/* ── Toolbar (the old floating controls bar) ─────────────── */
+@media (min-width: 901px) and (min-height: 501px) {
+  .sold-map #controls, .active-map #controls, body.side-open #controls {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    max-width: none;
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 7px 16px;
+    background: var(--panel);
+    backdrop-filter: none;
+    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1500;
+  }
+  #filterPanel {
+    left: 16px;
+    transform: translateY(6px);
+    width: 340px;
+  }
+  #filterPanel.show { transform: translateY(0); }
+}
+
+#controls label { color: var(--muted); font-size: 13px; }
+#controls input[type="number"] { width: 64px; padding: 5px 8px; border-radius: 6px; }
+
+.sold-map #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn),
+.active-map #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) {
+  padding: 6px 12px;
+  background: #ffffff;
+  background-image: none;
+  color: var(--ink);
+  border: 1px solid #c3cedb;
+  border-radius: 6px;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sold-map #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):hover,
+.active-map #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):hover { background: #f1f5f9; transform: none; box-shadow: none; }
+.sold-map #controls #toggleAreas.is-on, .active-map #controls #toggleAreas.is-on { background: var(--ink); background-image: none; color: #ffffff; border-color: var(--ink); }
+
+.area-toggle { background: #e8edf3; border-radius: 7px; padding: 2px; }
+#controls .area-toggle button.area-btn.area-btn.area-btn { border: 0; padding: 5px 12px; border-radius: 5px; color: var(--ink-2); background: transparent; background-image: none; }
+#controls .area-toggle button.area-btn.area-btn.area-btn.active { background: var(--ink); background-image: none; color: #ffffff; box-shadow: none; }
+#controls .area-toggle button.area-btn.area-btn.area-btn:hover:not(.active) { background: #d8e0ea; }
+
+#filterPanel { border-radius: 10px; border-color: var(--line); box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22); }
+.filter-header { background: #f8fafc; }
+.bed-btn, .ptype-btn { border-width: 1px; border-color: #c3cedb; color: var(--ink-2); border-radius: 6px; font-size: 13px; padding: 7px 10px; }
+.bed-btn.selected, .ptype-btn.selected { background: var(--ink); background-image: none; border-color: var(--ink); color: #ffffff; box-shadow: none; transform: none; }
+.bed-btn.selected-exact { background: var(--up); background-image: none; border-color: var(--up); box-shadow: none; }
+#filterPanel .noUi-connect { background: var(--accent); }
+#filterPanel .noUi-handle { border-color: var(--accent); }
+
+/* ── Side panels (listings, neighbourhood table) ─────────── */
+.toolbar-btn { background: var(--hdr-2); background-image: none; font-size: 13px; letter-spacing: 0.02em; }
+.toolbar-btn:hover { background: #334155; background-image: none; }
+#listingsPanel, #areasPanel { width: 400px; box-shadow: 1px 0 0 var(--line); }
+.search-container, .sort-container { background: #f8fafc; }
+.listing-rows { padding: 8px; }
+.listing-row { gap: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; }
+.listing-row img, .no-image-placeholder, .image-wrapper { width: 104px; height: 72px; }
+.listing-info { gap: 3px; }
+.listing-info strong { font-size: 16px; color: var(--ink); letter-spacing: -0.01em; }
+.listing-info .view-btn { padding: 3px 10px; font-size: 12px; }
+.areas-table thead th { background: #f1f5f9; }
+.th-btn { font-size: 10.5px; letter-spacing: 0.05em; }
+.area-row.is-selected { background: #e8f0fe; box-shadow: inset 3px 0 0 var(--accent); }
+.page-btn.active { background: var(--ink); background-image: none; border-color: var(--ink); }
+.selection-banner { background: var(--hdr-2); background-image: none; border-bottom-color: var(--hdr-2); }
+
+/* ── Map: quiet markers, numbers first ───────────────────── */
+.price-marker .price-label { padding: 2px 8px; border-radius: 999px; border: 1px solid #b6c3d3; color: var(--ink); font-size: 11.5px; font-weight: 700; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25); }
+.price-marker:hover .price-label { background: var(--ink); border-color: var(--ink); }
+.count-marker .count-label, .cluster-marker .cluster-label { padding: 2px 9px; border-radius: 999px; background: var(--ink); border: 1px solid var(--ink); color: #ffffff; font-size: 11.5px; font-weight: 700; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35); }
+.count-marker:hover .count-label, .cluster-marker:hover .cluster-label { background: #1e3a8a; border-color: #1e3a8a; }
+.leaflet-control-zoom { border: 0 !important; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.3) !important; border-radius: 8px !important; overflow: hidden; }
+.area-legend { border-radius: 8px; border: 1px solid var(--line); box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2); }
+
+/* ── Cards and charts ────────────────────────────────────── */
+.card {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: none;
+  text-align: left;
+}
+.card strong { margin: 0; color: var(--muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-align: left; }
+.card span { color: var(--ink); font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.15; }
+.card:first-child { background: var(--ink); border-color: var(--ink); }
+.card:first-child strong { color: #aab6c6; }
+.card:first-child span { color: #ffffff; }
+.insights-right { border: 1px solid var(--line); border-radius: 8px; box-shadow: none; }
+.sold-map .chart-header > span { color: var(--ink-2) !important; font-size: 12px; font-weight: 700 !important; letter-spacing: 0.05em; text-transform: uppercase; }
+.active-map .chart-header { display: block; }
+.active-map .as-of { display: block; margin-top: 4px; font-size: 11.5px; }
+.btn-group { background: #e8edf3; border-radius: 7px; padding: 2px; gap: 2px; }
+.chart-btn { border-radius: 5px; font-size: 12px; }
+.chart-btn.active { color: var(--ink); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15); }
+.insight-tabs { gap: 12px; flex-wrap: nowrap; }
+.insight-tab { padding: 6px 2px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--muted); font-size: 12.5px; }
+.insight-tab:hover { background: transparent; color: var(--ink); }
+.insight-tab.active { background: transparent; border-bottom-color: var(--accent); color: var(--ink); }
+.area-title { background: #e8f0fe; border-color: #c7d7f7; color: #1e3a8a; border-radius: 8px; }
+.chip-btn { border-radius: 6px; }
+
+/* ── The rail: map left, figures and chart right (script adds body.rail when it fits) ── */
+body.rail #mainPanel { grid-template-columns: minmax(0, 1fr) 440px; grid-template-rows: minmax(0, 1fr); }
+body.rail #map { grid-column: 1; grid-row: 1; }
+body.rail #insights, body.rail #insights.hidden, body.rail #insights.insights-charts {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding: 12px;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #f8fafc;
+  border-top: 0;
+  border-left: 1px solid var(--line);
+}
+body.rail .insights-left { flex: none; width: 100%; }
+body.rail .summary-cards { flex: none; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: auto; gap: 8px; }
+body.rail .card { grid-column: span 2; }
+body.rail .insights-right, body.rail .insights-charts .insights-right { flex: 1 0 auto; width: 100%; min-height: 360px; padding: 12px 14px; }
+
+/* sold: count and average first and large; the rest below */
+.sold-map .card:nth-child(-n+3) span { font-size: 26px; }
+.sold-map .card:nth-child(6) { order: 4; }
+/* active: three rows of two-wide cards, then the lowest and highest ask side by side */
+.active-map .card:nth-child(-n+3) span { font-size: 24px; }
+body.rail .active-map .card:nth-child(n+7), body.active-map.rail .card:nth-child(n+7) { grid-column: span 3; }
+
+@media (min-width: 1700px) { body.rail #mainPanel { grid-template-columns: minmax(0, 1fr) 520px; } }
+
+/* ── Phones and tablets: the same tabs under the map, in this skin ── */
+@media (max-width: 900px) {
+  #appHeader { flex-wrap: wrap; height: auto; gap: 8px; padding: 8px 12px 10px; justify-content: space-between; }
+  .brand-name { display: none; }
+  .brand { gap: 0; min-width: 40px; }
+  .period-bar { order: 3; width: 100%; margin: 0; flex-direction: column-reverse; align-items: stretch; gap: 4px; }
+  .period-seg { width: 100%; }
+  .period-btn { flex: 1; min-height: 40px; padding: 0 2px; }
+  .period-label { min-width: 0; text-align: left; font-size: 12px; white-space: normal; }
+  .period-dock { position: static; width: auto; max-width: none; order: 4; width: 100%; }
+  .sold-map #controls, .active-map #controls {
+    position: relative; top: auto; left: auto; width: 100%; max-width: none; transform: none; flex: none;
+    border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); background: var(--panel); backdrop-filter: none; padding: 6px 10px;
+  }
+  .sold-map #map, .active-map #map { height: 38vh; min-height: 220px; }
+  .mobile-tab-bar { background: #f1f5f9; }
+  .mobile-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+  .sold-map #controls #filterToggle, .active-map #controls #filterToggle { min-height: 40px; }
+  .brand { min-height: 40px; }
+}
+
+/* Short landscape phones: a slim header, the toolbar floats over the map */
+@media (max-height: 500px) and (orientation: landscape) {
+  #appHeader { height: 44px; gap: 8px; padding: 0 8px; flex-wrap: nowrap; justify-content: flex-start; }
+  .period-bar { order: 0; width: auto; margin-left: auto; flex-direction: row; }
+  .period-seg { width: auto; }
+  .period-btn { flex: none; }
+  .brand, .period-label { display: none; }
+  .period-btn { min-height: 40px; padding: 0 8px; }
+  .period-bar { gap: 6px; }
+  .sold-map #controls, .active-map #controls { position: absolute; top: 50px !important; width: auto; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.25); }
+  .period-dock { top: calc(100% + 4px); right: 8px; width: 320px; }
+}

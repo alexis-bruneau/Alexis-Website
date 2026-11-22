@@ -1,0 +1,27 @@
+/* Time selection (period.js): the pieces every layout shares. The layout files decide where the buttons sit and how they look. */
+
+[data-period-custom][hidden] { display: none; }
+
+/* The existing date / days-on-market slider, once it lives in the custom dock instead of the filter panel */
+[data-period-custom] .filter-section { border: 0; padding: 0; margin: 0; min-width: 0; }
+[data-period-custom] .filter-section legend { margin-bottom: 12px; padding: 0; font-size: 13px; font-weight: 600; color: #334155; }
+[data-period-custom] .noUi-target { height: 6px; background: #e2e8f0; border: 0; border-radius: 6px; box-shadow: none; }
+[data-period-custom] .noUi-connect { background: var(--accent, #2563eb); border-radius: 6px; }
+[data-period-custom] .noUi-handle {
+  width: 20px; height: 20px; top: -8px; right: -10px;
+  background: #ffffff; border: 2.5px solid var(--accent, #2563eb); border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25); cursor: grab;
+}
+[data-period-custom] .noUi-handle::before, [data-period-custom] .noUi-handle::after { display: none; }
+[data-period-custom] .range-labels span { color: #334155; }
+
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  [data-period-custom] .noUi-handle {
+    width: 40px; height: 40px; top: -17px; right: -20px; background: transparent; border: 0; box-shadow: none;
+  }
+  [data-period-custom] .noUi-handle::after {
+    content: ""; display: block; position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; box-sizing: border-box;
+    border-radius: 50%; background: #ffffff; border: 2.5px solid var(--accent, #2563eb); box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+  }
+  [data-period-custom] .noUi-target { margin: 10px 0 14px; }
+}
