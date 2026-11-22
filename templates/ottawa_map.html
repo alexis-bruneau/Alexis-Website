@@ -16,83 +16,85 @@
 
   <!-- ─── App styles ─────────────────────────────────────── -->
   <link rel="stylesheet" href="/static/css/map.css" />
+  <link rel="stylesheet" href="/static/css/period.css" />
+  <link rel="stylesheet" href="/static/css/v3.css" />
 </head>
 
 <body class="sold-map is-loading">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
-  <nav class="mode-tabs" aria-label="Listing type">
+  <header id="appHeader">
+    <a class="brand" href="/ottawa_map"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Ottawa Market</span></a>
+    <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map" class="active" aria-current="page">Sold</a>
     <a href="/ottawa_active">Active</a>
   </nav>
+  </header>
 
-  <!-- ─── Radius / filter controls ───────────────────────── -->
-  <div id="controls">
-    <!-- How the area is picked: a circle you drag, or a fixed Ottawa neighbourhood -->
-    <div class="area-toggle" id="areaToggle" role="group" aria-label="Pick the area by">
-      <button type="button" class="area-btn active" data-mode="circle" aria-pressed="true">Circle</button>
-      <button type="button" class="area-btn" data-mode="neighbourhood" aria-pressed="false">Neighbourhood</button>
+  <!-- ─── Time period: slicer cards, each with the number of sales in that period ─── -->
+  <section id="periodDeck" data-period-bar aria-label="Time period">
+    <div class="deck-head">
+      <h2 class="deck-title">Time period</h2>
+      <p class="deck-label" data-period-label aria-live="polite"></p>
     </div>
-
-    <span id="radiusGroup" class="radius-group">
-      <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
-      <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
-    </span>
-
-    <button id="filterToggle">Filters ⚙️</button>
-    <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
-    <button id="toggleAreas" type="button" hidden>📋 Neighbourhoods</button>
-
-    <div id="filterPanel">
-      <div class="filter-header">
-        <h3>Filter Options</h3>
-        <button id="clearFilters" class="clear-filters-btn">🗑️ Clear All</button>
-      </div>
-
-      <!-- Sold-date filter -->
-      <fieldset class="filter-section">
-        <legend><strong>Sold Date Range</strong></legend>
-        <div id="dateRangeSlider"></div>
-        <div class="range-labels">
-          <span id="labelStart">2019-01-01</span>
-          <span id="labelEnd">2024-12-31</span>
-        </div>
-      </fieldset>
-
-      <!-- Price filter -->
-      <fieldset class="filter-section">
-        <legend><strong>Price Range</strong></legend>
-        <div id="priceRangeSlider"></div>
-        <div class="range-labels">
-          <span id="labelPriceMin">$0</span>
-          <span id="labelPriceMax">$2,000,000</span>
-        </div>
-      </fieldset>
-
-      <!-- Beds filter -->
-      <fieldset class="filter-section">
-        <legend><strong>Bedrooms</strong></legend>
-        <div id="bedFilter">
-          <button class="bed-btn" data-bed="1">1</button>
-          <button class="bed-btn" data-bed="2">2</button>
-          <button class="bed-btn" data-bed="3">3</button>
-          <button class="bed-btn" data-bed="4">4</button>
-          <button class="bed-btn" data-bed="5">5+</button>
-        </div>
-        <p class="filter-hint">💡 Click once for "X or more", twice for "exactly X"</p>
-      </fieldset>
-
-      <!-- Property Type filter -->
-      <fieldset class="filter-section">
-        <legend><strong>Property Type</strong></legend>
-        <div id="ptypeFilter">
-          <button class="ptype-btn" data-ptype="Condo">Condo</button>
-          <button class="ptype-btn" data-ptype="Townhome">Townhome</button>
-          <button class="ptype-btn" data-ptype="Single-family">Single-family</button>
-          <button class="ptype-btn" data-ptype="Multi-family">Multi-family</button>
-        </div>
-      </fieldset>
+    <div class="slicers">
+        <button type="button" class="slicer" data-period="1w" aria-pressed="false" title="1 week">
+          <span class="sl-label"><span class="sl-long">1 week</span><span class="sl-short">1W</span></span>
+          <span class="sl-count" data-period-count="1w">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer" data-period="1m" aria-pressed="false" title="1 month">
+          <span class="sl-label"><span class="sl-long">1 month</span><span class="sl-short">1M</span></span>
+          <span class="sl-count" data-period-count="1m">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer" data-period="3m" aria-pressed="false" title="3 months">
+          <span class="sl-label"><span class="sl-long">3 months</span><span class="sl-short">3M</span></span>
+          <span class="sl-count" data-period-count="3m">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer" data-period="6m" aria-pressed="false" title="6 months">
+          <span class="sl-label"><span class="sl-long">6 months</span><span class="sl-short">6M</span></span>
+          <span class="sl-count" data-period-count="6m">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer" data-period="1y" aria-pressed="false" title="1 year">
+          <span class="sl-label"><span class="sl-long">1 year</span><span class="sl-short">1Y</span></span>
+          <span class="sl-count" data-period-count="1y">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer" data-period="all" aria-pressed="false" title="All time">
+          <span class="sl-label"><span class="sl-long">All time</span><span class="sl-short">All</span></span>
+          <span class="sl-count" data-period-count="all">–</span>
+          <span class="sl-unit">sales</span>
+        </button>
+        <button type="button" class="slicer slicer-custom" data-period="custom" aria-pressed="false" title="Pick your own range">
+          <span class="sl-label"><span class="sl-long">Custom</span><span class="sl-short">Pick</span></span>
+          <span class="sl-count sl-pick">Range</span>
+          <span class="sl-unit">slider</span>
+        </button>
     </div>
-  </div>
+    <div class="period-dock" data-period-custom hidden></div>
+  </section>
+
+  <!-- ─── Answers: the figures as plain sentences ─── -->
+  <section id="answers" aria-label="Summary">
+    <div class="answer-meta" id="answerMeta">
+          <div id="dataStatus" class="data-status" hidden></div>
+          <!-- Neighbourhood mode only: which area the cards and the chart describe -->
+          <div class="area-title" id="areaTitle" hidden>
+            <span class="area-title-name" id="areaTitleName"></span>
+            <button type="button" id="areaClear" class="area-clear" title="Clear the selected neighbourhood" aria-label="Clear the selected neighbourhood">✕</button>
+          </div>
+          <p class="area-hint" id="areaHint" hidden>Click a neighbourhood on the map, or a row in the table.</p>
+    </div>
+    <div class="answer-cards">
+      <article class="answer"><p class="ans-big" data-ans="big1">–</p><p class="ans-text" data-ans="text1"></p><p class="ans-sub" data-ans="sub1"></p></article>
+      <article class="answer"><p class="ans-big" data-ans="big2">–</p><p class="ans-text" data-ans="text2"></p><p class="ans-sub" data-ans="sub2"></p></article>
+      <article class="answer"><p class="ans-big" data-ans="big3">–</p><p class="ans-text" data-ans="text3"></p><p class="ans-sub" data-ans="sub3"></p></article>
+      <article class="answer"><p class="ans-big" data-ans="big4">–</p><p class="ans-text" data-ans="text4"></p><p class="ans-sub" data-ans="sub4"></p></article>
+    </div>
+  </section>
+
   <!-- ✅ end controls -->
 
   <!-- ─── Main flex layout ───────────────────────────────── -->
@@ -135,6 +137,74 @@
 
     <!-- Map + insights column -->
     <div id="mainPanel">
+  <!-- ─── Radius / filter controls ───────────────────────── -->
+      <div id="controls">
+        <!-- How the area is picked: a circle you drag, or a fixed Ottawa neighbourhood -->
+        <div class="area-toggle" id="areaToggle" role="group" aria-label="Pick the area by">
+          <button type="button" class="area-btn active" data-mode="circle" aria-pressed="true">Circle</button>
+          <button type="button" class="area-btn" data-mode="neighbourhood" aria-pressed="false">Neighbourhood</button>
+        </div>
+
+        <span id="radiusGroup" class="radius-group">
+          <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
+          <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+        </span>
+
+        <button id="filterToggle">Filters ⚙️</button>
+        <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
+        <button id="toggleAreas" type="button" hidden>📋 Neighbourhoods</button>
+
+        <div id="filterPanel">
+          <div class="filter-header">
+            <h3>Filter Options</h3>
+            <button id="clearFilters" class="clear-filters-btn">🗑️ Clear All</button>
+          </div>
+
+          <!-- Sold-date filter -->
+          <fieldset class="filter-section">
+            <legend><strong>Sold Date Range</strong></legend>
+            <div id="dateRangeSlider"></div>
+            <div class="range-labels">
+              <span id="labelStart">2019-01-01</span>
+              <span id="labelEnd">2024-12-31</span>
+            </div>
+          </fieldset>
+
+          <!-- Price filter -->
+          <fieldset class="filter-section">
+            <legend><strong>Price Range</strong></legend>
+            <div id="priceRangeSlider"></div>
+            <div class="range-labels">
+              <span id="labelPriceMin">$0</span>
+              <span id="labelPriceMax">$2,000,000</span>
+            </div>
+          </fieldset>
+
+          <!-- Beds filter -->
+          <fieldset class="filter-section">
+            <legend><strong>Bedrooms</strong></legend>
+            <div id="bedFilter">
+              <button class="bed-btn" data-bed="1">1</button>
+              <button class="bed-btn" data-bed="2">2</button>
+              <button class="bed-btn" data-bed="3">3</button>
+              <button class="bed-btn" data-bed="4">4</button>
+              <button class="bed-btn" data-bed="5">5+</button>
+            </div>
+            <p class="filter-hint">💡 Click once for "X or more", twice for "exactly X"</p>
+          </fieldset>
+
+          <!-- Property Type filter -->
+          <fieldset class="filter-section">
+            <legend><strong>Property Type</strong></legend>
+            <div id="ptypeFilter">
+              <button class="ptype-btn" data-ptype="Condo">Condo</button>
+              <button class="ptype-btn" data-ptype="Townhome">Townhome</button>
+              <button class="ptype-btn" data-ptype="Single-family">Single-family</button>
+              <button class="ptype-btn" data-ptype="Multi-family">Multi-family</button>
+            </div>
+          </fieldset>
+        </div>
+      </div>
       <div id="map"></div>
 
       <!-- ═══════════════════════════════════════════════════════ -->
@@ -178,13 +248,6 @@
       <div id="insights">
         <!-- LEFT: Cards Grid -->
         <div class="insights-left">
-          <div id="dataStatus" class="data-status" hidden></div>
-          <!-- Neighbourhood mode only: which area the cards and the chart describe -->
-          <div class="area-title" id="areaTitle" hidden>
-            <span class="area-title-name" id="areaTitleName"></span>
-            <button type="button" id="areaClear" class="area-clear" title="Clear the selected neighbourhood" aria-label="Clear the selected neighbourhood">✕</button>
-          </div>
-          <p class="area-hint" id="areaHint" hidden>Click a neighbourhood on the map, or a row in the table.</p>
           <div class="summary-cards">
             <div class="card">
               <strong>Listings Sold</strong>
@@ -253,6 +316,8 @@
     <script src="/static/js/status.js"></script>
     <script src="/static/js/map.js"></script>
     <script src="/static/js/neighbourhoods.js"></script>
+  <script src="/static/js/period.js"></script>
+  <script src="/static/js/v3.js"></script>
     <script>
       // Simple script to handle chart toggle UI state (logic in map.js)
       document.querySelectorAll('.chart-btn[data-metric]').forEach(btn => {
