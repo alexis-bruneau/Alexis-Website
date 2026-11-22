@@ -139,3 +139,65 @@
   refreshBadges();
   refreshStatus();
 })();
+
+/* ═══════════════════════════════════════════════════════════
+   PHONE · D · selection bar (active page)
+   When a listing is picked (a tap on the map, in the list or on the scatter) or the charts select a set of listings, a bar under
+   the title says so on every tab and has a Clear button. The picked listing is also pinned, marked, at the top of the list and
+   outlined on the map. active.js calls window._onSelectionChange; the sold page has neither the bar nor the hook.
+   ═══════════════════════════════════════════════════════════ */
+(function phoneSelection() {
+  const bar = document.getElementById("mSelBar");
+  if (!bar) return;
+  const body = document.body;
+  const PHONE = window.matchMedia("(max-width: 900px), (max-height: 500px) and (orientation: landscape)");
+  let lastMls = null;
+  let lastMapMls = null;
+
+  function row(label, text, onClear, onShow) {
+    const r = document.createElement("div");
+    r.className = "m-selrow";
+    const t = document.createElement(onShow ? "button" : "div");
+    t.className = "m-seltext";
+    if (onShow) { t.type = "button"; t.addEventListener("click", onShow); t.setAttribute("aria-label", `${label}: ${text}. Show it in the list`); }
+    const b = document.createElement("b"); b.textContent = label;
+    const s = document.createElement("span"); s.textContent = text;
+    t.append(b, s);
+    const c = document.createElement("button");
+    c.type = "button"; c.className = "m-selclear"; c.textContent = "Clear ✕";
+    c.setAttribute("aria-label", `Clear: ${label.toLowerCase()}`);
+    c.addEventListener("click", onClear);
+    r.append(t, c);
+    bar.appendChild(r);
+  }
+
+  function render() {
+    bar.replaceChildren();
+    if (!PHONE.matches) { bar.hidden = true; document.documentElement.style.setProperty("--m-sel-h", "0px"); return; }
+    const tab = body.dataset.mtab;
+    const pt = typeof window.pickedListing === "function" ? window.pickedListing() : null;
+    const cs = typeof window.chartSelectionCount === "function" ? window.chartSelectionCount() : null;
+    if (pt) {
+      const where = `${pt.address || "Address not shown"} · ${money(pt.price)}`;
+      row("Selected listing", where, () => window.clearFocusedListing(), tab === "listings" ? null : () => window._syncMobileTabs("listings"));
+    }
+    if (cs && tab !== "insights") row("Chart selection", `${cs.shown} of ${cs.total} listings`, () => window.clearChartSelection());
+    bar.hidden = bar.children.length === 0;
+    const h = bar.hidden || tab === "map" ? 0 : Math.ceil(bar.getBoundingClientRect().height);
+    document.documentElement.style.setProperty("--m-sel-h", `${h}px`);
+    // the picked listing is outlined on the map; a new pick starts the list at the top, where the pinned card is
+    if (typeof setEmphasis === "function") setEmphasis("is-linked", pt ? [pt] : []);
+    if (pt && pt.mls !== lastMls) { const panel = document.getElementById("mobileListingsPanel"); if (panel) panel.scrollTop = 0; }
+    // on the map tab, bring the picked listing into view (zoomed past the clustering) and outline its marker once it is there
+    if (pt && tab === "map" && pt.mls !== lastMapMls && pt.latitude != null) {
+      lastMapMls = pt.mls;
+      map.once("moveend", () => setTimeout(render, 50));
+      map.setView([pt.latitude, pt.longitude], Math.max(map.getZoom(), 17), { animate: true });
+    }
+    if (!pt) lastMapMls = null;
+    lastMls = pt ? pt.mls : null;
+  }
+  window._onSelectionChange = render;
+  new MutationObserver(render).observe(body, { attributes: true, attributeFilter: ["data-mtab"] });
+  PHONE.addEventListener("change", render);
+})();

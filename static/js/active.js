@@ -376,8 +376,11 @@ const CUT_BUCKETS = [
  *  at its total. Null when there is no first asking price, so such a listing is in no cut bucket. */
 const cutPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.original_price - pt.price) / pt.original_price * 100 : null;
 const bucketIndex = (buckets, value) => value == null ? -1 : buckets.findIndex((b) => b.test(value));
-const inBrush = (pt, b) => pt.dom != null && pt.price != null
-  && pt.dom >= b.xMin && pt.dom <= b.xMax && pt.price >= b.yMin && pt.price <= b.yMax;
+/** The change from the first asking price, in %, signed: a 5% cut is -5, a rise is positive, no change is 0. Null without a first price. */
+const diffPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.price - pt.original_price) / pt.original_price * 100 : null;
+const fmtPct = (v) => `${v > 0 ? "+" : v < 0 ? "\u2212" : ""}${Math.abs(v).toFixed(Math.abs(v) < 10 ? 1 : 0)}%`;
+const inBrush = (pt, b) => pt.dom != null && diffPct(pt) != null
+  && pt.dom >= b.xMin && pt.dom <= b.xMax && diffPct(pt) >= b.yMin && diffPct(pt) <= b.yMax;
 const hasChartSelection = () => chartSelection.dom.size > 0 || chartSelection.cut.size > 0 || chartSelection.brush !== null;
 
 function resetChartSelection() {
@@ -520,12 +523,25 @@ function highlightListing(mls) {
 
 const focusedPoint = () => focusedMls ? basePoints.find((p) => p.mls === focusedMls) : undefined;
 
+/** Tells the phone layout (v2.js) that the picked listing or the chart selection changed, so its selection bar follows. */
+function notifySelection() { if (typeof window._onSelectionChange === "function") window._onSelectionChange(); }
+
+/** Un-picks the listing marked by a click on the map, the list or the scatter. */
+function clearFocusedListing() {
+  focusedMls = null;
+  markFocusedRow();
+  updateCurve();
+  if (window._refreshMobileListings) window._refreshMobileListings();
+}
+window.clearFocusedListing = clearFocusedListing;
+
 /** Highlights the focused listing's row (if it is on this page) and adds the "x% of comparable homes sold by..." note. */
 function markFocusedRow() {
   document.querySelectorAll("#listingRows .highlight").forEach((el) => el.classList.remove("highlight"));
   document.querySelectorAll("#listingRows .sell-note").forEach((el) => el.remove());
   const pt = focusedPoint();
   const row = pt && document.getElementById(`listing-${pt.mls}`);
+  notifySelection();
   if (!row) return;
   row.classList.add("highlight");
   const note = document.createElement("p");
@@ -610,20 +626,50 @@ function updateListingsSidebar() {
   if (window._refreshMobileListings) window._refreshMobileListings();   // the phone's Listings tab shows the same list
 }
 
+/** Page numbers as most sites show them: first, last and the pages around the current one, with a gap between: « 1 … 4 5 6 … 22 ».
+ *  On a phone the numbers are hidden (CSS) and "Page 5 of 22" sits between the previous and next buttons. */
+function getPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = [1];
+  const from = Math.max(2, current - 1), to = Math.min(total - 1, current + 1);
+  if (from > 2) pages.push("...");
+  for (let i = from; i <= to; i++) pages.push(i);
+  if (to < total - 1) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
 function renderPagination(container, current, totalPages, totalItems, onPageClick) {
   container.innerHTML = "";
   if (totalPages <= 1) return;
-  const button = (label, page, { active = false, disabled = false, nav = false } = {}) => {
+  const button = (label, page, { active = false, disabled = false, nav = "", name = "" } = {}) => {
     const b = document.createElement("button");
+    b.type = "button";
     b.textContent = label;
     b.className = `page-btn${nav ? " nav-btn" : ""}${active ? " active" : ""}`;
+    if (nav) b.dataset.dir = nav;
+    b.setAttribute("aria-label", name || `Page ${page}`);
+    if (active) b.setAttribute("aria-current", "page");
     b.disabled = disabled;
     b.addEventListener("click", () => onPageClick(page));
     container.appendChild(b);
   };
-  button("«", current - 1, { disabled: current === 1, nav: true });
-  for (let p = 1; p <= totalPages; p++) button(p, p, { active: p === current });
-  button("»", current + 1, { disabled: current === totalPages, nav: true });
+  button("\u00ab", current - 1, { disabled: current === 1, nav: "prev", name: "Previous page" });
+  getPageNumbers(current, totalPages).forEach((p) => {
+    if (p === "...") {
+      const gap = document.createElement("span");
+      gap.className = "page-ellipsis";
+      gap.textContent = "\u2026";
+      container.appendChild(gap);
+    } else {
+      button(p, p, { active: p === current });
+    }
+  });
+  button("\u00bb", current + 1, { disabled: current === totalPages, nav: "next", name: "Next page" });
+  const status = document.createElement("span");
+  status.className = "page-status";
+  status.textContent = `Page ${current} of ${totalPages}`;
+  container.appendChild(status);
   const info = document.createElement("span");
   info.className = "pagination-info";
   info.textContent = `${totalItems.toLocaleString()} total`;
@@ -724,6 +770,7 @@ insightTabs.forEach((tab, i) => {
 function updateSelectionBar() {
   const bar = document.getElementById("selectionBar");
   bar.hidden = !hasChartSelection();
+  notifySelection();
   if (bar.hidden) return;
   document.getElementById("selectionSummary").textContent = `${currentPoints.length} of ${basePoints.length} listings`;
   const chips = document.getElementById("selectionChips");
@@ -742,13 +789,16 @@ function updateSelectionBar() {
   if (dom.size) addChip(`Days: ${labels(dom, DOM_BUCKETS)}`, () => dom.clear());
   if (cut.size) addChip(`Cut: ${labels(cut, CUT_BUCKETS)}`, () => cut.clear());
   if (brush) {
-    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${compactPrice(brush.yMin)}–${compactPrice(brush.yMax)}`,
+    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${fmtPct(brush.yMin)} to ${fmtPct(brush.yMax)}`,
       () => { chartSelection.brush = null; });
   }
 }
 document.getElementById("clearSelection").addEventListener("click", () => { resetChartSelection(); refreshView(); });
+window.clearChartSelection = () => { resetChartSelection(); refreshView(); };
+window.chartSelectionCount = () => hasChartSelection() ? { shown: currentPoints.length, total: basePoints.length } : null;
+window.pickedListing = () => focusedPoint();
 
-/* ---- 1. Scatter: asking price vs days on market ---- */
+/* ---- 1. Scatter: change from the first asking price (%) vs days on market ---- */
 let brushDrag = null;       // { x0, y0, x1, y1 } in canvas pixels while a selection rectangle is being dragged
 let brushMode = false;      // touch screens: "Select area" turns a finger drag into a selection instead of a page scroll
 let suppressClick = false;  // the click that ends a drag must not also select the dot under the cursor
@@ -812,7 +862,7 @@ function initScatter() {
             title: (items) => items[0].raw.pt.address || "Address not shown",
             label: (item) => {
               const pt = item.raw.pt;
-              const lines = [`${money(pt.price)} · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`, changeText(pt)];
+              const lines = [`${fmtPct(diffPct(pt))} from the first ask · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`, `${money(pt.price)} now`, changeText(pt)];
               if (pt.original_price && pt.original_price !== pt.price) lines.push(`Listed at ${money(pt.original_price)}`);
               return lines;
             }
@@ -821,7 +871,9 @@ function initScatter() {
       },
       scales: {
         x: { type: "linear", min: 0, suggestedMax: 90, title: { display: true, text: "Days on market" }, grid: { color: GRID } },
-        y: { title: { display: true, text: "Asking price" }, min: 0, suggestedMax: 1000000, grace: "5%", ticks: { callback: (v, i, ticks) => fmtMoneyTick(v, ticks) }, grid: { color: GRID } }
+        y: { title: { display: true, text: "Change from first asking price" }, suggestedMin: -10, suggestedMax: 5, grace: "5%",
+             ticks: { callback: (v) => `${v}%` },
+             grid: { color: (c) => c.tick && c.tick.value === 0 ? withAlpha(INK, 0.45) : GRID, lineWidth: (c) => c.tick && c.tick.value === 0 ? 1.5 : 1 } }
       }
     },
     plugins: [brushPlugin]
@@ -895,18 +947,19 @@ function initScatter() {
 
 function updateScatter() {
   // Every listing that passes the bucket picks; the brush only fades dots, it does not remove them.
-  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && pt.price != null);
+  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && diffPct(pt) != null);
   charts.scatter.data.datasets.forEach((ds) => {
-    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: pt.price, pt }));
+    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: diffPct(pt), pt }));
   });
   // Nothing to draw (no neighbourhood picked yet): give the empty axes a sensible range instead of $0K ticks
   charts.scatter.options.scales.x.suggestedMax = shown.length ? undefined : 90;
-  charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 1000000;
+  charts.scatter.options.scales.y.suggestedMin = shown.length ? undefined : -10;
+  charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 5;
   charts.scatter.update("none");
   setChartEmpty(charts.scatter.canvas.parentElement, shown.length ? null
     : (areaMode === "neighbourhood" && !selectedNeighbourhood ? "Pick a neighbourhood to see its listings." : "No listings to plot."));
   charts.scatter.canvas.setAttribute("aria-label",
-    `Scatter chart of asking price against days on market: ${shown.length} active listings`);
+    `Scatter chart of the change from the first asking price against days on market: ${shown.length} active listings`);
 }
 
 /** Clicking a dot: show the list, scroll to the listing and highlight it (highlightListing also marks it on the curve). */
@@ -1182,7 +1235,22 @@ if (chartsReady) {
     rowsEl.innerHTML = "";
     appendListBanners(rowsEl, list.length);
     if (!list.length) rowsEl.insertAdjacentHTML("beforeend", `<p class="empty-note">No active listings match.</p>`);
-    list.slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
+    // The listing picked on the map, in the list or in the scatter sits first, marked as selected, with its own way to clear it
+    const picked = focusedMls && list.find((pt) => pt.mls === focusedMls);
+    if (picked) {
+      const card = listingRow(picked, { mobile: true });
+      card.classList.add("highlight", "is-selected");
+      const head = document.createElement("div");
+      head.className = "sel-head";
+      head.innerHTML = `<span class="sel-badge">Selected listing</span><span class="sel-hint">Clear it with the bar above</span>`;
+      card.prepend(head);
+      const note = document.createElement("p");
+      note.className = "sell-note";
+      note.textContent = sellNote(picked);
+      card.querySelector(".listing-info").insertBefore(note, card.querySelector(".view-btn"));
+      rowsEl.appendChild(card);
+    }
+    list.filter((pt) => pt !== picked).slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
     renderPagination(document.getElementById("mobilePaginationControls"), mobilePage, totalPages, list.length, (page) => {
       mobilePage = page;
       renderMobileListings();

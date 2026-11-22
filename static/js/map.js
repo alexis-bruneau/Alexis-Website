@@ -451,8 +451,11 @@ function renderPagination(container, currentPg, totalPages, totalItems, onPageCl
 
   // Prev button
   const prevBtn = document.createElement("button");
+  prevBtn.type = "button";
   prevBtn.textContent = "«";
   prevBtn.className = "page-btn nav-btn";
+  prevBtn.dataset.dir = "prev";
+  prevBtn.setAttribute("aria-label", "Previous page");
   prevBtn.disabled = currentPg === 1;
   prevBtn.addEventListener("click", () => onPageClick(currentPg - 1));
   container.appendChild(prevBtn);
@@ -467,8 +470,11 @@ function renderPagination(container, currentPg, totalPages, totalItems, onPageCl
       container.appendChild(ellipsis);
     } else {
       const btn = document.createElement("button");
+      btn.type = "button";
       btn.textContent = p;
       btn.className = `page-btn${p === currentPg ? ' active' : ''}`;
+      btn.setAttribute("aria-label", `Page ${p}`);
+      if (p === currentPg) btn.setAttribute("aria-current", "page");
       btn.addEventListener("click", () => onPageClick(p));
       container.appendChild(btn);
     }
@@ -476,11 +482,20 @@ function renderPagination(container, currentPg, totalPages, totalItems, onPageCl
 
   // Next button
   const nextBtn = document.createElement("button");
+  nextBtn.type = "button";
   nextBtn.textContent = "»";
   nextBtn.className = "page-btn nav-btn";
+  nextBtn.dataset.dir = "next";
+  nextBtn.setAttribute("aria-label", "Next page");
   nextBtn.disabled = currentPg === totalPages;
   nextBtn.addEventListener("click", () => onPageClick(currentPg + 1));
   container.appendChild(nextBtn);
+
+  // "Page 5 of 22": shown instead of the numbers on a phone (CSS)
+  const status = document.createElement("span");
+  status.className = "page-status";
+  status.textContent = `Page ${currentPg} of ${totalPages}`;
+  container.appendChild(status);
 
   // Total count
   const info = document.createElement("span");
