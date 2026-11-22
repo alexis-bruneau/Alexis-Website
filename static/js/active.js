@@ -1154,6 +1154,7 @@ if (chartsReady) {
 
   function applyTab() {
     if (!isMobile()) {   // desktop: back to the side panels, no leftovers from the phone layout
+      delete document.body.dataset.mtab;
       tabBar.style.display = "none";
       listingsEl.style.display = "none";
       if (areasEl) areasEl.style.display = "none";
@@ -1162,23 +1163,15 @@ if (chartsReady) {
       return;
     }
     if (areasTab) areasTab.hidden = areaMode !== "neighbourhood";
-    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = "insights";
-    tabBar.style.display = "flex";
+    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = window._phoneHomeTab || "insights";
+    // Phone: what is on screen is decided by CSS from body[data-mtab] (map | listings | insights | areas), not by inline styles
+    document.body.dataset.mtab = activeTab;
+    [tabBar, listingsEl, areasEl, insightsEl].forEach((el) => { if (el) el.style.display = ""; });
+    insightsEl.classList.remove("mobile-hidden", "hidden");
     tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === activeTab));
-
-    listingsEl.style.display = "none";
-    if (areasEl) areasEl.style.display = "none";
-    if (activeTab === "insights") {
-      insightsEl.classList.remove("mobile-hidden", "hidden");
-      insightsEl.style.display = "";
-      setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
-    } else {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      if (activeTab === "areas" && areasEl) areasEl.style.display = "flex";
-      if (activeTab === "listings") { listingsEl.style.display = "flex"; renderMobileListings(); }
-    }
-    setTimeout(() => map.invalidateSize(), 50);
+    // (neighbourhoods.js, which defines the banner the list starts with, loads after this file: the first call comes with the data)
+    if (typeof appendAreaBanner === "function") renderMobileListings();   // cheap (one page of rows); keeps the list current whichever view shows it
+    setTimeout(() => { map.invalidateSize(); resizeCharts(); }, 60);   // the charts and the map were laid out while hidden
   }
 
   function renderMobileListings() {
@@ -1208,7 +1201,7 @@ if (chartsReady) {
   });
 
   // New data: redraw the phone list when it is the one on screen (new data starts at page 1)
-  window._refreshMobileListings = () => { if (isMobile() && activeTab === "listings") { mobilePage = 1; renderMobileListings(); } };
+  window._refreshMobileListings = () => { if (isMobile()) { mobilePage = 1; renderMobileListings(); } };
 
   // A marker tap (or the scatter) opens the list: on a phone that means the Listings tab
   const desktopSetView = setView;

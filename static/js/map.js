@@ -1215,43 +1215,29 @@ function offsetToDateStr(offset) {
   function applyMobileTab() {
     if (!isMobile()) {
       // Desktop: hide mobile elements, restore desktop insights
+      delete document.body.dataset.mtab;
       tabBar.style.display = "none";
       mobileListingsPanel.style.display = "none";
       if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
       insightsEl.classList.remove("mobile-hidden");
+      insightsEl.style.display = "";
       return;
     }
 
     // The Areas tab only exists in Neighbourhood mode
     if (mobileAreasTab) mobileAreasTab.hidden = areaMode !== "neighbourhood";
-    if (activeMobileTab === "areas" && areaMode !== "neighbourhood") activeMobileTab = "insights";
+    if (activeMobileTab === "areas" && areaMode !== "neighbourhood") activeMobileTab = window._phoneHomeTab || "insights";
 
-    // Show tab bar
-    tabBar.style.display = "flex";
-
-    // Update tab active states
+    // Phone: what is on screen is decided by CSS from body[data-mtab] (map | listings | insights | areas), not by inline styles
+    document.body.dataset.mtab = activeMobileTab;
+    [tabBar, mobileListingsPanel, mobileAreasPanel, insightsEl].forEach(el => { if (el) el.style.display = ""; });
+    insightsEl.classList.remove("mobile-hidden");
     tabBar.querySelectorAll(".mobile-tab").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.tab === activeMobileTab);
     });
-
-    if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
-    if (activeMobileTab === "insights") {
-      insightsEl.classList.remove("mobile-hidden");
-      insightsEl.style.display = "flex";
-      mobileListingsPanel.style.display = "none";
-    } else if (activeMobileTab === "areas") {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      mobileListingsPanel.style.display = "none";
-      if (mobileAreasPanel) mobileAreasPanel.style.display = "flex";
-    } else {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      mobileListingsPanel.style.display = "flex";
-      renderMobileListings();
-    }
-
-    setTimeout(() => map.invalidateSize(), 50);
+    // (neighbourhoods.js, which defines the banner the list starts with, loads after this file: the first call comes with the data)
+    if (typeof appendAreaBanner === "function") renderMobileListings();   // cheap (one page of rows); keeps the list current whichever view shows it
+    setTimeout(() => { map.invalidateSize(); if (typeof resizeCharts === "function") resizeCharts(); }, 60);
   }
 
   // Render listings into the mobile panel
@@ -1324,6 +1310,8 @@ function offsetToDateStr(offset) {
         <div class="image-wrapper">
           <img
             src="${pt.photo || ''}"
+            referrerpolicy="no-referrer"
+            loading="lazy"
             onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
             alt=""
           />
@@ -1385,7 +1373,7 @@ function offsetToDateStr(offset) {
   const origUpdateListingsSidebar = window.updateListingsSidebar || updateListingsSidebar;
   // We expose a hook: after desktop sidebar updates, also refresh mobile
   window._refreshMobileListings = function () {
-    if (isMobile() && activeMobileTab === "listings") {
+    if (isMobile()) {
       renderMobileListings();
     }
   };
