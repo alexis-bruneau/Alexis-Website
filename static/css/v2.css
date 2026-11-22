@@ -1,0 +1,305 @@
+/* ═══════════════════════════════════════════════════════════
+   V2 · MAP FIRST
+   The map fills the window. Everything else floats on it as glass: one control pill on top, the listings and the neighbourhood
+   table as cards on the left, the figures and the chart in a drawer you can fold down to a single row of numbers.
+   The time period is a compact menu in the control pill. Loaded after map.css.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --glass: rgba(255, 255, 255, 0.9);
+  --glass-solid: #ffffff;
+  --glass-line: rgba(255, 255, 255, 0.75);
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --muted: #526071;
+  --line: #dde4ee;
+  --accent: #4f46e5;
+  --accent-dim: #c7d2fe;
+  --accent-ink: #3730a3;
+  --up: #047857;
+  --down: #b91c1c;
+  --flat: #64748b;
+  --shadow: 0 10px 32px rgba(15, 23, 42, 0.26), 0 2px 6px rgba(15, 23, 42, 0.12);
+  --chart-text: #475569;
+  --chart-grid: #e8edf5;
+  --chart-bar: #4f46e5;
+  --chart-bar-fill: rgba(79, 70, 229, 0.2);
+  --chart-line: #0f172a;
+  --chart-line-fill: rgba(15, 23, 42, 0.08);
+  --chart-line-dom: #c2410c;
+  --chart-line-dom-fill: rgba(194, 65, 12, 0.1);
+  --chart-line-diff: #0f766e;
+  --chart-line-diff-fill: rgba(15, 118, 110, 0.1);
+}
+
+.glass-fx { backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); }
+
+/* ── Sold | Active: a small pill, top left of the map ── */
+.mode-tabs {
+  top: 14px;
+  left: 14px;
+  right: auto;
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+.mode-tabs a { padding: 7px 16px; border-radius: 11px; color: var(--ink-2); font-size: 13.5px; }
+.mode-tabs a:hover { background: #e9edf5; }
+.mode-tabs a.active { background: var(--ink); background-image: none; color: #ffffff; }
+
+/* ── The control pill ── */
+#controls {
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+#controls label { color: var(--muted); font-size: 13px; }
+#controls input[type="number"] { border-radius: 8px; border-color: #cbd5e1; }
+
+#controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) {
+  padding: 7px 13px;
+  background: #ffffff;
+  background-image: none;
+  color: var(--ink);
+  border: 1px solid #cdd6e3;
+  border-radius: 10px;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+#controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):hover { background: #f1f4f9; transform: none; box-shadow: none; }
+#controls #toggleAreas.is-on { background: var(--accent); background-image: none; color: #ffffff; border-color: var(--accent); }
+
+.area-toggle { background: #e8ecf3; border-radius: 11px; padding: 2px; }
+#controls .area-toggle button.area-btn.area-btn.area-btn { border: 0; border-radius: 9px; background: transparent; background-image: none; color: var(--ink-2); padding: 6px 12px; }
+#controls .area-toggle button.area-btn.area-btn.area-btn.active { background: var(--accent); background-image: none; color: #ffffff; box-shadow: 0 1px 3px rgba(79, 70, 229, 0.4); }
+#controls .area-toggle button.area-btn.area-btn.area-btn:hover:not(.active) { background: #d9dfeb; }
+
+/* ── Time period: a compact menu that always shows the period in force ── */
+.period-menu { position: relative; display: inline-flex; }
+#controls .period-menu .pm.pm-btn.pm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 10px;
+  min-height: 38px;
+  text-align: left;
+}
+.pm-icon { flex: none; color: var(--accent-ink); }
+.pm-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.pm-name { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+.pm-range { font-size: 11px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.pm-range:empty { display: none; }
+.pm-caret { color: var(--muted); font-size: 12px; }
+.pm-btn[aria-expanded="true"] { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18) !important; }
+
+.period-menu-pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 10020;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 250px;
+  padding: 6px;
+  background: var(--glass-solid);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.period-menu-pop[hidden] { display: none; }
+#controls .period-menu .period-menu-pop button.pm.pm-opt.pm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  text-align: left;
+}
+#controls .period-menu .period-menu-pop button.pm.pm-opt.pm::before {
+  content: "";
+  flex: none;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 2px solid #94a3b8;
+  border-radius: 50%;
+}
+#controls .period-menu .period-menu-pop button.pm.pm-opt.pm:hover { background: #eef1f8; }
+#controls .period-menu .period-menu-pop button.pm.pm-opt.pm.is-active { background: #eef0ff; color: var(--accent-ink); font-weight: 700; }
+#controls .period-menu .period-menu-pop button.pm.pm-opt.pm.is-active::before { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 3px, transparent 4px); }
+.period-menu-pop .period-dock { margin: 4px 4px 6px; padding: 12px 10px 4px; border-top: 1px solid var(--line); }
+
+/* ── Filters ── */
+#filterPanel { border-radius: 16px; border: 1px solid var(--glass-line); background: var(--glass-solid); box-shadow: var(--shadow); }
+.filter-header { background: transparent; border-bottom-color: var(--line); }
+.bed-btn, .ptype-btn { border-width: 1px; border-color: #c4cddb; color: var(--ink-2); border-radius: 10px; font-size: 13px; padding: 8px 10px; }
+.bed-btn.selected, .ptype-btn.selected { background: var(--accent); background-image: none; border-color: var(--accent); color: #ffffff; box-shadow: none; transform: none; }
+#filterPanel .noUi-connect { background: var(--accent); }
+#filterPanel .noUi-handle { border-color: var(--accent); }
+
+/* ── Markers: white pills for prices, solid accent pills for counts ── */
+.price-marker .price-label { padding: 3px 9px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.97); color: var(--ink); font-weight: 700; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35); }
+.price-marker:hover .price-label { background: var(--ink); color: #ffffff; }
+.count-marker .count-label, .cluster-marker .cluster-label { padding: 3px 10px; border: 2px solid #ffffff; border-radius: 999px; background: var(--accent); color: #ffffff; font-weight: 700; box-shadow: 0 2px 8px rgba(30, 27, 75, 0.45); }
+.count-marker:hover .count-label, .cluster-marker:hover .cluster-label { background: var(--accent-ink); border-color: #ffffff; }
+.leaflet-control-zoom { border: 0 !important; border-radius: 12px !important; overflow: hidden; box-shadow: var(--shadow) !important; }
+.area-legend { border-radius: 14px; border: 1px solid var(--glass-line); background: var(--glass); box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+.area-title { background: #eef0ff; border-color: #c7d2fe; color: var(--accent-ink); }
+
+/* ── Cards and charts (shared by the drawer and the phone panel) ── */
+.card { background: rgba(255, 255, 255, 0.8); border: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+.card strong { color: var(--muted); letter-spacing: 0.05em; }
+.card span { color: var(--ink); }
+.drawer-period { display: block; margin: 0 0 8px; color: var(--ink-2); font-size: 12.5px; font-weight: 600; }
+.insights-right { background: transparent; box-shadow: none; padding: 0; }
+.chart-btn.active { color: var(--accent-ink); }
+.btn-group { background: #e8ecf3; border-radius: 10px; }
+.insight-tab.active { background: #eef0ff; border-color: #c7d2fe; color: var(--accent-ink); }
+.page-btn.active { background: var(--accent); background-image: none; border-color: var(--accent); }
+.drawer-toggle { display: none; }
+
+/* ── Desktop: the map is the page ── */
+@media (min-width: 901px) and (min-height: 501px) {
+  body { display: block; background: #0f172a; }
+  #appContainer, #mainPanel { position: absolute; inset: 0; display: block; height: auto; flex: none; }
+  #appContainer { overflow: hidden; }
+  #map { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  #controls { top: 14px; max-width: calc(100vw - 2 * 240px); }
+  body.side-open #controls { left: 424px; max-width: calc(100vw - 424px - 24px); }
+  .mode-tabs { z-index: 10001; }
+
+  /* the listings and the neighbourhood table float over the map instead of pushing it */
+  #listingsPanel, #areasPanel {
+    position: absolute;
+    left: 14px;
+    top: 70px;
+    bottom: 34px;
+    width: 396px;
+    max-width: none;
+    overflow: hidden;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px) saturate(1.4);
+    transform: translateX(calc(-100% - 28px));
+  }
+  #listingsPanel.open, #areasPanel.open { transform: none; }
+  #listingsPanel.hidden, #areasPanel.hidden { display: none; }
+  .toolbar-btn { background: transparent; background-image: none; color: var(--accent-ink); border-bottom: 1px solid var(--line); font-size: 13px; }
+  .toolbar-btn:hover { background: #eef0ff; background-image: none; }
+  .search-container, .sort-container { background: transparent; }
+  .listing-row { border: 1px solid var(--line); border-radius: 12px; }
+  .areas-table thead th { background: #f3f5fa; }
+  .area-row.is-selected { background: #eef0ff; box-shadow: inset 3px 0 0 var(--accent); }
+
+  /* the drawer */
+  #insights, #insights.hidden, #insights.insights-charts {
+    position: absolute;
+    left: 14px;
+    right: 76px;
+    bottom: 34px;
+    display: flex;
+    flex-direction: row;
+    gap: 18px;
+    height: min(330px, 40vh);
+    min-height: 236px;
+    max-height: none;
+    padding: 14px 16px;
+    overflow: visible;
+    background: var(--glass);
+    border: 1px solid var(--glass-line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px) saturate(1.4);
+    z-index: 900;
+  }
+  body.side-open #insights, body.side-open #insights.insights-charts { left: 424px; }
+  .insights-left { flex: 0 0 360px; justify-content: flex-start; }
+  .summary-cards { gap: 8px; }
+  .insights-right, .insights-charts .insights-right { flex: 1; min-width: 0; padding: 0; }
+  .drawer-toggle {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 901;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 14px;
+    border: 1px solid var(--glass-line);
+    border-radius: 999px;
+    background: var(--glass-solid);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+  }
+  .drawer-toggle:hover { color: var(--accent-ink); }
+  .dt-caret { transition: transform 0.2s ease; }
+
+  /* folded: one row of numbers */
+  body.drawer-collapsed #insights, body.drawer-collapsed #insights.insights-charts { height: auto; min-height: 0; padding: 10px 16px 12px; }
+  body.drawer-collapsed .insights-right { display: none; }
+  body.drawer-collapsed .insights-left { flex: 1 1 auto; }
+  body.drawer-collapsed .summary-cards { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); grid-auto-rows: auto; }
+  body.drawer-collapsed .card { padding: 6px 10px; }
+  body.drawer-collapsed .drawer-period { margin-bottom: 6px; }
+  body.drawer-collapsed .dt-caret { transform: rotate(180deg); }
+
+  /* narrower windows: the cards go in a single column beside the chart, the pill wraps */
+  @media (max-width: 1180px) { .insights-left { flex-basis: 300px; } }
+}
+@container main (max-width: 700px) {
+  #insights, #insights.insights-charts { flex-direction: column; overflow-y: auto; max-height: 46vh; }
+  .insights-left { flex: none; width: 100%; }
+}
+
+/* ── Phones and tablets: the standard tabs under the map, in glass and indigo ── */
+@media (max-width: 900px) {
+  .mode-tabs { background: var(--glass-solid); border-color: var(--line); backdrop-filter: none; }
+  #controls { background: var(--glass); }
+  .period-menu { order: 4; flex: 1 1 150px; min-width: 0; position: static; }
+  #controls .radius-group { flex: 0 0 auto; }
+  #controls .period-menu .pm.pm-btn.pm { width: 100%; min-height: 40px; }
+  .pm-range { display: none; }
+  .pm-text { flex: 1; }
+  .period-menu-pop { position: absolute; left: 0; right: 0; min-width: 0; width: auto; top: calc(100% + 8px); max-height: 60vh; overflow-y: auto; }
+  #controls .period-menu .period-menu-pop button.pm.pm-opt.pm { min-height: 44px; }
+  .mobile-tab-bar { background: #f1f4f9; }
+  .mobile-tab.active { color: var(--accent-ink); border-bottom-color: var(--accent); }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #controls .period-menu .pm.pm-btn.pm { min-height: 40px; }
+  .pm-range { display: none; }
+  .period-menu-pop { min-width: 220px; }
+}
+
+.chg.down, .ask-diff.down { color: var(--down); }
+.recent-date { color: var(--muted); }
+
+@media (max-width: 900px) {
+  #controls .area-toggle { flex: 1 1 60%; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .sold-map .mode-tabs, .active-map .mode-tabs { left: auto !important; }
+}

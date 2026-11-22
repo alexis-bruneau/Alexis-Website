@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ottawa Active Listings</title>
+  <link rel="icon" href="data:," />
 
   <!-- ─── Vendor styles ─────────────────────────────────── -->
   <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet" />
@@ -15,9 +16,11 @@
 
   <!-- ─── App styles (shared with the sold map) ──────────── -->
   <link rel="stylesheet" href="/static/css/map.css" />
+  <link rel="stylesheet" href="/static/css/period.css" />
+  <link rel="stylesheet" href="/static/css/v2.css" />
 </head>
 
-<body class="active-map">
+<body class="active-map is-loading">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
   <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map">Sold</a>
@@ -36,6 +39,24 @@
       <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
       <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
     </span>
+
+    <div class="period-menu">
+      <button type="button" id="periodMenuBtn" class="pm pm-btn" aria-haspopup="true" aria-expanded="false" aria-controls="periodMenu" title="Time period">
+        <svg class="pm-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 5.5V10l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span class="pm-text"><span class="pm-name" data-period-name>All time</span><span class="pm-range" data-period-range></span></span>
+        <span class="pm-caret" aria-hidden="true">▾</span>
+      </button>
+      <div id="periodMenu" class="period-menu-pop" role="menu" aria-label="Time period" hidden>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="1w" aria-pressed="false">Listed within 1 week</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="1m" aria-pressed="false">Listed within 1 month</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="3m" aria-pressed="false">Listed within 3 months</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="6m" aria-pressed="false">Listed within 6 months</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="1y" aria-pressed="false">Any time on market</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="all" aria-pressed="false">Any time on market</button>
+          <button type="button" class="pm pm-opt" role="menuitemradio" data-period="custom" aria-pressed="false">Listed within Custom range</button>
+        <div class="period-dock" data-period-custom hidden></div>
+      </div>
+    </div>
 
     <button id="filterToggle">Filters ⚙️</button>
     <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
@@ -170,7 +191,10 @@
 
       <!-- ═══ INSIGHTS FOOTER ═══ -->
       <div id="insights" class="insights-charts">
+        <button type="button" id="drawerToggle" class="drawer-toggle" aria-expanded="true" aria-controls="insights"><span class="dt-label">Hide insights</span><span class="dt-caret" aria-hidden="true">⌄</span></button>
         <div class="insights-left">
+          <p class="drawer-period" data-period-label></p>
+          <div id="dataStatus" class="data-status" hidden></div>
           <!-- Neighbourhood mode only: which area the cards and the charts describe -->
           <div class="area-title" id="areaTitle" hidden>
             <span class="area-title-name" id="areaTitleName"></span>
@@ -278,8 +302,11 @@
   <!-- Chart.js, pinned to an exact version and checked with an integrity hash -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"
     integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t" crossorigin="anonymous"></script>
+  <script src="/static/js/status.js"></script>
   <script src="/static/js/active.js"></script>
   <script src="/static/js/neighbourhoods.js"></script>
+  <script src="/static/js/period.js"></script>
+  <script src="/static/js/v2.js"></script>
 </body>
 
 </html>

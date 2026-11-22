@@ -341,6 +341,15 @@ function renderLegend() {
   }
 }
 
+/** The legend sits just above the attribution line (which wraps to two or three lines on a phone), never on top of it. */
+function positionLegend() {
+  const corner = document.querySelector(".leaflet-bottom.leaflet-left");
+  const attribution = document.querySelector(".leaflet-control-attribution");
+  if (corner && attribution) corner.style.bottom = `${attribution.offsetHeight}px`;
+}
+window.addEventListener("resize", () => setTimeout(positionLegend, 60));
+map.on("layeradd layerremove", () => setTimeout(positionLegend, 0));   // the attribution grows when the boundaries load
+
 function setMetric(metric) {
   nbState.metric = metric;
   nbState.scale = computeScale();
@@ -544,7 +553,11 @@ function updateAreaTitle() {
   const inNb = areaMode === "neighbourhood";
   title.hidden = !(inNb && selectedNeighbourhood);
   hint.hidden = !(inNb && !selectedNeighbourhood);
-  if (inNb && selectedNeighbourhood) document.getElementById("areaTitleName").textContent = selectedNeighbourhood.name;
+  if (inNb && selectedNeighbourhood) {
+    const name = document.getElementById("areaTitleName");
+    name.textContent = selectedNeighbourhood.name;
+    name.title = selectedNeighbourhood.name;   // the name is cut with an ellipsis when it is long
+  }
 }
 
 /** Neighbourhood mode with nothing selected: no markers, no listings, empty cards. */
@@ -554,6 +567,8 @@ function showNoNeighbourhoodSelected() {
 }
 
 function showNoNeighbourhoodSelectedSold() {
+  finishLoading();
+  clearDataStatus();
   updateMapMarkers([]);
   updateStats(null, []);
   currentPoints = [];
@@ -565,6 +580,8 @@ function showNoNeighbourhoodSelectedSold() {
 }
 
 function showNoNeighbourhoodSelectedActive() {
+  finishLoading();
+  clearDataStatus();
   basePoints = [];
   serverSummary = { count: 0 };
   soldInfo = { curve: null, sample: 0, window: null };
@@ -592,6 +609,7 @@ function appendAreaBanner(container, total) {
 async function setAreaMode(mode) {
   if (mode === areaMode) return;
   areaMode = mode;
+  document.body.classList.toggle("area-mode-nb", mode === "neighbourhood");   // CSS leaves room for the legend
   document.querySelectorAll("#areaToggle .area-btn").forEach(b => {
     const on = b.dataset.mode === mode;
     b.classList.toggle("active", on);
@@ -607,6 +625,7 @@ async function setAreaMode(mode) {
     map.removeLayer(handle);
     if (!nbLegend) nbLegend = createLegend();
     nbLegend.addTo(map);
+    positionLegend();
     nbState.status = nbState.rows.length ? "ready" : "loading";
     renderLegend();
     // Polygons and summary load side by side; the polygons are fetched once per page load
@@ -623,6 +642,8 @@ async function setAreaMode(mode) {
   } else {
     if (nbState.layer) map.removeLayer(nbState.layer);
     if (nbLegend) map.removeLayer(nbLegend);
+    const legendCorner = document.querySelector(".leaflet-bottom.leaflet-left");
+    if (legendCorner) legendCorner.style.bottom = "";
     selectedNeighbourhood = null;
     if (radiusGroup) radiusGroup.hidden = false;
     if (areasBtn) areasBtn.hidden = true;

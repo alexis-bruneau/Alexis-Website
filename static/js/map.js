@@ -85,8 +85,12 @@ let selectedPTypes = [];  // Array of property types
 
 
 /************** 1. MAP SETUP **************/
-const map = L.map("map", { minZoom: 10, scrollWheelZoom: true })
+const map = L.map("map", { minZoom: 10, scrollWheelZoom: true, zoomControl: false })
   .setView([45.4215, -75.6972], 13);
+// Bottom right, like on phones: the top left belongs to the sidebars and the controls bar
+L.control.zoom({ position: "bottomright" }).addTo(map);
+// The map follows its own box: any layout change (a panel opening, a footer growing, a font loading) resizes it
+if (window.ResizeObserver) new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById("map"));
 
 const ottawaBounds = L.latLngBounds([45.25, -76.0], [45.75, -75.4]);
 map.setMaxBounds(ottawaBounds);
@@ -107,8 +111,8 @@ const redDotIcon = L.divIcon({
 
 const markersCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
-  maxClusterRadius: 30,
-  disableClusteringAtZoom: 15,
+  maxClusterRadius: 90,           // the labels are ~80px wide: closer than this they pile on top of each other
+  disableClusteringAtZoom: 17,
   spiderfyOnMaxZoom: true,
   removeOutsideVisibleBounds: true,
   animate: true,
@@ -173,7 +177,11 @@ fetch("/points.json")
     updateListingsCount();
     fetchFilteredPoints();
   })
-  .catch(console.error);
+  .catch((err) => {
+    // The first fetch only sizes the date slider: the page still works without it
+    console.error("Failed to load the date range:", err);
+    fetchFilteredPoints();
+  });
 
 
 /************** 3. CIRCLE AND DRAGGABLE HANDLE **************/
@@ -219,6 +227,46 @@ radiusInput.addEventListener("change", () => {
 
 
 
+
+/** The filter panel never runs off the screen: on a phone it ends above the tab bar (the bottom of the map), on a desktop at the
+ *  bottom of the window. Longer than that, it scrolls inside itself. */
+function fitFilterPanel() {
+  const panel = document.getElementById("filterPanel");
+  if (!panel || panel.style.display === "none") return;
+  const top = panel.getBoundingClientRect().top;
+  const mapBottom = document.getElementById("map").getBoundingClientRect().bottom;
+  const phone = window.innerWidth <= 900 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+  const limit = phone ? mapBottom : window.innerHeight;
+  panel.style.maxHeight = `${Math.max(120, limit - top - 12)}px`;
+}
+window.addEventListener("resize", () => fitFilterPanel());
+
+/** Axis label for a dollar amount, with only as many decimals as the tick spacing needs ($1.0M three times never happens). */
+function fmtMoneyTick(v, ticks) {
+  const step = ticks && ticks.length > 1 ? Math.abs(ticks[1].value - ticks[0].value) : 1000;
+  const abs = Math.abs(v);
+  if (abs >= 1e6) {
+    const d = step >= 1e6 ? 0 : step >= 1e5 ? 1 : 2;
+    return `$${Number((v / 1e6).toFixed(d)).toFixed(d === 0 ? 0 : Math.max(1, d))}M`;
+  }
+  if (abs >= 1000) return `$${Number((v / 1000).toFixed(step >= 1000 ? 0 : 1))}k`;
+  return `$${Math.round(v)}`;
+}
+
+/** Shows (or, with null, hides) a centred message over a chart's box, so a chart with nothing to draw says why. */
+function setChartEmpty(box, message) {
+  if (!box) return;
+  let el = box.querySelector(".chart-empty");
+  if (!message) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "chart-empty";
+    box.appendChild(el);
+  }
+  el.textContent = message;
+  el.hidden = false;
+}
+
 /************** 4. FILTER HANDLERS **************/
 document.getElementById("filterToggle").addEventListener("click", (e) => {
   L.DomEvent.stopPropagation(e); // Prevent map click from firing immediately
@@ -232,6 +280,7 @@ document.getElementById("filterToggle").addEventListener("click", (e) => {
   } else {
     // Opening: Clear inline display and add class
     panel.style.display = "block";
+    fitFilterPanel();
     // We need a tiny delay for the transition to work if it was just display: none
     requestAnimationFrame(() => {
       panel.classList.add("show");
@@ -376,8 +425,6 @@ function hideFilterPanel() {
 
 // Click on map background clears selection, hides filter panel, and returns to insights view
 map.on("click", (e) => {
-  console.log("DEBUG: Map background clicked", e);
-
   if (selectedLocationKey) {
     clearLocationSelection();
   }
@@ -386,7 +433,6 @@ map.on("click", (e) => {
 
   // If sidebar is open, close it (returning to insights)
   if (currentView === "listings") {
-    console.log("DEBUG: Closing sidebar");
     setView(homeView());
   }
 });
@@ -560,7 +606,7 @@ function updateListingsSidebar(points) {
         <strong>$${parseInt(pt.price).toLocaleString()}</strong>
         ${askingBadge(pt)}
         <p>${pt.address}</p>
-        <p>${pt.beds} 🛏 | ${pt.baths} 🛁 | <strong>${pt.ptype || 'Unknown Type'}</strong></p>
+        <p>${pt.beds ?? "–"} bd · ${pt.baths ?? "–"} ba · <span class="ptype-text">${pt.ptype || 'Unknown Type'}</span></p>
         <p>${getTimeSinceSold(pt.sold_date)}</p>
         <a
           href="${pt.url}"
@@ -693,8 +739,9 @@ async function fetchFilteredPoints() {
     const { points, summary, error } = await res.json();
     if (requestId !== pointsRequestId) return;   // a newer request is on its way
     if (error) throw new Error(error);
-    console.log("DEBUG: Received Summary:", summary);
 
+    finishLoading();
+    clearDataStatus();
     updateMapMarkers(points); // Update markers with filtered points
     updateStats(summary, points); // Pass points to calculate detailed stats client-side
     currentPoints = points;
@@ -704,8 +751,17 @@ async function fetchFilteredPoints() {
     updateListingsSidebar(points); // Only filtered points in sidebar
     if (window._refreshMobileListings) window._refreshMobileListings(); // Also refresh mobile
 
+    if (!summary || summary.count === 0) {
+      setDataStatus("empty", "No sales match these filters.", [
+        { label: "Clear filters", run: () => document.getElementById("clearFilters").click() }
+      ]);
+    }
   } catch (err) {
     console.error("Failed to fetch filtered points:", err);
+    if (requestId !== pointsRequestId) return;
+    finishLoading();
+    setDataStatus("error", "Couldn't load the sales.", [{ label: "Try again", run: () => fetchFilteredPoints() }]);
+    setChartEmpty(document.querySelector(".chart-container-full"), "Couldn't load the chart.");
   }
 }
 
@@ -886,14 +942,20 @@ function updateStats(summary, points) {
   if (!summary || summary.count === 0) {
     ["count", "avg", "max", "min", "dom", "diff"].forEach(id => {
       const el = document.getElementById(`stat-${id}`);
-      if (el) el.textContent = "–";
+      if (el) { el.textContent = "–"; if (id === "diff") el.style.color = ""; }
     });
     if (soldChart) {
       soldChart.data.labels = [];
       soldChart.data.datasets[0].data = [];
       soldChart.data.datasets[1].data = [];
+      // nothing to draw: sensible empty axes instead of a column of "$0k"
+      soldChart.options.scales.y.suggestedMax = 10;
+      soldChart.options.scales.y1.suggestedMax = 1000000;
       soldChart.update();
     }
+    const nothingPicked = areaMode === "neighbourhood" && !selectedNeighbourhood;
+    setChartEmpty(document.querySelector(".chart-container-full"),
+      nothingPicked ? "Pick a neighbourhood to see its trend." : "No sales to chart.");
     return;
   }
 
@@ -921,7 +983,6 @@ function updateStats(summary, points) {
     if (domCount > 0) clientAvgDom = domSum / domCount;
     if (diffCount > 0) clientAvgDiff = diffSum / diffCount;
 
-    console.log(`DEBUG Client Calc: DOM=${clientAvgDom}, Diff=${clientAvgDiff}, Count=${points.length}`);
   }
 
   const { count, average_price, max_price, min_price, by_month } = summary;
@@ -946,22 +1007,24 @@ function updateStats(summary, points) {
     if (avg_diff_pct !== null && avg_diff_pct !== undefined) {
       const sign = avg_diff_pct > 0 ? "+" : "";
       diffEl.textContent = `${sign}${Number(avg_diff_pct).toFixed(1)}%`;
-      diffEl.style.color = avg_diff_pct >= 0 ? "#10b981" : "#ef4444"; // Green if positive (sold over list), Red if negative
+      diffEl.style.color = avg_diff_pct >= 0 ? cssVar("--up", "#047857") : cssVar("--down", "#dc2626"); // Green if positive (sold over list), Red if negative (design tokens; both pass AA on white)
     } else {
       diffEl.textContent = "–";
       diffEl.style.color = "";
     }
   }
 
+  setChartEmpty(document.querySelector(".chart-container-full"), by_month && by_month.length ? null : "No monthly data for these sales.");
   if (by_month && by_month.length) {
+    if (soldChart) { soldChart.options.scales.y.suggestedMax = undefined; soldChart.options.scales.y1.suggestedMax = undefined; }
     const labels = by_month.map(item => item.month);
     const counts = by_month.map(item => item.count);
 
     // Determine which metric to show on the line chart
     let lineData = [];
     let lineLabel = "";
-    let lineColor = "red";
-    let lineBg = "rgba(255,0,0,0.2)";
+    let lineColor = cssVar("--chart-line", "red");
+    let lineBg = cssVar("--chart-line-fill", "rgba(255,0,0,0.2)");
     let yAxisFormat = (val) => val; // default formatter
 
     if (currentChartMetric === "price") {
@@ -971,14 +1034,14 @@ function updateStats(summary, points) {
     } else if (currentChartMetric === "dom") {
       lineData = by_month.map(item => item.avg_dom || 0);
       lineLabel = "Avg Days on Market";
-      lineColor = "#f59e0b"; // Amber
-      lineBg = "rgba(245, 158, 11, 0.2)";
+      lineColor = cssVar("--chart-line-dom", "#f59e0b"); // Amber
+      lineBg = cssVar("--chart-line-dom-fill", "rgba(245, 158, 11, 0.2)");
       yAxisFormat = (val) => `${Math.round(val)}d`;
     } else if (currentChartMetric === "diff") {
       lineData = by_month.map(item => item[`avg_diff_pct_${diffBasis}`] || 0);
       lineLabel = `Avg Sold vs ${DIFF_BASIS_LABEL[diffBasis]} %`;
-      lineColor = "#8b5cf6"; // Violet
-      lineBg = "rgba(139, 92, 246, 0.2)";
+      lineColor = cssVar("--chart-line-diff", "#8b5cf6"); // Violet
+      lineBg = cssVar("--chart-line-diff-fill", "rgba(139, 92, 246, 0.2)");
       yAxisFormat = (val) => `${val.toFixed(1)}%`;
     }
 
@@ -1003,8 +1066,8 @@ function updateStats(summary, points) {
             {
               label: "# Sold",
               data: counts,
-              backgroundColor: "rgba(54, 162, 235, 0.2)",
-              borderColor: "rgba(54, 162, 235, 1)",
+              backgroundColor: cssVar("--chart-bar-fill", "rgba(54, 162, 235, 0.2)"),
+              borderColor: cssVar("--chart-bar", "rgba(54, 162, 235, 1)"),
               borderWidth: 1,
               yAxisID: "y",
               order: 2
@@ -1026,12 +1089,25 @@ function updateStats(summary, points) {
           responsive: true,
           maintainAspectRatio: false,
           interaction: { mode: "index", intersect: false },
+          color: cssVar("--chart-text", "#526071"),
           scales: {
+            x: {
+              grid: { display: false },
+              // "2021-04" -> "Apr ’21", flat and thinned out: tilted, crammed month codes were unreadable
+              ticks: {
+                maxRotation: 0, autoSkip: true, maxTicksLimit: 8,
+                callback: function (value) {
+                  const [y, m] = String(this.getLabelForValue(value)).split("-");
+                  return m ? `${MONTH_NAMES[Number(m) - 1]} ’${y.slice(2)}` : this.getLabelForValue(value);
+                }
+              }
+            },
             y: {
               type: "linear",
               position: "left",
+              beginAtZero: true,
               title: { display: true, text: "Listings Sold" },
-              ticks: { stepSize: 1, precision: 0 },
+              ticks: { precision: 0 },
               grid: { display: false }
             },
             y1: {
@@ -1041,7 +1117,7 @@ function updateStats(summary, points) {
               title: { display: false },
               ticks: {
                 callback: function (value, index, ticks) {
-                  if (currentChartMetric === "price") return `$${Math.round(value / 1000)}k`;
+                  if (currentChartMetric === "price") return fmtMoneyTick(value, ticks);
                   if (currentChartMetric === "dom") return `${Math.round(value)}d`;
                   if (currentChartMetric === "diff") {
                     // Only as many decimals as the tick spacing needs (0.5 step -> 1, 0.25 -> 2, 2 -> 0),
@@ -1058,7 +1134,7 @@ function updateStats(summary, points) {
             }
           },
           plugins: {
-            legend: { position: "top" },
+            legend: { position: "top", labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8 } },
             tooltip: {
               callbacks: {
                 label: ctx => {
@@ -1096,11 +1172,14 @@ function getTimeSinceSold(dateStr) {
   const soldDate = new Date(dateStr);
   const now = new Date();
   const diffMin = Math.floor((now - soldDate) / 60000);
-  if (diffMin < 60) return `${diffMin} min ago`;
+  const plural = (n, unit) => `${n} ${unit}${n === 1 ? "" : "s"} ago`;
+  if (diffMin < 60) return plural(Math.max(diffMin, 0), "min");
   const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr} hrs ago`;
+  if (diffHr < 24) return plural(diffHr, "hr");
   const diffDays = Math.floor(diffHr / 24);
-  return `${diffDays} days ago`;
+  if (diffDays < 60) return plural(diffDays, "day");
+  if (diffDays < 730) return plural(Math.floor(diffDays / 30), "month");
+  return plural(Math.floor(diffDays / 365), "year");
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1127,7 +1206,7 @@ function offsetToDateStr(offset) {
 
   function isMobile() {
     // Portrait phone
-    if (window.innerWidth <= 768) return true;
+    if (window.innerWidth <= 900) return true;
     // Landscape phone (short height, wider than tall)
     if (window.innerHeight <= 500 && window.innerWidth > window.innerHeight) return true;
     return false;
@@ -1253,7 +1332,7 @@ function offsetToDateStr(offset) {
           <strong>$${parseInt(pt.price).toLocaleString()}</strong>
           ${askingBadge(pt)}
           <p>${pt.address}</p>
-          <p>${pt.beds} 🛏 | ${pt.baths} 🛁</p>
+          <p>${pt.beds ?? "–"} bd · ${pt.baths ?? "–"} ba</p>
           <p>${getTimeSinceSold(pt.sold_date)}</p>
         </div>
       `;
