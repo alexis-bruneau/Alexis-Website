@@ -15,15 +15,39 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
   <!-- ─── App styles ─────────────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap" />
   <link rel="stylesheet" href="/static/css/map.css" />
+  <link rel="stylesheet" href="/static/css/period.css" />
+  <link rel="stylesheet" href="/static/css/v4.css" />
 </head>
 
 <body class="sold-map is-loading">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
-  <nav class="mode-tabs" aria-label="Listing type">
+  <header id="appHeader">
+    <a class="wordmark" href="/ottawa_map">Ottawa <em>homes</em></a>
+    <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map" class="active" aria-current="page">Sold</a>
     <a href="/ottawa_active">Active</a>
   </nav>
+    <div class="period-bar" data-period-bar role="group" aria-label="Time period">
+      <button type="button" class="period-tab" data-period="1w" aria-pressed="false" title="1 week">1W</button>
+      <button type="button" class="period-tab" data-period="1m" aria-pressed="false" title="1 month">1M</button>
+      <button type="button" class="period-tab" data-period="3m" aria-pressed="false" title="3 months">3M</button>
+      <button type="button" class="period-tab" data-period="6m" aria-pressed="false" title="6 months">6M</button>
+      <button type="button" class="period-tab" data-period="1y" aria-pressed="false" title="1 year">1Y</button>
+      <button type="button" class="period-tab" data-period="all" aria-pressed="false" title="All time">All</button>
+      <button type="button" class="period-tab" data-period="custom" aria-pressed="false" title="Custom range">Custom</button>
+    </div>
+    <div class="period-dock" data-period-custom hidden></div>
+  </header>
+
+  <!-- ─── The finding, in a sentence ─── -->
+  <section id="headline" aria-live="polite">
+    <p class="hl-lead" id="hlLead">&nbsp;</p>
+    <p class="hl-sub" id="hlSub"></p>
+    <p class="hl-period"><span data-period-label></span></p>
+  </section>
 
   <!-- ─── Radius / filter controls ───────────────────────── -->
   <div id="controls">
@@ -253,6 +277,8 @@
     <script src="/static/js/status.js"></script>
     <script src="/static/js/map.js"></script>
     <script src="/static/js/neighbourhoods.js"></script>
+  <script src="/static/js/period.js"></script>
+  <script src="/static/js/v4.js"></script>
     <script>
       // Simple script to handle chart toggle UI state (logic in map.js)
       document.querySelectorAll('.chart-btn[data-metric]').forEach(btn => {

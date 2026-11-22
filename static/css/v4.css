@@ -1,0 +1,208 @@
+/* ═══════════════════════════════════════════════════════════
+   V4 · CALM
+   Quiet and editorial: paper white, almost no boxes, one green accent, a serif sentence that states the finding, text tabs
+   instead of buttons. The structure is the familiar one (map, figures and chart underneath) with the noise taken out.
+   Loaded after map.css.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  --paper: #fbfaf7;
+  --ink: #1d2623;
+  --ink-2: #3c4743;
+  --muted: #59635f;
+  --line: #e6e1d6;
+  --accent: #1d5c47;
+  --accent-dim: #c9dcd3;
+  --up: #1d5c47;
+  --down: #a23b28;
+  --flat: #6b7280;
+  --serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --chart-text: #4d5753;
+  --chart-grid: #efebe1;
+  --chart-bar: #8fb5a4;
+  --chart-bar-fill: rgba(29, 92, 71, 0.2);
+  --chart-line: #1d2623;
+  --chart-line-fill: rgba(29, 38, 35, 0.06);
+  --chart-line-dom: #a23b28;
+  --chart-line-dom-fill: rgba(162, 59, 40, 0.08);
+  --chart-line-diff: #1d5c47;
+  --chart-line-diff-fill: rgba(29, 92, 71, 0.08);
+}
+
+body { background: var(--paper); color: var(--ink); }
+
+/* ── Header: wordmark, text tabs ── */
+#appHeader { position: relative; z-index: 10010; flex: none; display: flex; align-items: flex-end; gap: 30px; padding: 16px 24px 0; }
+.wordmark { color: var(--ink); font-family: var(--serif); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; line-height: 1; padding-bottom: 6px; }
+.wordmark em { color: var(--accent); font-style: italic; font-weight: 500; }
+#appHeader .mode-tabs { position: static !important; margin: 0; padding: 0; gap: 22px; background: none; box-shadow: none; backdrop-filter: none; }
+#appHeader .mode-tabs a { padding: 6px 0 7px; border-radius: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: 14px; font-weight: 600; }
+#appHeader .mode-tabs a:hover { background: none; color: var(--ink); }
+#appHeader .mode-tabs a.active { background: none; background-image: none; border-bottom-color: var(--accent); color: var(--ink); }
+.period-bar { margin-left: auto; display: flex; gap: 2px; }
+.period-tab { padding: 6px 10px 7px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.period-tab:hover { color: var(--ink); }
+.period-tab.is-active { border-bottom-color: var(--accent); color: var(--ink); }
+.period-tab:focus-visible, .wordmark:focus-visible, #appHeader .mode-tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; box-shadow: none; }
+.period-dock { position: absolute; top: calc(100% + 4px); right: 24px; width: 380px; max-width: calc(100vw - 48px); padding: 16px 18px 18px; background: #ffffff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 18px 44px rgba(29, 38, 35, 0.18); }
+
+/* ── The finding ── */
+#headline { flex: none; padding: 20px 24px 6px; max-width: 1180px; }
+.hl-lead { margin: 0; color: var(--ink); font-family: var(--serif); font-size: 32px; font-weight: 500; line-height: 1.18; letter-spacing: -0.012em; }
+.hl-lead strong { color: var(--accent); font-weight: 600; }
+.hl-sub { margin: 7px 0 0; color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.hl-sub strong { color: var(--ink); font-weight: 650; }
+.hl-sub:empty { display: none; }
+.hl-period { margin: 7px 0 0; color: var(--muted); font-size: 12.5px; }
+
+/* ── Toolbar: quiet, left aligned, above the map ── */
+@media (min-width: 901px) and (min-height: 501px) {
+  body #controls, body.side-open #controls {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: auto;
+    max-width: none;
+    flex: none;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 8px 24px 12px;
+    background: none;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    z-index: 1500;
+  }
+  #filterPanel { left: 24px; transform: translateY(6px); width: 340px; }
+  #filterPanel.show { transform: translateY(0); }
+}
+#controls label { color: var(--muted); font-size: 13px; }
+#controls input[type="number"] { width: 62px; border: 0; border-bottom: 1px solid #b9b3a3; border-radius: 0; background: none; padding: 4px 2px; }
+#controls input[type="number"]:focus { border-bottom-color: var(--accent); box-shadow: none; }
+body #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) {
+  padding: 6px 14px;
+  background: none;
+  background-image: none;
+  color: var(--ink);
+  border: 1px solid #cdc7b7;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+body #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn):hover { background: #f1eee5; transform: none; box-shadow: none; }
+body #controls #toggleAreas.is-on { background: var(--accent); background-image: none; color: #ffffff; border-color: var(--accent); }
+.area-toggle { background: none; padding: 0; gap: 18px; }
+#controls .area-toggle button.area-btn.area-btn.area-btn { padding: 6px 0 5px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none; background-image: none; color: var(--muted); font-size: 13.5px; }
+#controls .area-toggle button.area-btn.area-btn.area-btn:hover:not(.active) { background: none; color: var(--ink); }
+#controls .area-toggle button.area-btn.area-btn.area-btn.active { background: none; background-image: none; border-bottom-color: var(--accent); color: var(--ink); box-shadow: none; }
+#filterPanel { border-radius: 12px; border-color: var(--line); box-shadow: 0 18px 44px rgba(29, 38, 35, 0.18); }
+.filter-header { background: #fbfaf7; }
+.bed-btn, .ptype-btn { border-width: 1px; border-color: #cdc7b7; color: var(--ink-2); border-radius: 999px; font-size: 13px; padding: 8px 10px; }
+.bed-btn.selected, .ptype-btn.selected { background: var(--accent); background-image: none; border-color: var(--accent); color: #ffffff; box-shadow: none; transform: none; }
+#filterPanel .noUi-connect { background: var(--accent); }
+#filterPanel .noUi-handle { border-color: var(--accent); }
+
+/* ── Map: an inset card ── */
+@media (min-width: 901px) and (min-height: 501px) {
+  #appContainer { padding: 0 24px 16px; gap: 16px; }
+  #map { border-radius: 16px; border: 1px solid var(--line); }
+  #mainPanel { gap: 0; }
+  #insights, #insights.insights-charts { background: none; border-top: 0; padding: 20px 0 0; gap: 40px; height: 32vh; min-height: 250px; }
+  #insights.insights-charts { height: 40vh; min-height: 320px; }
+  #listingsPanel, #areasPanel { width: 380px; border: 1px solid var(--line); border-radius: 16px; box-shadow: none; }
+}
+.price-marker .price-label { padding: 2px 9px; border: 1px solid #cdc7b7; border-radius: 999px; background: #ffffff; color: var(--ink); font-weight: 650; box-shadow: 0 1px 3px rgba(29, 38, 35, 0.2); }
+.price-marker:hover .price-label { background: var(--ink); border-color: var(--ink); }
+.count-marker .count-label, .cluster-marker .cluster-label { padding: 2px 10px; border: 1px solid #ffffff; border-radius: 999px; background: var(--accent); color: #ffffff; font-weight: 650; box-shadow: 0 1px 4px rgba(29, 38, 35, 0.35); }
+.count-marker:hover .count-label, .cluster-marker:hover .cluster-label { background: #123f31; border-color: #ffffff; }
+.leaflet-control-zoom { border: 0 !important; border-radius: 10px !important; overflow: hidden; box-shadow: 0 1px 6px rgba(29, 38, 35, 0.3) !important; }
+.area-legend { border-radius: 10px; border: 1px solid var(--line); }
+.toolbar-btn { background: var(--accent); background-image: none; }
+.toolbar-btn:hover { background: #123f31; background-image: none; }
+.search-container, .sort-container { background: #fbfaf7; }
+.listing-row { border: 1px solid var(--line); border-radius: 12px; }
+.listing-info strong { color: var(--ink); }
+.listing-info .view-btn { border-color: var(--accent); color: var(--accent); border-radius: 999px; }
+.listing-info .view-btn:hover { background: var(--accent); }
+.areas-table thead th { background: #fbfaf7; }
+.area-row.is-selected { background: #eaf2ee; box-shadow: inset 3px 0 0 var(--accent); }
+.page-btn.active { background: var(--accent); background-image: none; border-color: var(--accent); }
+.selection-banner { background: var(--accent); background-image: none; border-bottom-color: var(--accent); }
+
+/* ── Figures: no cards, hairlines ── */
+.card { align-items: flex-start; padding: 10px 0 8px; background: none; border-top: 1px solid var(--line); border-radius: 0; box-shadow: none; text-align: left; }
+.card strong { margin: 0 0 2px; color: var(--muted); font-size: 11px; font-weight: 650; letter-spacing: 0.08em; text-align: left; }
+.card span { color: var(--ink); font-family: var(--serif); font-size: 29px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.1; }
+.summary-cards { gap: 0 28px; }
+.insights-right { padding: 0; background: none; box-shadow: none; }
+.chart-header span { color: var(--ink-2) !important; font-family: var(--serif); font-size: 17px; font-style: italic; font-weight: 500 !important; }
+.btn-group { background: none; padding: 0; gap: 14px; }
+.chart-btn { padding: 4px 0; border-radius: 0; border-bottom: 2px solid transparent; color: var(--muted); font-size: 13px; }
+.chart-btn:hover { background: none; }
+.chart-btn.active { background: none; box-shadow: none; border-bottom-color: var(--accent); color: var(--ink); }
+.insight-tabs { gap: 16px; }
+.insight-tab { padding: 6px 0; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--muted); font-size: 13px; }
+.insight-tab:hover { background: none; color: var(--ink); }
+.insight-tab.active { background: none; border-bottom-color: var(--accent); color: var(--ink); }
+.area-title { background: #eaf2ee; border-color: #cfe0d8; color: var(--accent); border-radius: 10px; }
+.chip-btn { border-radius: 999px; }
+
+/* ── Phones and tablets ── */
+@media (max-width: 900px) {
+  #appHeader { flex-wrap: wrap; align-items: center; gap: 4px 18px; padding: 12px 16px 0; }
+  .wordmark { padding: 0; font-size: 21px; min-height: 40px; display: inline-flex; align-items: center; }
+  #appHeader .mode-tabs { margin-left: auto; }
+  #appHeader .mode-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; min-width: 44px; padding: 0 6px; }
+  .period-bar { order: 3; width: 100%; margin: 0; justify-content: space-between; border-bottom: 1px solid var(--line); }
+  .period-tab { flex: 1; min-height: 40px; padding: 0 2px; font-size: 14px; }
+  .period-dock { position: absolute; top: calc(100% - 4px); left: 12px; right: 12px; width: auto; max-width: none; }
+  #headline { padding: 14px 16px 2px; }
+  .hl-lead { font-size: 22px; }
+  .hl-sub { font-size: 13.5px; margin-top: 4px; }
+  .hl-period { font-size: 12px; margin-top: 4px; }
+  .sold-map #controls, .active-map #controls {
+    position: relative; top: auto; left: auto; width: 100%; max-width: none; transform: none; flex: none;
+    background: none; backdrop-filter: none; border: 0; border-radius: 0; box-shadow: none; padding: 8px 16px 6px;
+  }
+  #controls .area-toggle { gap: 18px; justify-content: flex-start; }
+  #controls .area-toggle button.area-btn.area-btn.area-btn { flex: 0 0 auto; padding: 0 2px; min-height: 40px; }
+  .sold-map #map, .active-map #map { height: 38vh; min-height: 220px; border-radius: 0; }
+  .mobile-tab-bar { background: var(--paper); }
+  .mobile-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: none; }
+  .card span { font-size: 22px; }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #appHeader { align-items: center; flex-wrap: nowrap; padding: 4px 10px 0; gap: 10px; height: 52px; }
+  .wordmark { display: none; }
+  .period-bar { order: 0; width: auto; margin-left: auto; border-bottom: 0; }
+  .period-tab { min-height: 40px; min-width: 40px; padding: 0 7px; }
+  #headline { display: none; }
+  .sold-map #controls, .active-map #controls { top: 54px !important; position: absolute; }
+  .period-dock { top: calc(100% + 4px); right: 10px; width: 320px; }
+  .card span { font-size: 16px; }
+}
+
+/* Short windows: the headline gives up its second and third lines so the map keeps its height */
+@media (min-width: 901px) and (max-height: 820px) {
+  .hl-lead { font-size: 27px; }
+  #headline { padding-top: 12px; }
+  #insights, #insights.insights-charts { height: 34vh; min-height: 250px; }
+}
+@media (min-width: 901px) and (max-height: 760px) {
+  .hl-sub, .hl-period { display: none; }
+  #headline { padding-bottom: 0; }
+}
+
+@media (max-width: 900px) {
+  .btn-group { gap: 4px; }
+  .chart-btn { min-width: 44px; padding: 4px 8px; }
+}
+@media (min-width: 901px) and (max-height: 660px) {
+  #appHeader { padding-top: 8px; }
+  #insights, #insights.insights-charts { height: 32vh; min-height: 190px; padding-top: 10px; }
+  .card span { font-size: 22px; }
+  .card { padding: 6px 0 4px; }
+}
