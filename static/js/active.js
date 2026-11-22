@@ -1149,11 +1149,12 @@ if (chartsReady) {
   if (!tabBar || !listingsEl) return;
 
   let activeTab = "insights";
-  let mobilePage = 1;
+  let mobileShown = 0;   // how many cards the phone list shows (it grows with "Show more")
   const isMobile = () => window.innerWidth <= 900 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
 
   function applyTab() {
     if (!isMobile()) {   // desktop: back to the side panels, no leftovers from the phone layout
+      delete document.body.dataset.mtab;
       tabBar.style.display = "none";
       listingsEl.style.display = "none";
       if (areasEl) areasEl.style.display = "none";
@@ -1162,53 +1163,51 @@ if (chartsReady) {
       return;
     }
     if (areasTab) areasTab.hidden = areaMode !== "neighbourhood";
-    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = "insights";
-    tabBar.style.display = "flex";
+    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = window._phoneHomeTab || "insights";
+    // Phone: what is on screen is decided by CSS from body[data-mtab] (map | listings | insights | areas), not by inline styles
+    document.body.dataset.mtab = activeTab;
+    [tabBar, listingsEl, areasEl, insightsEl].forEach((el) => { if (el) el.style.display = ""; });
+    insightsEl.classList.remove("mobile-hidden", "hidden");
     tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === activeTab));
-
-    listingsEl.style.display = "none";
-    if (areasEl) areasEl.style.display = "none";
-    if (activeTab === "insights") {
-      insightsEl.classList.remove("mobile-hidden", "hidden");
-      insightsEl.style.display = "";
-      setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
-    } else {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      if (activeTab === "areas" && areasEl) areasEl.style.display = "flex";
-      if (activeTab === "listings") { listingsEl.style.display = "flex"; renderMobileListings(); }
-    }
-    setTimeout(() => map.invalidateSize(), 50);
+    // (neighbourhoods.js, which defines the banner the list starts with, loads after this file: the first call comes with the data)
+    if (typeof appendAreaBanner === "function") renderMobileListings();   // cheap (one page of rows); keeps the list current whichever view shows it
+    setTimeout(() => { map.invalidateSize(); resizeCharts(); }, 60);   // the charts and the map were laid out while hidden
   }
 
   function renderMobileListings() {
     if (!rowsEl) return;
     const list = sortedList(sortEl ? sortEl.value : "newest");
-    const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
-    if (mobilePage > totalPages) mobilePage = 1;
+    // Phone: no page numbers. The list grows by one batch each time "Show more" is pressed.
+    if (mobileShown < ITEMS_PER_PAGE) mobileShown = ITEMS_PER_PAGE;
+    const shown = list.slice(0, mobileShown);
     rowsEl.innerHTML = "";
     appendListBanners(rowsEl, list.length);
     if (!list.length) rowsEl.insertAdjacentHTML("beforeend", `<p class="empty-note">No active listings match.</p>`);
-    list.slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
-    renderPagination(document.getElementById("mobilePaginationControls"), mobilePage, totalPages, list.length, (page) => {
-      mobilePage = page;
-      renderMobileListings();
-      rowsEl.scrollTop = 0;
-    });
+    shown.forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
+    const moreBox = document.getElementById("mobilePaginationControls");
+    moreBox.innerHTML = "";
+    if (list.length > shown.length) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "show-more-btn";
+      more.textContent = `Show ${Math.min(ITEMS_PER_PAGE, list.length - shown.length)} more · ${(list.length - shown.length).toLocaleString()} left`;
+      more.addEventListener("click", () => { mobileShown += ITEMS_PER_PAGE; renderMobileListings(); });
+      moreBox.appendChild(more);
+    }
   }
 
   // Through setView (wrapped below), so the desktop view state stays in step and a resize lands on the right panel
   tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.addEventListener("click", () => window.setView(btn.dataset.tab)));
-  if (sortEl) sortEl.addEventListener("change", () => { mobilePage = 1; renderMobileListings(); });
+  if (sortEl) sortEl.addEventListener("change", () => { mobileShown = 0; renderMobileListings(); });
   if (mobileSearch) mobileSearch.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase();
     searchInput.value = e.target.value;
-    mobilePage = 1;
+    mobileShown = 0;
     renderMobileListings();
   });
 
   // New data: redraw the phone list when it is the one on screen (new data starts at page 1)
-  window._refreshMobileListings = () => { if (isMobile() && activeTab === "listings") { mobilePage = 1; renderMobileListings(); } };
+  window._refreshMobileListings = () => { if (isMobile()) { mobileShown = 0; renderMobileListings(); } };
 
   // A marker tap (or the scatter) opens the list: on a phone that means the Listings tab
   const desktopSetView = setView;

@@ -1215,43 +1215,29 @@ function offsetToDateStr(offset) {
   function applyMobileTab() {
     if (!isMobile()) {
       // Desktop: hide mobile elements, restore desktop insights
+      delete document.body.dataset.mtab;
       tabBar.style.display = "none";
       mobileListingsPanel.style.display = "none";
       if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
       insightsEl.classList.remove("mobile-hidden");
+      insightsEl.style.display = "";
       return;
     }
 
     // The Areas tab only exists in Neighbourhood mode
     if (mobileAreasTab) mobileAreasTab.hidden = areaMode !== "neighbourhood";
-    if (activeMobileTab === "areas" && areaMode !== "neighbourhood") activeMobileTab = "insights";
+    if (activeMobileTab === "areas" && areaMode !== "neighbourhood") activeMobileTab = window._phoneHomeTab || "insights";
 
-    // Show tab bar
-    tabBar.style.display = "flex";
-
-    // Update tab active states
+    // Phone: what is on screen is decided by CSS from body[data-mtab] (map | listings | insights | areas), not by inline styles
+    document.body.dataset.mtab = activeMobileTab;
+    [tabBar, mobileListingsPanel, mobileAreasPanel, insightsEl].forEach(el => { if (el) el.style.display = ""; });
+    insightsEl.classList.remove("mobile-hidden");
     tabBar.querySelectorAll(".mobile-tab").forEach(btn => {
       btn.classList.toggle("active", btn.dataset.tab === activeMobileTab);
     });
-
-    if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
-    if (activeMobileTab === "insights") {
-      insightsEl.classList.remove("mobile-hidden");
-      insightsEl.style.display = "flex";
-      mobileListingsPanel.style.display = "none";
-    } else if (activeMobileTab === "areas") {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      mobileListingsPanel.style.display = "none";
-      if (mobileAreasPanel) mobileAreasPanel.style.display = "flex";
-    } else {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      mobileListingsPanel.style.display = "flex";
-      renderMobileListings();
-    }
-
-    setTimeout(() => map.invalidateSize(), 50);
+    // (neighbourhoods.js, which defines the banner the list starts with, loads after this file: the first call comes with the data)
+    if (typeof appendAreaBanner === "function") renderMobileListings();   // cheap (one page of rows); keeps the list current whichever view shows it
+    setTimeout(() => { map.invalidateSize(); if (typeof resizeCharts === "function") resizeCharts(); }, 60);
   }
 
   // Render listings into the mobile panel
@@ -1297,10 +1283,9 @@ function offsetToDateStr(offset) {
     const MOBILE_PER_PAGE = 20;
     const totalItems = list.length;
     const totalPages = Math.ceil(totalItems / MOBILE_PER_PAGE);
-    if (window._mobileCurrentPage > totalPages) window._mobileCurrentPage = 1;
-    if (!window._mobileCurrentPage) window._mobileCurrentPage = 1;
-    const startIdx = (window._mobileCurrentPage - 1) * MOBILE_PER_PAGE;
-    const pageItems = list.slice(startIdx, startIdx + MOBILE_PER_PAGE);
+    // Phone: no page numbers. The list grows by one batch each time "Show more" is pressed.
+    if (!window._mobileShown || window._mobileShown < MOBILE_PER_PAGE) window._mobileShown = MOBILE_PER_PAGE;
+    const pageItems = list.slice(0, window._mobileShown);
 
     mobileListingRows.innerHTML = "";
 
@@ -1324,6 +1309,8 @@ function offsetToDateStr(offset) {
         <div class="image-wrapper">
           <img
             src="${pt.photo || ''}"
+            referrerpolicy="no-referrer"
+            loading="lazy"
             onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';"
             alt=""
           />
@@ -1345,11 +1332,15 @@ function offsetToDateStr(offset) {
 
     // Render pagination into the dedicated sticky container
     const mobilePagContainer = document.getElementById("mobilePaginationControls");
-    renderPagination(mobilePagContainer, window._mobileCurrentPage, totalPages, totalItems, (page) => {
-      window._mobileCurrentPage = page;
-      renderMobileListings();
-      mobileListingRows.scrollTop = 0;
-    });
+    mobilePagContainer.innerHTML = "";
+    if (totalItems > pageItems.length) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "show-more-btn";
+      more.textContent = `Show ${Math.min(MOBILE_PER_PAGE, totalItems - pageItems.length)} more · ${(totalItems - pageItems.length).toLocaleString()} left`;
+      more.addEventListener("click", () => { window._mobileShown += MOBILE_PER_PAGE; renderMobileListings(); });
+      mobilePagContainer.appendChild(more);
+    }
 
   }
 
@@ -1364,7 +1355,7 @@ function offsetToDateStr(offset) {
   // Mobile sort select change
   if (mobileSortSelect) {
     mobileSortSelect.addEventListener("change", () => {
-      window._mobileCurrentPage = 1;
+      window._mobileShown = 0;
       renderMobileListings();
     });
   }
@@ -1376,7 +1367,7 @@ function offsetToDateStr(offset) {
       searchQuery = e.target.value.toLowerCase();
       // Keep desktop search in sync
       if (listingSearchInput) listingSearchInput.value = e.target.value;
-      window._mobileCurrentPage = 1;
+      window._mobileShown = 0;
       renderMobileListings();
     });
   }
@@ -1385,7 +1376,8 @@ function offsetToDateStr(offset) {
   const origUpdateListingsSidebar = window.updateListingsSidebar || updateListingsSidebar;
   // We expose a hook: after desktop sidebar updates, also refresh mobile
   window._refreshMobileListings = function () {
-    if (isMobile() && activeMobileTab === "listings") {
+    if (isMobile()) {
+      window._mobileShown = 0;   // new data: back to the first batch
       renderMobileListings();
     }
   };

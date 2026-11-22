@@ -303,3 +303,133 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .sold-map .mode-tabs, .active-map .mode-tabs { left: auto !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PHONE · C · MINIMAL
+   The map, a three-figure bar (count, average price, days on market), a Price button and a Period button, and a list that opens
+   from the bottom when you ask for it (with "Show more" instead of page numbers). The radius tool, the neighbourhood table, the
+   charts and every other filter are not on the phone. Desktop (901px and wider) keeps all of it and ignores this block.
+   ═══════════════════════════════════════════════════════════ */
+.m-only { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --m-top: env(safe-area-inset-top, 0px);
+    --m-bottom: env(safe-area-inset-bottom, 0px);
+    --m-dock-h: 128px;   /* measured by script */
+    --m-sheet-max: 88vh;
+    --tap: 44px;
+  }
+  @supports (height: 100dvh) { :root { --m-sheet-max: 88dvh; } }
+
+  /* the page: a fixed map */
+  html, body { height: 100% !important; overflow: hidden !important; overscroll-behavior: none; }
+  body { display: block !important; }
+  #appContainer, #mainPanel { position: fixed !important; inset: 0 !important; display: block !important; height: auto !important; min-height: 0 !important; flex: none !important; grid-template-columns: none !important; grid-template-rows: none !important; }
+  #appContainer { z-index: 1100; }
+  body[data-chip] #appContainer, body[data-mtab="listings"] #appContainer { z-index: 10095; }   /* the scrim and the list sheet, which live inside it, then cover the dock too */
+  #map { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; min-height: 0 !important; grid-column: auto !important; grid-row: auto !important; }
+  #listingsPanel, #areasPanel, #insights, #mobileAreasPanel, .mobile-tab-bar { display: none !important; }
+
+  /* Sold | Active: a small pill, top left */
+  .sold-map .mode-tabs, .active-map .mode-tabs {
+    position: fixed !important; top: calc(10px + var(--m-top)) !important; left: 12px !important; right: auto !important; bottom: auto !important;
+    margin: 0 !important; padding: 3px !important; border-radius: 15px !important; z-index: 1200 !important;
+    background: var(--glass-solid); border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 18px; font-size: 14px; border-radius: 12px; }
+  body[data-chip] .mode-tabs, body[data-mtab="listings"] .mode-tabs { z-index: 900 !important; }
+
+  /* Leaflet's corners sit above the dock */
+  .leaflet-top.leaflet-left { display: none; }
+  .leaflet-bottom { bottom: var(--m-dock-h) !important; }
+  .leaflet-control-zoom a, .leaflet-touch .leaflet-bar a { width: var(--tap) !important; height: var(--tap) !important; line-height: var(--tap) !important; }
+  .leaflet-control-attribution a { display: inline-block; padding: 14px 3px !important; margin: -14px 0 !important; }
+  .drag-handle::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }   /* a 52px grab area for a 24px dot */
+
+  /* ── the dock ── */
+  .m-dock { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1150; padding: 0 12px calc(10px + var(--m-bottom)); background: var(--glass-solid); border-radius: 22px 22px 0 0; box-shadow: 0 -8px 30px rgba(15, 23, 42, 0.22), 0 -1px 0 var(--line); }
+  .m-stats { display: flex; width: 100%; min-height: 64px; padding: 10px 4px 6px; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .m-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .m-cell + .m-cell { padding-left: 12px; border-left: 1px solid var(--line); }
+  .m-cell b { font-size: 21px; line-height: 1.2; font-weight: 800; color: var(--ink); white-space: nowrap; letter-spacing: -0.01em; }
+  .m-cell i { font-style: normal; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .m-actions { display: flex; gap: 8px; }
+  .m-chip, .m-list-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 0 16px; border-radius: 14px; font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .m-chip { flex: 1 1 0; min-width: 0; padding: 0 10px; border: 1px solid #c4cddb; background: #fff; color: var(--ink); font-size: 14px; }
+  .m-chip[data-chip="period"] { flex: 1.5 1 0; }
+  .m-chip::after { content: "▾"; font-size: 11px; color: var(--muted); }
+  .m-chip.is-on { background: #eef0ff; border-color: var(--accent); color: var(--accent-ink); }
+  .m-chip.is-on::after { color: var(--accent-ink); }
+  .m-list-btn { flex: 1 1 0; border: 0; background: var(--ink); color: #fff; }
+  .m-sum-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #78350f; background: #fffbeb; border: 1px solid #fcd34d; }
+  .m-sum-status[hidden] { display: none; }
+  .m-sum-status.is-error { color: #7f1d1d; background: #fef2f2; border-color: #fca5a5; }
+  .m-sum-status button { min-height: var(--tap); padding: 0 14px; border: 1px solid #cdd6e3; border-radius: 10px; background: #fff; font: inherit; font-weight: 700; color: var(--ink); }
+
+  /* ── the list sheet: #mobileListingsPanel rises from the bottom ── */
+  #mobileListingsPanel { display: none !important; }
+  body[data-mtab="listings"] #mobileListingsPanel {
+    display: flex !important; flex-direction: column; position: fixed !important; left: 0; right: 0; bottom: 0; top: auto !important; height: var(--m-sheet-max) !important; z-index: 10100;
+    overflow-y: auto !important; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    background: #fff !important; border: 0 !important; border-radius: 22px 22px 0 0 !important; box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.3); padding: 0 !important; margin: 0 !important; min-height: 0 !important;
+  }
+  .m-list-head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 4; flex: none; padding: 10px 14px 4px 18px; background: #fff; }
+  .m-list-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--ink); }
+  .m-icon-btn { width: var(--tap); height: var(--tap); padding: 0; border: 0; border-radius: 50%; background: #eef1f7; color: var(--ink); font-size: 18px; }
+  #mobileListingsPanel .search-container { position: sticky; top: 58px; z-index: 3; flex: none; display: flex !important; padding: 4px 14px 8px; background: #fff !important; border: 0; box-shadow: 0 1px 0 var(--line); }
+  #mobileListingsPanel .search-container input { min-height: var(--tap); font-size: 15px; }
+  #mobileListingsPanel .sort-container { display: none; }
+  #mobileListingsPanel .listing-rows { flex: none !important; overflow: visible !important; padding: 8px 14px 4px !important; min-height: 0; }
+  #mobileListingsPanel .listing-row { min-height: 88px; }
+  #mobileListingsPanel .pagination-controls { position: static !important; flex: none; padding: 6px 14px calc(20px + var(--m-bottom)); background: transparent !important; border: 0 !important; }
+  .show-more-btn { width: 100%; min-height: 52px; border: 1px solid #c4cddb; border-radius: 14px; background: #fff; color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 700; }
+  .listing-info .view-btn, .selection-banner button, .data-status-btn { min-height: var(--tap) !important; min-width: var(--tap); }
+
+  /* ── scrim + the Price / Period sheet (#controls) ── */
+  .m-scrim:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 10090; background: rgba(15, 23, 42, 0.5); }
+  #controls { display: none !important; }
+  body[data-chip] #controls {
+    display: flex !important; flex-direction: column; align-items: stretch !important; gap: 14px; position: fixed !important; top: auto !important; left: 0 !important; right: 0; bottom: 0; z-index: 10100 !important;
+    width: auto !important; max-width: none !important; max-height: var(--m-sheet-max); height: auto !important; transform: none !important; transition: none !important;
+    padding: 0 18px calc(14px + var(--m-bottom)) !important; border: 0 !important; border-radius: 22px 22px 0 0 !important; box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.3) !important; backdrop-filter: none !important;
+    background: #fff !important; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  body[data-chip] #controls .m-filter-head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 4; margin: 0 -18px; padding: 10px 18px 6px; background: #fff; }
+  body[data-chip] #controls .m-filter-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--ink); }
+  body[data-chip] #controls .m-icon-btn { width: var(--tap); height: var(--tap); padding: 0 !important; border: 0 !important; border-radius: 50% !important; background: #eef1f7 !important; color: var(--ink) !important; font-size: 18px !important; }
+  body[data-chip] #controls #filterPanel { display: contents !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; transform: none !important; }
+  body[data-chip] #controls .area-toggle, body[data-chip] #controls .radius-group, body[data-chip] #controls #toggleListings, body[data-chip] #controls #toggleAreas, body[data-chip] #controls #filterToggle, body[data-chip] #controls #periodMenuBtn { display: none !important; }
+  body[data-chip] #controls .filter-section { display: none !important; }
+  body[data-chip] #controls .filter-header { display: none !important; }
+  body[data-chip="price"] #controls .filter-header { display: flex !important; order: 5; justify-content: flex-end; padding: 0; border: 0; background: transparent; }
+  body[data-chip="price"] #controls .filter-header h3 { display: none; }
+  body[data-chip="price"] #controls #clearFilters { min-height: var(--tap); padding: 0 16px; border-radius: 12px; background: #fff !important; color: var(--down) !important; border: 1px solid #f1c5c5 !important; font-size: 14px; font-weight: 700; }
+  body[data-chip] #controls .m-filter-foot { order: 9; }
+  body[data-chip="price"] #controls .filter-section[data-sec="price"] { display: block !important; margin: 0; padding: 4px 0 0; border: 0; min-width: 0; background: transparent; }
+  body[data-chip="price"] #controls .filter-section legend { display: none; }
+  body[data-chip="price"] #controls .range-labels span { font-size: 15px; padding: 6px 12px; }
+  body[data-chip="price"] #controls .filter-section .noUi-target { margin: 14px 20px 16px !important; }
+  body[data-chip] #controls .noUi-handle { width: var(--tap) !important; height: var(--tap) !important; top: -19px !important; right: -22px !important; }
+  body[data-chip] #controls .noUi-handle::after { top: 12px !important; left: 12px !important; }
+  body[data-chip="price"] #controls .period-menu, body[data-chip="period"] #controls .filter-section { display: none !important; }
+  body[data-chip="period"] #controls .period-menu { display: block !important; position: static; width: 100%; }
+  body[data-chip] #controls .period-menu .period-menu-pop, body[data-chip] #controls .period-menu .period-menu-pop[hidden] {
+    display: grid !important; position: static; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; min-width: 0; max-height: none; padding: 0; border: 0; box-shadow: none; background: transparent; overflow: visible;
+  }
+  body[data-chip] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm { min-height: var(--tap); padding: 8px 10px; border: 1px solid #d5dce8; border-radius: 12px; font-size: 14px; line-height: 1.2; white-space: normal !important; }
+  body[data-chip] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm.is-active { border-color: var(--accent); }
+  body[data-chip] #controls .pm-opt[data-period="custom"], body[data-chip] #controls .period-dock { display: none !important; }   /* no custom range on this phone layout */
+  body[data-chip] #controls .m-filter-foot { display: block; position: sticky; bottom: 0; z-index: 4; margin: 0 -18px -14px; padding: 10px 18px calc(14px + var(--m-bottom)); background: #fff; }
+  body[data-chip] #controls .m-filter-foot .m-apply { width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--accent); background-image: none; color: #fff; font: inherit; font-size: 17px; font-weight: 800; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4); }
+}
+
+/* a phone on its side: the dock is one row (figures and buttons side by side) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .m-dock { display: flex; align-items: center; gap: 8px; padding-top: 6px; }
+  .m-stats { flex: 1.4; min-height: 52px; padding: 4px; }
+  .m-actions { flex: 1; }
+  .m-cell b { font-size: 18px; }
+  .m-sum-status { position: absolute; bottom: 100%; left: 12px; margin: 0 0 6px; }
+}
