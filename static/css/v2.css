@@ -393,6 +393,7 @@
   #mobileListingsPanel .listing-rows { flex: 1 1 100% !important; overflow: visible !important; padding: 2px 12px 4px !important; min-height: 0; }
   #mobileListingsPanel .pagination-controls { position: static !important; flex: 1 1 100%; padding: 8px 12px 24px; background: transparent !important; border: 0 !important; flex-wrap: wrap; justify-content: center; }
   #mobileListingsPanel .listing-row { min-height: 88px; background: #fff; }
+  #mobileListingsPanel .listing-row.highlight:not(.is-selected) { background: #f7f7ff; border: 2px solid var(--accent) !important; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18); }
   .page-btn, .page-ellipsis { min-width: var(--tap) !important; width: var(--tap) !important; height: var(--tap) !important; }
   .listing-info .view-btn, .selection-banner button, .data-status-btn, .area-clear, .chart-btn, .insight-tab, .chip-btn { min-height: var(--tap) !important; min-width: var(--tap); }
   #mobileAreasPanel .areas-body { flex: none; background: #fff; }

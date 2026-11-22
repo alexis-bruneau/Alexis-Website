@@ -69,6 +69,13 @@ function toggleView() {
   (window.setView || setView)(currentView === "listings" ? homeView() : "listings");
 }
 
+/** Opens the listings. On a phone the bottom tab bar changes the screen without telling currentView (tapping Map leaves it on
+ *  "listings"), so the tab has to be checked too, or a marker tap after that never brings the Listings tab back. */
+function showListings() {
+  const tab = document.body.dataset.mtab;   // only set on a phone
+  if (currentView !== "listings" || (tab && tab !== "listings")) setView("listings");
+}
+
 /** Where closing the listings sidebar goes back to: the neighbourhood table in Neighbourhood mode, else the insights. */
 function homeView() { return areaMode === "neighbourhood" ? "areas" : "insights"; }
 
@@ -145,6 +152,7 @@ fetch("/points.json")
         range: { min: 0, max: totalDays },
         start: [0, totalDays]
       });
+      slider.noUiSlider.set(defaultSoldWindow());   // the page opens on the last 6 months (fires "set": period.js highlights it)
       updateDateLabels();
     }
 
@@ -299,8 +307,8 @@ document.getElementById("clearFilters").addEventListener("click", () => {
   selectedPTypes = [];
   document.querySelectorAll(".ptype-btn").forEach(b => b.classList.remove("selected"));
 
-  // Reset date range slider to full range
-  slider.noUiSlider.set([0, totalDays]);
+  // Reset date range slider to the default period (last 6 months)
+  slider.noUiSlider.set(defaultSoldWindow());
 
   // Reset price range slider to full range
   priceSlider.noUiSlider.set([MIN_PRICE, MAX_PRICE]);
@@ -661,6 +669,16 @@ let dateOrigin = new Date("2019-01-01");  // default, updated when data loads
 const msPerDay = 1000 * 60 * 60 * 24;
 let totalDays = Math.floor((new Date() - dateOrigin) / msPerDay);
 
+const DEFAULT_PERIOD_MONTHS = 6;
+
+/** [start, end] slider offsets of the default period: the last N months of sold data (same rule as the "6 months" pick in period.js). */
+function defaultSoldWindow() {
+  const start = new Date(dateOrigin.getTime() + totalDays * msPerDay);
+  start.setUTCMonth(start.getUTCMonth() - DEFAULT_PERIOD_MONTHS);
+  start.setUTCDate(start.getUTCDate() + 1);
+  return [Math.max(0, Math.round((start - dateOrigin) / msPerDay)), totalDays];
+}
+
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function updateDateLabels() {
@@ -763,6 +781,7 @@ async function fetchFilteredPoints() {
     currentPage = 1; // Reset to page 1 on new data
     selectedLocationKey = null; // Clear location selection
     selectedMarkerRef = null;
+    window._mobileFocusMls = null;   // new data: the phone list forgets the picked listing
     updateListingsSidebar(points); // Only filtered points in sidebar
     if (window._refreshMobileListings) window._refreshMobileListings(); // Also refresh mobile
 
@@ -864,11 +883,12 @@ function updateMapMarkers(filteredPoints) {
           if (el) el.classList.add("marker-selected");
 
           // Switch to listings view and show filtered listings
-          if (currentView !== "listings") {
-            setView("listings");
-          }
+          window._mobileFocusMls = null;
+          window._mobileCurrentPage = 1;
           currentPage = 1;
+          showListings();
           updateListingsSidebar(currentPoints);
+          if (window._refreshMobileListings) window._refreshMobileListings();
         } else {
           // Single listing: clear any active selection and restore full view
           if (selectedMarkerRef) {
@@ -879,13 +899,16 @@ function updateMapMarkers(filteredPoints) {
           selectedMarkerRef = null;
           currentPage = 1;
 
+          // The phone list opens on the page that holds the listing and highlights it (renderMobileListings reads these two)
+          window._mobileFocusMls = firstProperty.mls || null;
+          window._mobileScrollToFocus = !!firstProperty.mls;
+
           // Switch to listings if needed
-          if (currentView !== "listings") {
-            setView("listings");
-          }
+          showListings();
 
           // Re-render full listings then highlight clicked one
           updateListingsSidebar(currentPoints);
+          if (window._refreshMobileListings) window._refreshMobileListings();
           if (firstProperty.mls) {
             setTimeout(() => highlightSidebarListing(firstProperty.mls), 150);
           }
@@ -1296,6 +1319,11 @@ function offsetToDateStr(offset) {
 
     // Pagination
     const MOBILE_PER_PAGE = 20;
+    const focusMls = window._mobileFocusMls;   // the listing picked on the map: its page opens and its row is highlighted
+    if (focusMls && window._mobileScrollToFocus) {
+      const idx = list.findIndex(pt => pt.mls === focusMls);
+      if (idx !== -1) window._mobileCurrentPage = Math.floor(idx / MOBILE_PER_PAGE) + 1;
+    }
     const totalItems = list.length;
     const totalPages = Math.ceil(totalItems / MOBILE_PER_PAGE);
     if (window._mobileCurrentPage > totalPages) window._mobileCurrentPage = 1;
@@ -1321,6 +1349,8 @@ function offsetToDateStr(offset) {
     pageItems.forEach(pt => {
       const row = document.createElement("div");
       row.className = "listing-row";
+      if (focusMls && pt.mls === focusMls) row.classList.add("highlight");
+      row.dataset.mls = pt.mls || "";
       row.innerHTML = `
         <div class="image-wrapper">
           <img
@@ -1345,6 +1375,16 @@ function offsetToDateStr(offset) {
       });
       mobileListingRows.appendChild(row);
     });
+
+    // Bring the picked row into view once the Listings tab is on screen (it was hidden, so it has no layout yet)
+    if (focusMls && window._mobileScrollToFocus) {
+      window._mobileScrollToFocus = false;
+      // looked up when the timer fires: the list is redrawn more than once while the tab opens
+      setTimeout(() => {
+        const target = mobileListingRows.querySelector(".listing-row.highlight");
+        if (target) target.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 150);
+    }
 
     // Render pagination into the dedicated sticky container
     const mobilePagContainer = document.getElementById("mobilePaginationControls");

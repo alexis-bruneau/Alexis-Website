@@ -16,6 +16,8 @@ prefix is `silver_v2`, NOT the live `silver/`, so you can compare before switchi
     python -m redfin.transform.sold --incremental --out-prefix silver   # daily run: only new listings
     python -m redfin.transform.sold --out-prefix silver    # full rewrite of live silver (back it up first)
 
+Only bronze days from config.SILVER_MIN_MONTH (2025-06) on are transformed; older pages stay in bronze only.
+
 Images: a listing's photo is attached when it already exists in images/. Missing ones are downloaded
 from the CDN (not redfin.ca pages) unless you pass --skip-images.
 """
@@ -25,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
-from redfin import runstats
+from redfin import config, runstats
 from redfin.storage import azure_store as store
 from redfin.transform import metrics, parsing
 
@@ -35,12 +37,13 @@ EVENT_KEY = ["property_id", "event_date", "event_type", "source_id", "price"]
 
 
 def latest_bronze_per_name(entries):
-    """[(day, name, blob)] -> one entry per bronze file name (the MLS, or P<property_id>), the newest day."""
+    """[(day, name, blob)] -> one entry per bronze file name (the MLS, or P<property_id>), the newest day.
+    Only names whose newest day is in config.SILVER_MIN_MONTH or later: older pages stay in bronze but never reach silver."""
     latest = {}
     for day, name, blob in entries:
         if name not in latest or day > latest[name][0]:
             latest[name] = (day, name, blob)
-    return sorted(latest.values())
+    return sorted(v for v in latest.values() if v[0][:7] >= config.SILVER_MIN_MONTH)
 
 
 def transform_one(entry, streetview):

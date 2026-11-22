@@ -444,6 +444,15 @@ function setEmphasis(cls, points) {
   });
 }
 
+/** Opens the listings. On a phone the bottom tab bar changes the screen without telling currentView (tapping Map leaves it on
+ *  "listings"), so the tab has to be checked too, or a marker tap after that never brings the Listings tab back. */
+function showListings() {
+  const tab = document.body.dataset.mtab;   // only set on a phone
+  if (currentView !== "listings" || (tab && tab !== "listings")) setView("listings");
+  const panel = document.getElementById("mobileListingsPanel");
+  if (panel && tab) panel.scrollTop = 0;   // the picked listing is pinned at the top of the phone list
+}
+
 function updateMapMarkers(points) {
   markersCluster.clearLayers();
   markerByKey = new Map();
@@ -479,7 +488,7 @@ function updateMapMarkers(points) {
       L.DomEvent.stopPropagation(e);
       currentPage = 1;
       selectedLocationKey = group.length > 1 ? key : null;
-      if (currentView !== "listings") setView("listings");
+      showListings();
       updateListingsSidebar();
       if (group.length === 1) setTimeout(() => highlightListing(first.mls), 150);
     });
@@ -981,7 +990,7 @@ function openListing(pt) {
   selectedLocationKey = null;
   if (searchQuery) { searchQuery = ""; searchInput.value = ""; }
   setEmphasis("is-linked", []);
-  if (currentView !== "listings") setView("listings");
+  showListings();
   updateListingsSidebar();
   setTimeout(() => highlightListing(pt.mls), 150);
 }

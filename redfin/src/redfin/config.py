@@ -48,4 +48,6 @@ MAX_CONSECUTIVE_FAILURES = int(os.getenv("MAX_CONSECUTIVE_FAILURES", "8"))
 MAX_NEW_URLS = int(os.getenv("MAX_NEW_URLS", "500"))
 CENSUS_SLICE_MAX = int(os.getenv("CENSUS_SLICE_MAX", "340"))
 SAVE_STREETVIEW = os.getenv("SAVE_STREETVIEW", "1") == "1"
+# Silver keeps only bronze days from this month on (YYYY-MM). Bronze itself keeps everything.
+SILVER_MIN_MONTH = os.getenv("SILVER_MIN_MONTH", "2025-06")
 STATS_FILE = os.getenv("REDFIN_STATS_FILE")  # unset outside redfin.run.daily: steps then report nothing

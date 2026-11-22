@@ -335,6 +335,30 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Consequences**: CSS only (`static/css/map.css`); no endpoint, daily scrape or Pages build change.
 - **Status**: accepted
 
+## D22. Silver starts at 2025-06; the sold map opens on the last 6 months
+- **Date**: 2026-11-22
+- **Decision**: (1) `transform.sold` (and `transform.text`, `run.verify`, which share `latest_bronze_per_name`) only take listings
+  whose newest bronze day is in `config.SILVER_MIN_MONTH` (`2025-06`, env-overridable) or later. Older bronze pages stay in bronze
+  (write-once, source of truth) but never reach silver, so a full rebuild gives silver from 2025-06 and the sale history of the
+  dropped listings goes with them. The cutoff is on the bronze day (the `silver/<YYYY-MM>/` folder), not on the sale date.
+  (2) `/ottawa_map` loads with the "Sold Date Range" slider on the last 6 months of sold data (same rule as the "6 months" quick
+  pick); Clear All returns to that default, "All" is one click. The active map is unchanged (its period is time on market, and
+  6 months would hide listings of 180+ days).
+- **Consequences**: month files before 2025-06 already in live `silver/` are not deleted by an incremental run; they disappear
+  only on a full rewrite (`--out-prefix silver`, back up first). Daily scrape workflow and Pages build are unchanged in shape,
+  but the scheduled run on master will use the cutoff once merged.
+- **Status**: accepted
+
+## D23. Phone: a marker tap always returns to the Listings tab and shows the listing
+- **Date**: 2026-11-22 (same branch as D22)
+- **Decision**: on both maps, `showListings()` opens the list when the desktop view state **or** the phone tab (`body[data-mtab]`)
+  is not "listings". Before, only `currentView` was checked, and the bottom tab bar never updates it, so after one marker tap
+  (or the scatter on the active page) later taps while on the Map tab did nothing. On the sold page the phone list also had no
+  highlight: it now opens on the page that holds the tapped listing (sorted as the phone list is), marks the row and scrolls to
+  it; new data clears the mark. The active page's phone list already pins the picked listing at the top: it now scrolls back to the top.
+- **Consequences**: JS and CSS only (`map.js`, `active.js`, `v2.css`); no endpoint, silver, daily scrape or Pages build change.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)

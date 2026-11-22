@@ -45,6 +45,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
   bar on phones. Read time only (`redfin.analytics.neighbourhoods`, `sale_filters`, `active_filters`): nothing new in silver, no blob
   change; the daily scrape and the Pages build are untouched. Boundaries and licence: `redfin/data/neighbourhoods/README.md`.
 
+- **Silver from 2025-06 only, sold map opens on 6 months** (D22): `config.SILVER_MIN_MONTH`; the old month files still in live
+  `silver/` go away only on a full rewrite. The sold map's date slider defaults to the last 6 months (Clear All too).
+
 ## In progress
 
 - `feature/daily-run` (D14, D15): the daily command, merged with master (which has the restructure). PR to master not merged yet.
