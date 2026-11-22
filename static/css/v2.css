@@ -184,6 +184,10 @@
   body.side-open #controls { left: 424px; max-width: calc(100vw - 424px - 24px); }
   .mode-tabs { z-index: 10001; }
 
+  /* the neighbourhood legend ("Colour by"): Leaflet puts it bottom left, which is under the table and the drawer here.
+     Move that corner to the top right, below the control pill (!important beats the inline bottom set by positionLegend) */
+  #map .leaflet-bottom.leaflet-left { top: 70px; right: 4px; bottom: auto !important; left: auto; }
+
   /* the listings and the neighbourhood table float over the map instead of pushing it */
   #listingsPanel, #areasPanel {
     position: absolute;
@@ -261,7 +265,7 @@
   body.drawer-collapsed #insights, body.drawer-collapsed #insights.insights-charts { height: auto; min-height: 0; padding: 10px 16px 12px; }
   body.drawer-collapsed .insights-right { display: none; }
   body.drawer-collapsed .insights-left { flex: 1 1 auto; }
-  body.drawer-collapsed .summary-cards { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); grid-auto-rows: auto; }
+  body.drawer-collapsed .summary-cards { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); grid-auto-rows: auto; }
   body.drawer-collapsed .card { padding: 6px 10px; }
   body.drawer-collapsed .drawer-period { margin-bottom: 6px; }
   body.drawer-collapsed .dt-caret { transform: rotate(180deg); }

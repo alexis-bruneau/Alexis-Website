@@ -342,12 +342,27 @@ function renderLegend() {
 }
 
 /** The legend sits just above the attribution line (which wraps to two or three lines on a phone), never on top of it. */
+// Same query as the full-bleed desktop block in v2.css, which moves the legend's corner to the top right
+const LEGEND_TOP_RIGHT = window.matchMedia("(min-width: 901px) and (min-height: 501px)");
+
 function positionLegend() {
   const corner = document.querySelector(".leaflet-bottom.leaflet-left");
+  if (!corner) return;
+  if (LEGEND_TOP_RIGHT.matches) {
+    // just under the control bar, which wraps to two rows on narrower windows
+    const bar = document.getElementById("controls");
+    const top = bar ? bar.getBoundingClientRect().bottom - map.getContainer().getBoundingClientRect().top - 4 : 0;
+    corner.style.top = top > 0 ? `${Math.round(top)}px` : "";
+    return;
+  }
+  corner.style.top = "";
   const attribution = document.querySelector(".leaflet-control-attribution");
-  if (corner && attribution) corner.style.bottom = `${attribution.offsetHeight}px`;
+  if (attribution) corner.style.bottom = `${attribution.offsetHeight}px`;
 }
 window.addEventListener("resize", () => setTimeout(positionLegend, 60));
+if (window.ResizeObserver && document.getElementById("controls")) {
+  new ResizeObserver(() => positionLegend()).observe(document.getElementById("controls"));
+}
 map.on("layeradd layerremove", () => setTimeout(positionLegend, 0));   // the attribution grows when the boundaries load
 
 function setMetric(metric) {
@@ -534,10 +549,38 @@ function selectNeighbourhood(id, { zoom = false, name = null } = {}) {
   renderAreaTables();
   scrollSelectedRowIntoView();
   if (zoom && nbState.layers.has(id)) {
-    map.fitBounds(nbState.layers.get(id).getBounds(), { padding: [24, 24], maxZoom: 15 });
+    map.fitBounds(nbState.layers.get(id).getBounds(), { ...visibleMapPadding(24), maxZoom: 15 });
   }
   updateAreaTitle();
   NB.refetch();
+}
+
+/**
+ * fitBounds padding that keeps the area clear of whatever floats over the map: the control bar on top, the listings or
+ * neighbourhood panel on the left, the insights drawer at the bottom (the full-bleed desktop layout). Layouts that put
+ * those beside or under the map get plain `margin` padding, since nothing overlaps.
+ */
+function visibleMapPadding(margin) {
+  const m = map.getContainer().getBoundingClientRect();
+  let top = 0, left = 0, bottom = 0;
+  const overlap = sel => {
+    const el = document.querySelector(sel);
+    if (!el || el.offsetParent === null) return null;   // not displayed
+    const r = el.getBoundingClientRect();
+    const hit = r.width > 0 && r.height > 0 && r.left < m.right && r.right > m.left && r.top < m.bottom && r.bottom > m.top;
+    return hit ? r : null;
+  };
+  const bar = overlap("#controls");
+  if (bar && bar.top < m.top + m.height / 2) top = bar.bottom - m.top;
+  ["#areasPanel.open", "#listingsPanel.open"].forEach(sel => {
+    const r = overlap(sel);
+    if (r && r.left < m.left + m.width / 2) left = Math.max(left, r.right - m.left);
+  });
+  const drawer = overlap("#insights");
+  if (drawer && drawer.top > m.top + m.height / 2) bottom = m.bottom - drawer.top;
+  // a window too small for that: fall back to the whole map
+  if (m.width - left < 160 || m.height - top - bottom < 120) return { padding: [margin, margin] };
+  return { paddingTopLeft: [left + margin, top + margin], paddingBottomRight: [margin, bottom + margin] };
 }
 
 function clearNeighbourhoodSelection() {

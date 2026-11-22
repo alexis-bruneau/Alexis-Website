@@ -375,12 +375,14 @@ const CUT_BUCKETS = [
  *  total cut over the listing's life, not last_change_pct (only the latest change): a listing cut twice counts once,
  *  at its total. Null when there is no first asking price, so such a listing is in no cut bucket. */
 const cutPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.original_price - pt.price) / pt.original_price * 100 : null;
+/** Price difference: the asking price against the FIRST asking price, as a signed % (negative = cut, positive = raised,
+ *  0 = unchanged). The scatter's y value. Null when there is no first asking price. */
+const priceDiffPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.price - pt.original_price) / pt.original_price * 100 : null;
 const bucketIndex = (buckets, value) => value == null ? -1 : buckets.findIndex((b) => b.test(value));
-/** The change from the first asking price, in %, signed: a 5% cut is -5, a rise is positive, no change is 0. Null without a first price. */
-const diffPct = (pt) => (pt.original_price > 0 && pt.price != null) ? (pt.price - pt.original_price) / pt.original_price * 100 : null;
-const fmtPct = (v) => `${v > 0 ? "+" : v < 0 ? "\u2212" : ""}${Math.abs(v).toFixed(Math.abs(v) < 10 ? 1 : 0)}%`;
-const inBrush = (pt, b) => pt.dom != null && diffPct(pt) != null
-  && pt.dom >= b.xMin && pt.dom <= b.xMax && diffPct(pt) >= b.yMin && diffPct(pt) <= b.yMax;
+const inBrush = (pt, b) => {
+  const diff = priceDiffPct(pt);
+  return pt.dom != null && diff != null && pt.dom >= b.xMin && pt.dom <= b.xMax && diff >= b.yMin && diff <= b.yMax;
+};
 const hasChartSelection = () => chartSelection.dom.size > 0 || chartSelection.cut.size > 0 || chartSelection.brush !== null;
 
 function resetChartSelection() {
@@ -789,7 +791,7 @@ function updateSelectionBar() {
   if (dom.size) addChip(`Days: ${labels(dom, DOM_BUCKETS)}`, () => dom.clear());
   if (cut.size) addChip(`Cut: ${labels(cut, CUT_BUCKETS)}`, () => cut.clear());
   if (brush) {
-    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${fmtPct(brush.yMin)} to ${fmtPct(brush.yMax)}`,
+    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${fmtDiffPct(brush.yMin, 0)} to ${fmtDiffPct(brush.yMax, 0)}`,
       () => { chartSelection.brush = null; });
   }
 }
@@ -798,7 +800,14 @@ window.clearChartSelection = () => { resetChartSelection(); refreshView(); };
 window.chartSelectionCount = () => hasChartSelection() ? { shown: currentPoints.length, total: basePoints.length } : null;
 window.pickedListing = () => focusedPoint();
 
-/* ---- 1. Scatter: change from the first asking price (%) vs days on market ---- */
+/** "-5%" / "+2.5%" / "0%" for the price-difference axis and tooltip. */
+const fmtDiffPct = (v, digits) => {
+  if (v == null) return "–";
+  const r = Number(v.toFixed(digits ?? 1));
+  return `${r > 0 ? "+" : ""}${r}%`;
+};
+
+/* ---- 1. Scatter: price difference vs first asking price (%) against days on market ---- */
 let brushDrag = null;       // { x0, y0, x1, y1 } in canvas pixels while a selection rectangle is being dragged
 let brushMode = false;      // touch screens: "Select area" turns a finger drag into a selection instead of a page scroll
 let suppressClick = false;  // the click that ends a drag must not also select the dot under the cursor
@@ -862,7 +871,8 @@ function initScatter() {
             title: (items) => items[0].raw.pt.address || "Address not shown",
             label: (item) => {
               const pt = item.raw.pt;
-              const lines = [`${fmtPct(diffPct(pt))} from the first ask · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`, `${money(pt.price)} now`, changeText(pt)];
+              const lines = [`${fmtDiffPct(priceDiffPct(pt), 1)} vs first ask · ${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`,
+                             `Asking ${money(pt.price)}`, changeText(pt)];
               if (pt.original_price && pt.original_price !== pt.price) lines.push(`Listed at ${money(pt.original_price)}`);
               return lines;
             }
@@ -871,8 +881,7 @@ function initScatter() {
       },
       scales: {
         x: { type: "linear", min: 0, suggestedMax: 90, title: { display: true, text: "Days on market" }, grid: { color: GRID } },
-        y: { title: { display: true, text: "Change from first asking price" }, suggestedMin: -10, suggestedMax: 5, grace: "5%",
-             ticks: { callback: (v) => `${v}%` },
+        y: { title: { display: true, text: "Price difference vs first asking price" }, suggestedMin: -10, suggestedMax: 2, grace: "5%", ticks: { callback: (v) => fmtDiffPct(v) },
              grid: { color: (c) => c.tick && c.tick.value === 0 ? withAlpha(INK, 0.45) : GRID, lineWidth: (c) => c.tick && c.tick.value === 0 ? 1.5 : 1 } }
       }
     },
@@ -947,19 +956,19 @@ function initScatter() {
 
 function updateScatter() {
   // Every listing that passes the bucket picks; the brush only fades dots, it does not remove them.
-  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && diffPct(pt) != null);
+  const shown = applySelection(basePoints, "brush").filter((pt) => pt.dom != null && priceDiffPct(pt) != null);
   charts.scatter.data.datasets.forEach((ds) => {
-    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: diffPct(pt), pt }));
+    ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: priceDiffPct(pt), pt }));
   });
-  // Nothing to draw (no neighbourhood picked yet): give the empty axes a sensible range instead of $0K ticks
+  // Nothing to draw (no neighbourhood picked yet): give the empty axes a sensible range
   charts.scatter.options.scales.x.suggestedMax = shown.length ? undefined : 90;
   charts.scatter.options.scales.y.suggestedMin = shown.length ? undefined : -10;
-  charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 5;
+  charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 2;
   charts.scatter.update("none");
   setChartEmpty(charts.scatter.canvas.parentElement, shown.length ? null
     : (areaMode === "neighbourhood" && !selectedNeighbourhood ? "Pick a neighbourhood to see its listings." : "No listings to plot."));
   charts.scatter.canvas.setAttribute("aria-label",
-    `Scatter chart of the change from the first asking price against days on market: ${shown.length} active listings`);
+    `Scatter chart of price difference from the first asking price against days on market: ${shown.length} active listings`);
 }
 
 /** Clicking a dot: show the list, scroll to the listing and highlight it (highlightListing also marks it on the curve). */

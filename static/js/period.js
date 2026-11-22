@@ -60,7 +60,10 @@
       if (current === "custom") return { name: "Custom time on market", range: b >= MAX_DOM ? `${a}+ days on market` : `${a}–${b} days on market` };
       return { name: ACTIVE_NAMES[current], range: "" };
     }
-    return { name: NAMES[current], range: `${fmtShort(dayDate(a))} – ${fmtDate(dayDate(b))}` };
+    const from = dayDate(a), to = dayDate(b);
+    // the start drops its year only when it is the same as the end's ("Aug 23 – Nov 22, 2026", "Apr 12, 2021 – Nov 22, 2026")
+    const fromText = from.getUTCFullYear() === to.getUTCFullYear() ? fmtShort(from) : fmtDate(from);
+    return { name: NAMES[current], range: `${fromText} – ${fmtDate(to)}` };
   }
   function labelText() {
     const { name, range } = labelParts();
