@@ -169,7 +169,7 @@ body {
 }
 
 .search-container input::placeholder {
-  color: #667085;
+  color: #566072;
 }
 
 .search-container input:focus {
@@ -772,7 +772,7 @@ body {
 
 .page-btn:hover {
   background: #f1f5f9;
-  border-color: #667085;
+  border-color: #566072;
 }
 
 .page-btn.active {
@@ -802,7 +802,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667085;
+  color: #566072;
   font-size: 14px;
   font-weight: 600;
   user-select: none;
@@ -810,7 +810,7 @@ body {
 
 .pagination-info {
   font-size: 12px;
-  color: #667085;
+  color: #566072;
   margin-left: 8px;
 }
 
@@ -1691,7 +1691,7 @@ body {
 
 .recent-row:hover { background: #f8fafc; }
 .recent-addr { color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recent-date { color: #667085; font-size: 12px; }
+.recent-date { color: #566072; font-size: 12px; }
 
 .empty-note {
   padding: 16px;
@@ -2195,7 +2195,7 @@ canvas.brushing { touch-action: none; }
 .area-row { cursor: pointer; }
 .area-row:hover { background: #f1f5f9; }
 .area-row.is-selected { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
-.area-row.is-low td.is-stat { color: #667085; font-weight: 400; }   /* fewer than the minimum sample: the estimates are greyed out */
+.area-row.is-low td.is-stat { color: #566072; font-weight: 400; }   /* fewer than the minimum sample: the estimates are greyed out */
 .area-row.is-unassigned td.c-name { font-style: italic; }
 
 .areas-empty {

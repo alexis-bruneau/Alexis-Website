@@ -89,6 +89,8 @@ const map = L.map("map", { minZoom: 10, scrollWheelZoom: true, zoomControl: fals
   .setView([45.4215, -75.6972], 13);
 // Bottom right, like on phones: the top left belongs to the sidebars and the controls bar
 L.control.zoom({ position: "bottomright" }).addTo(map);
+// The map follows its own box: any layout change (a panel opening, a footer growing, a font loading) resizes it
+if (window.ResizeObserver) new ResizeObserver(() => map.invalidateSize()).observe(document.getElementById("map"));
 
 const ottawaBounds = L.latLngBounds([45.25, -76.0], [45.75, -75.4]);
 map.setMaxBounds(ottawaBounds);
@@ -235,7 +237,7 @@ function fitFilterPanel() {
   const mapBottom = document.getElementById("map").getBoundingClientRect().bottom;
   const phone = window.innerWidth <= 900 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
   const limit = phone ? mapBottom : window.innerHeight;
-  panel.style.maxHeight = `${Math.max(160, limit - top - 12)}px`;
+  panel.style.maxHeight = `${Math.max(120, limit - top - 12)}px`;
 }
 window.addEventListener("resize", () => fitFilterPanel());
 
