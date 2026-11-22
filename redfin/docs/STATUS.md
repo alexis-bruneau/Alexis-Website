@@ -48,6 +48,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 - **Silver from 2025-06 only, sold map opens on 6 months** (D22): `config.SILVER_MIN_MONTH`; the old month files still in live
   `silver/` go away only on a full rewrite. The sold map's date slider defaults to the last 6 months (Clear All too).
 
+- **Docker image for the web app** (D24, `feature/docker`): runs locally (`docker run --env-file .env`), about 250 MB of memory,
+  not deployed yet. Root `requirements.txt` is now web-only, which also removes the old `requests==2.24.0` pin. Guide: `docs/DOCKER.md`.
+
 ## In progress
 
 - `feature/daily-run` (D14, D15): the daily command, merged with master (which has the restructure). PR to master not merged yet.
@@ -92,7 +95,6 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 | Container is publicly readable, including bronze/silver | Azure | P2 |
 | Manual backups under `silver_backup/<timestamp>/` contain `listed_properties` files | Azure | harmless (the map only reads `silver/`), but nothing documents or cleans them |
 | Map still reads the legacy columns `Days On Market` / `Sold Price Difference` | `app/main.py` | dropping them needs the app switched to the new names first |
-| Root `requirements.txt` pins `requests==2.24.0`; the package takes any `requests` | Flask app vs package | can conflict in one environment; unpin when touching the Flask app |
 | Heroku files were removed (D12) | | if the Flask app is still deployed on Heroku, that deploy is broken |
 
 Fixed by the 2026-11-21 docs pass (kept here once, for the record): ACTIVE_LISTINGS.md said "design only" although census,

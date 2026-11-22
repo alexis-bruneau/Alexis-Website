@@ -16,6 +16,10 @@ python -m pytest redfin               # all tests
 python app/main.py                    # local Flask app (needs AZURE_STORAGE_CONNECTION_STRING in .env)
 ```
 
+The web app also builds as a Docker image (`Dockerfile`, `.dockerignore`; guide: [docs/DOCKER.md](docs/DOCKER.md)):
+`docker build -t alexis-website .` then `docker run --rm -p 8000:8000 --env-file .env alexis-website`. `requirements.txt`
+is web-only (no playwright); the workflows do not use it.
+
 ## Branch workflow
 
 - Work on feature branches and open a PR to **master**. Don't push to master directly, and don't merge PRs yourself.

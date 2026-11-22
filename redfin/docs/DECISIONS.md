@@ -359,6 +359,25 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Consequences**: JS and CSS only (`map.js`, `active.js`, `v2.css`); no endpoint, silver, daily scrape or Pages build change.
 - **Status**: accepted
 
+## D24. The web app ships as a Docker image: one gunicorn worker with 4 threads, web-only requirements
+- **Date**: 2026-11-22 (`feature/docker`, step 1 of the hosting plan; nothing is deployed yet)
+- **Decision**: `Dockerfile` (python:3.10-slim) runs `gunicorn app.main:app` on `0.0.0.0:$PORT` (default 8000) with
+  `--workers 1 --worker-class gthread --threads 4 --timeout 120`. The redfin package is installed editable and `--no-deps`.
+  The connection string is never in the image: `docker run --env-file .env` locally, an Azure secret later.
+- **Why one worker**: `app/main.py` loads the sold and active data from Azure when it is imported, so every worker process holds
+  its own full copy (measured: about 250 MB for one worker, 290 MB peak). Threads share one copy, and `/refresh-data` (called
+  by `redfin.run.daily`) reloads module globals in the one process that answers, so with several workers only a random one
+  would refresh. `--timeout 120` because the Azure download runs inside the worker's start-up.
+- **Why editable**: `redfin/config.py` finds `redfin/data/neighbourhoods/` relative to its own file; a normal install copies the
+  package into site-packages and the file would not be found. `--no-deps` keeps playwright, bs4 and requests out of the image.
+- **Requirements**: neither workflow reads the root `requirements.txt` (`daily_scrape.yml` installs `-e ./redfin`,
+  `deploy_pages.yml` only runs `build_site.py`), so it was trimmed to what the web app imports (playwright, beautifulsoup4,
+  Pillow and the `requests==2.24.0` pin removed; `redfin[dev]` still brings the scraping packages for local work).
+- **Consequences**: new `Dockerfile`, `.dockerignore`, `docs/DOCKER.md`; no change to `daily_scrape.yml`, `deploy_pages.yml`,
+  blobs or endpoints. Open point: a second worker would need `/refresh-data` to reach every worker, or the data moved out of
+  process. The first sold request after start takes about 6 s (it builds the neighbourhood frame).
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)
