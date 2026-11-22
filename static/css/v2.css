@@ -307,3 +307,199 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .sold-map .mode-tabs, .active-map .mode-tabs { left: auto !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PHONE · D · BOTTOM TAB NAVIGATION
+   A native-style bar of tabs at the bottom: Map, Listings, Insights, Filters (and Areas in Neighbourhood mode). Each tab is its
+   own full-screen view; nothing is stacked on top of the map. Desktop (901px and wider) ignores all of this.
+   ═══════════════════════════════════════════════════════════ */
+.m-only { display: none; }
+
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --m-top: env(safe-area-inset-top, 0px);
+    --m-bottom: env(safe-area-inset-bottom, 0px);
+    --m-nav-h: calc(62px + var(--m-bottom));
+    --m-bar-h: calc(60px + var(--m-top));
+    --tap: 44px;
+    --m-bg: #f1f4f9;
+  }
+
+  /* the page: a fixed map above the tab bar; the views are laid over the map */
+  html, body { height: 100% !important; overflow: hidden !important; overscroll-behavior: none; }
+  body { display: block !important; }
+  #appContainer, #mainPanel { position: fixed !important; inset: 0 !important; display: block !important; height: auto !important; min-height: 0 !important; flex: none !important; grid-template-columns: none !important; grid-template-rows: none !important; }
+  #appContainer { z-index: 1100; }
+  #map { position: absolute !important; inset: 0 0 var(--m-nav-h) 0 !important; width: 100% !important; height: auto !important; min-height: 0 !important; grid-column: auto !important; grid-row: auto !important; }
+  #listingsPanel, #areasPanel { display: none !important; }
+
+  /* Sold | Active: a small pill, top left, over the map and over the top bar */
+  .sold-map .mode-tabs, .active-map .mode-tabs {
+    position: fixed !important; top: calc(7px + var(--m-top)) !important; left: 10px !important; right: auto !important; bottom: auto !important;
+    margin: 0 !important; padding: 3px !important; border-radius: 15px !important; z-index: 1300 !important; gap: 0;
+    background: #e8ecf3; border: 0; box-shadow: none; backdrop-filter: none;
+  }
+  body[data-mtab="map"] .mode-tabs { background: var(--glass-solid) !important; border: 1px solid var(--line) !important; box-shadow: var(--shadow) !important; }
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 16px; font-size: 14px; font-weight: 700; border-radius: 12px; }
+  .sold-map .mode-tabs a.active, .active-map .mode-tabs a.active { background: var(--ink); color: #fff; }
+
+  /* ── bottom navigation ── */
+  .mobile-tab-bar { display: flex !important; position: fixed; left: 0; right: 0; bottom: 0; z-index: 1200; height: var(--m-nav-h); padding: 0 0 var(--m-bottom); background: var(--glass-solid) !important; border-top: 1px solid var(--line) !important; box-shadow: 0 -4px 18px rgba(15, 23, 42, 0.08); }
+  .mobile-tab { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: var(--tap); padding: 4px 2px 2px; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; color: var(--muted) !important; font: inherit; -webkit-tap-highlight-color: transparent; }
+  .mobile-tab .m-ico { font-size: 22px; line-height: 1; filter: grayscale(1); opacity: 0.75; }
+  .mobile-tab .m-lbl { font-size: 12px; font-weight: 700; line-height: 1.2; }
+  .mobile-tab.active { background: transparent !important; box-shadow: none !important; border-color: transparent !important; color: var(--accent-ink) !important; }
+  .mobile-tab.active .m-ico { filter: none; opacity: 1; }
+  .mobile-tab.active::before { content: ""; position: absolute; top: 0; left: 24%; right: 24%; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); }
+  .mobile-tab[hidden] { display: none !important; }
+  .m-badge { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800; line-height: 20px; text-align: center; box-shadow: 0 0 0 2px var(--glass-solid); }
+  .m-badge[hidden] { display: none; }
+
+  /* ── top bar: the title of the view; none on the map ── */
+  .m-topbar { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1150; height: var(--m-bar-h); padding: var(--m-top) 12px 0 164px; background: var(--glass-solid); box-shadow: 0 1px 0 var(--line); align-items: center; }
+  body:not([data-mtab="map"]) .m-topbar { display: flex; }
+  .m-bar-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; line-height: 1.2; }
+  .m-bar-text h1 { margin: 0; font-size: 18px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-bar-sub { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-sum-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; position: fixed; left: 12px; right: 12px; top: calc(var(--m-bar-h) + 6px); z-index: 1250; padding: 8px 12px; border-radius: 12px; font-size: 13px; color: #78350f; background: #fffbeb; border: 1px solid #fcd34d; box-shadow: var(--shadow); }
+  body[data-mtab="map"] .m-sum-status { top: calc(66px + var(--m-top)); }
+  .m-sum-status[hidden] { display: none; }
+  .m-sum-status.is-error { color: #7f1d1d; background: #fef2f2; border-color: #fca5a5; }
+  .m-sum-status button { min-height: var(--tap); padding: 0 14px; border: 1px solid #cdd6e3; border-radius: 10px; background: #fff; font: inherit; font-weight: 700; color: var(--ink); }
+
+  /* Leaflet: the zoom buttons and the attribution sit just above the tab bar (the map ends there) */
+  .leaflet-top.leaflet-left { display: none; }
+  .leaflet-control-zoom a, .leaflet-touch .leaflet-bar a { width: var(--tap) !important; height: var(--tap) !important; line-height: var(--tap) !important; }
+  .leaflet-control-attribution a { display: inline-block; padding: 14px 3px !important; margin: -14px 0 !important; }
+  .drag-handle::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
+
+  /* ── the views: Listings, Areas, Insights fill the space between the bars ── */
+  #mobileListingsPanel, #mobileAreasPanel, #insights {
+    display: none !important; position: fixed !important; left: 0; right: 0; top: var(--m-bar-h) !important; bottom: var(--m-nav-h) !important; height: auto !important; min-height: 0 !important; max-height: none !important; z-index: 1000;
+    flex-direction: column; overflow-y: auto !important; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    background: var(--m-bg) !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important; padding: 0 !important; margin: 0 !important; grid-column: auto !important; grid-row: auto !important;
+  }
+  body[data-mtab="listings"] #mobileListingsPanel, body[data-mtab="areas"] #mobileAreasPanel { display: flex !important; }
+  body[data-mtab="insights"] #insights { display: flex !important; padding: 14px 14px 24px !important; gap: 14px !important; }
+
+  /* listings: search and sort share a row at the top of the scroll; the pages come last */
+  #mobileListingsPanel { flex-direction: row !important; flex-wrap: wrap; align-content: flex-start; }
+  #mobileListingsPanel .search-container { position: sticky; top: 0; z-index: 3; flex: 1 1 0; min-width: 0; display: flex !important; align-items: center; padding: 8px 6px 8px 12px; background: var(--m-bg) !important; border: 0; }
+  #mobileListingsPanel .search-container .search-icon { display: none; }
+  #mobileListingsPanel .sort-container { position: sticky; top: 0; z-index: 3; flex: 0 0 168px; display: flex; align-items: center; padding: 8px 12px 8px 0; background: var(--m-bg) !important; border: 0; }
+  #mobileListingsPanel .sort-container label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #mobileListingsPanel .search-container input, #mobileListingsPanel .sort-container select { width: 100%; min-height: var(--tap); padding-left: 10px; font-size: 15px; background: #fff; }
+  #mobileListingsPanel .sort-container select { flex: 1; min-width: 0; padding-right: 4px; }
+  #mobileListingsPanel .listing-rows { flex: 1 1 100% !important; overflow: visible !important; padding: 2px 12px 4px !important; min-height: 0; }
+  #mobileListingsPanel .pagination-controls { position: static !important; flex: 1 1 100%; padding: 8px 12px 24px; background: transparent !important; border: 0 !important; flex-wrap: wrap; justify-content: center; }
+  #mobileListingsPanel .listing-row { min-height: 88px; background: #fff; }
+  .page-btn, .page-ellipsis { min-width: var(--tap) !important; width: var(--tap) !important; height: var(--tap) !important; }
+  .listing-info .view-btn, .selection-banner button, .data-status-btn, .area-clear, .chart-btn, .insight-tab, .chip-btn { min-height: var(--tap) !important; min-width: var(--tap); }
+  #mobileAreasPanel .areas-body { flex: none; background: #fff; }
+  .areas-filter, .area-legend-metric select, .th-btn { min-height: var(--tap) !important; }
+
+  /* insights */
+  .insights-left, .insights-right { flex: none !important; width: 100% !important; min-height: 0 !important; }
+  .insights-right { display: flex; flex-direction: column; }
+  .chart-container-full { flex: none !important; height: 260px !important; min-height: 260px !important; }
+  #insights .drawer-period { display: none; }   /* the period is in the top bar */
+
+  /* ── the Filters tab: #controls is a page between the two bars ── */
+  #controls { display: none !important; }
+  body[data-mtab="filters"] #controls {
+    display: grid !important; position: fixed !important; left: 0 !important; right: 0 !important; top: var(--m-bar-h) !important; bottom: var(--m-nav-h) !important; z-index: 1150 !important;
+    width: auto !important; max-width: none !important; height: auto !important; transform: none !important; transition: none !important;
+    grid-template-columns: 1fr auto; align-content: start; gap: 8px 10px;
+    padding: 6px 16px 96px !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important;
+    background: var(--glass-solid) !important; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  body[data-mtab="filters"] #controls > *, body[data-mtab="filters"] #controls .filter-section { grid-column: 1 / -1; min-width: 0; order: 0 !important; }
+  body[data-mtab="filters"] #controls #filterPanel { display: contents !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; transform: none !important; }
+  body[data-mtab="filters"] #controls .filter-header { display: contents !important; }
+  body[data-mtab="filters"] #controls .filter-header h3 { display: none; }
+  body[data-mtab="filters"] #controls #clearFilters { grid-column: 2 !important; grid-row: 1; justify-self: end; min-height: var(--tap); padding: 0 14px; border-radius: 12px; background: #ffffff !important; color: var(--down) !important; border: 1px solid #f1c5c5 !important; font-size: 14px; font-weight: 700; }
+  body[data-mtab="filters"] #controls .m-sec-label { display: block; grid-column: 1 !important; grid-row: 1; align-self: center; margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  body[data-mtab="filters"] #controls .m-sec-label[data-sec="period"] { grid-column: 1 / -1 !important; grid-row: auto; margin-top: 10px; }
+  body[data-mtab="filters"] #controls #toggleListings, body[data-mtab="filters"] #controls #toggleAreas, body[data-mtab="filters"] #controls #filterToggle, body[data-mtab="filters"] #controls #periodMenuBtn { display: none !important; }
+  body[data-mtab="filters"] #controls .area-toggle { display: flex; width: 100%; padding: 3px; }
+  body[data-mtab="filters"] #controls .area-toggle button.area-btn.area-btn.area-btn { flex: 1; min-height: var(--tap); font-size: 15px; }
+  body[data-mtab="filters"] #controls .radius-group { display: flex; align-items: center; gap: 10px; }
+  body[data-mtab="filters"] #controls .radius-group[hidden] { display: none !important; }
+  body[data-mtab="filters"] #controls .radius-group label { font-size: 15px; color: var(--ink-2); }
+  body[data-mtab="filters"] #controls input[type="number"] { width: 84px !important; height: var(--tap) !important; font-size: 16px !important; padding: 0 10px !important; }
+  body[data-mtab="filters"] #controls .period-menu { display: block; position: static; width: 100%; flex: none; }
+  body[data-mtab="filters"] #controls .period-menu .period-menu-pop, body[data-mtab="filters"] #controls .period-menu .period-menu-pop[hidden] {
+    display: grid !important; position: static; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; min-width: 0; max-height: none; padding: 0; border: 0; box-shadow: none; background: transparent; overflow: visible;
+  }
+  body[data-mtab="filters"] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm { min-height: var(--tap); padding: 8px 10px; border: 1px solid #d5dce8; border-radius: 12px; font-size: 14px; line-height: 1.2; white-space: normal !important; }
+  body[data-mtab="filters"] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm.is-active { border-color: var(--accent); }
+  body[data-mtab="filters"] #controls .period-menu .period-dock { grid-column: 1 / -1; margin: 4px 0 0; padding: 14px 6px 6px; }
+  body[data-mtab="filters"] #controls .filter-section { display: block; margin: 0; padding: 14px 0 4px; border: 0; border-top: 1px solid var(--line); background: transparent; }
+  body[data-mtab="filters"] #controls .filter-section legend { margin: 0 0 6px; padding: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 800; float: none; }
+  body[data-mtab="filters"] #controls .range-labels span { font-size: 14px; padding: 6px 10px; }
+  body[data-mtab="filters"] #controls .bed-btn, body[data-mtab="filters"] #controls .ptype-btn { min-height: var(--tap); font-size: 15px; }
+  body[data-mtab="filters"] #controls #bedFilter { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  body[data-mtab="filters"] #controls #ptypeFilter, body[data-mtab="filters"] #controls #changeFilter { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  body[data-mtab="filters"] #controls .bed-btn { min-width: 0; padding: 0; }
+  body[data-mtab="filters"] #controls .ptype-btn { padding: 0 6px; font-size: 14px; }
+  body[data-mtab="filters"] #controls .filter-hint { font-size: 12.5px; color: var(--muted); }
+  body[data-mtab="filters"] #controls .filter-section .noUi-target { margin: 10px 20px 14px !important; }
+  body[data-mtab="filters"] #controls .noUi-handle { width: var(--tap) !important; height: var(--tap) !important; top: -19px !important; right: -22px !important; }
+  body[data-mtab="filters"] #controls .noUi-handle::after { top: 12px !important; left: 12px !important; }
+  body[data-mtab="filters"] #controls .m-filter-foot { display: block; position: fixed; left: 0; right: 0; bottom: var(--m-nav-h); z-index: 5; margin: 0; padding: 10px 16px; background: var(--glass-solid); border-top: 1px solid var(--line); }
+  body[data-mtab="filters"] #controls .m-filter-foot .m-apply { width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--accent); background-image: none; color: #fff; font: inherit; font-size: 17px; font-weight: 800; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4); }
+}
+
+/* a phone on its side: a slimmer bar and tab bar; the tabs keep icon and label side by side */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --m-nav-h: calc(52px + var(--m-bottom)); --m-bar-h: calc(54px + var(--m-top)); }
+  .mobile-tab { flex-direction: row; gap: 6px; }
+  .mobile-tab .m-ico { font-size: 18px; }
+  .mobile-tab.active::before { left: 10%; right: 10%; }
+  .m-badge { position: static; margin-left: 2px; box-shadow: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PHONE · D · selection bar, the selected listing, and page controls
+   ═══════════════════════════════════════════════════════════ */
+.page-status { display: none; }   /* "Page 5 of 22": phones only; the desktop shows the page numbers */
+.m-selbar { display: none; }
+
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  /* ── selection bar: what is selected, on every tab, with a Clear button that is always in the same place ── */
+  .m-selbar:not([hidden]) { display: flex; flex-direction: column; position: fixed; left: 0; right: 0; top: var(--m-bar-h); z-index: 1190; background: var(--accent-soft, #eef0ff); border-bottom: 2px solid var(--accent); box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12); }
+  body[data-mtab="map"] .m-selbar:not([hidden]) { top: calc(66px + var(--m-top)); left: 10px; right: 10px; border: 2px solid var(--accent); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  .m-selrow { display: flex; align-items: center; gap: 8px; min-height: 56px; padding: 6px 12px 6px 14px; }
+  .m-selrow + .m-selrow { border-top: 1px solid #c7d2fe; }
+  .m-seltext { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; min-height: var(--tap); padding: 0; border: 0; background: none; font: inherit; text-align: left; color: var(--ink); }
+  button.m-seltext { cursor: pointer; }
+  .m-seltext b { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+  .m-seltext span { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-selclear { flex: none; min-height: var(--tap); padding: 0 14px; border: 1px solid var(--accent); border-radius: 12px; background: #fff; color: var(--accent-ink); font: inherit; font-size: 14px; font-weight: 800; }
+  /* the views start under the bar when it shows */
+  #mobileListingsPanel, #mobileAreasPanel, #insights { top: calc(var(--m-bar-h) + var(--m-sel-h, 0px)) !important; }
+  body[data-mtab="filters"] #controls { top: calc(var(--m-bar-h) + var(--m-sel-h, 0px)) !important; }
+  /* on the Insights tab the chart's own selection bar (one chip per selection) does that job */
+  body[data-mtab="insights"] .selection-bar { position: sticky; top: -14px; z-index: 5; }
+
+  /* ── the selected listing in the list ── */
+  #mobileListingsPanel .listing-row.is-selected { flex-wrap: wrap; border: 2px solid var(--accent) !important; background: #f7f7ff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.18); }
+  #mobileListingsPanel .listing-row.is-selected .listing-info { flex: 1 1 0; min-width: 0; }
+  .sel-head { flex: 1 1 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px -2px 8px; padding: 0 0 6px; border-bottom: 1px solid #c7d2fe; }
+  .sel-badge { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sel-hint { font-size: 12.5px; color: var(--muted); text-align: right; }
+  #mobileListingsPanel .listing-row.is-selected .sell-note { margin: 4px 0 6px; font-size: 13px; color: var(--ink-2); }
+  .price-marker.is-linked .price-label, .count-marker.is-linked .count-label { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* ── page controls: ‹ Prev   Page 5 of 22   Next ›  (the numbers are for the desktop) ── */
+  .pagination-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; }
+  .pagination-controls .page-btn:not(.nav-btn), .pagination-controls .page-ellipsis { display: none !important; }
+  .pagination-controls .page-btn.nav-btn { width: auto !important; min-width: 104px !important; padding: 0 14px; font-size: 0; font-weight: 700; }
+  .pagination-controls .page-btn.nav-btn::after { font-size: 15px; }
+  .pagination-controls .page-btn[data-dir="prev"] { order: 1; }
+  .pagination-controls .page-btn[data-dir="prev"]::after { content: "\2039  Prev"; }
+  .pagination-controls .page-btn[data-dir="next"] { order: 3; }
+  .pagination-controls .page-btn[data-dir="next"]::after { content: "Next  \203A"; }
+  .pagination-controls .page-status { display: block; order: 2; flex: 1; text-align: center; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .pagination-controls .pagination-info { order: 4; flex: 1 1 100%; text-align: center; font-size: 12.5px; color: var(--muted); }
+}

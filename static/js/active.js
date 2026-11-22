@@ -525,12 +525,25 @@ function highlightListing(mls) {
 
 const focusedPoint = () => focusedMls ? basePoints.find((p) => p.mls === focusedMls) : undefined;
 
+/** Tells the phone layout (v2.js) that the picked listing or the chart selection changed, so its selection bar follows. */
+function notifySelection() { if (typeof window._onSelectionChange === "function") window._onSelectionChange(); }
+
+/** Un-picks the listing marked by a click on the map, the list or the scatter. */
+function clearFocusedListing() {
+  focusedMls = null;
+  markFocusedRow();
+  updateCurve();
+  if (window._refreshMobileListings) window._refreshMobileListings();
+}
+window.clearFocusedListing = clearFocusedListing;
+
 /** Highlights the focused listing's row (if it is on this page) and adds the "x% of comparable homes sold by..." note. */
 function markFocusedRow() {
   document.querySelectorAll("#listingRows .highlight").forEach((el) => el.classList.remove("highlight"));
   document.querySelectorAll("#listingRows .sell-note").forEach((el) => el.remove());
   const pt = focusedPoint();
   const row = pt && document.getElementById(`listing-${pt.mls}`);
+  notifySelection();
   if (!row) return;
   row.classList.add("highlight");
   const note = document.createElement("p");
@@ -615,20 +628,50 @@ function updateListingsSidebar() {
   if (window._refreshMobileListings) window._refreshMobileListings();   // the phone's Listings tab shows the same list
 }
 
+/** Page numbers as most sites show them: first, last and the pages around the current one, with a gap between: « 1 … 4 5 6 … 22 ».
+ *  On a phone the numbers are hidden (CSS) and "Page 5 of 22" sits between the previous and next buttons. */
+function getPageNumbers(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages = [1];
+  const from = Math.max(2, current - 1), to = Math.min(total - 1, current + 1);
+  if (from > 2) pages.push("...");
+  for (let i = from; i <= to; i++) pages.push(i);
+  if (to < total - 1) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
 function renderPagination(container, current, totalPages, totalItems, onPageClick) {
   container.innerHTML = "";
   if (totalPages <= 1) return;
-  const button = (label, page, { active = false, disabled = false, nav = false } = {}) => {
+  const button = (label, page, { active = false, disabled = false, nav = "", name = "" } = {}) => {
     const b = document.createElement("button");
+    b.type = "button";
     b.textContent = label;
     b.className = `page-btn${nav ? " nav-btn" : ""}${active ? " active" : ""}`;
+    if (nav) b.dataset.dir = nav;
+    b.setAttribute("aria-label", name || `Page ${page}`);
+    if (active) b.setAttribute("aria-current", "page");
     b.disabled = disabled;
     b.addEventListener("click", () => onPageClick(page));
     container.appendChild(b);
   };
-  button("«", current - 1, { disabled: current === 1, nav: true });
-  for (let p = 1; p <= totalPages; p++) button(p, p, { active: p === current });
-  button("»", current + 1, { disabled: current === totalPages, nav: true });
+  button("\u00ab", current - 1, { disabled: current === 1, nav: "prev", name: "Previous page" });
+  getPageNumbers(current, totalPages).forEach((p) => {
+    if (p === "...") {
+      const gap = document.createElement("span");
+      gap.className = "page-ellipsis";
+      gap.textContent = "\u2026";
+      container.appendChild(gap);
+    } else {
+      button(p, p, { active: p === current });
+    }
+  });
+  button("\u00bb", current + 1, { disabled: current === totalPages, nav: "next", name: "Next page" });
+  const status = document.createElement("span");
+  status.className = "page-status";
+  status.textContent = `Page ${current} of ${totalPages}`;
+  container.appendChild(status);
   const info = document.createElement("span");
   info.className = "pagination-info";
   info.textContent = `${totalItems.toLocaleString()} total`;
@@ -729,6 +772,7 @@ insightTabs.forEach((tab, i) => {
 function updateSelectionBar() {
   const bar = document.getElementById("selectionBar");
   bar.hidden = !hasChartSelection();
+  notifySelection();
   if (bar.hidden) return;
   document.getElementById("selectionSummary").textContent = `${currentPoints.length} of ${basePoints.length} listings`;
   const chips = document.getElementById("selectionChips");
@@ -747,11 +791,14 @@ function updateSelectionBar() {
   if (dom.size) addChip(`Days: ${labels(dom, DOM_BUCKETS)}`, () => dom.clear());
   if (cut.size) addChip(`Cut: ${labels(cut, CUT_BUCKETS)}`, () => cut.clear());
   if (brush) {
-    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${compactPrice(brush.yMin)}–${compactPrice(brush.yMax)}`,
+    addChip(`Area: ${Math.round(brush.xMin)}–${Math.round(brush.xMax)} days, ${fmtDiffPct(brush.yMin, 0)} to ${fmtDiffPct(brush.yMax, 0)}`,
       () => { chartSelection.brush = null; });
   }
 }
 document.getElementById("clearSelection").addEventListener("click", () => { resetChartSelection(); refreshView(); });
+window.clearChartSelection = () => { resetChartSelection(); refreshView(); };
+window.chartSelectionCount = () => hasChartSelection() ? { shown: currentPoints.length, total: basePoints.length } : null;
+window.pickedListing = () => focusedPoint();
 
 /** "-5%" / "+2.5%" / "0%" for the price-difference axis and tooltip. */
 const fmtDiffPct = (v, digits) => {
@@ -834,7 +881,8 @@ function initScatter() {
       },
       scales: {
         x: { type: "linear", min: 0, suggestedMax: 90, title: { display: true, text: "Days on market" }, grid: { color: GRID } },
-        y: { title: { display: true, text: "Price difference vs first asking price" }, suggestedMin: -10, suggestedMax: 2, grace: "5%", ticks: { callback: (v) => fmtDiffPct(v) }, grid: { color: GRID } }
+        y: { title: { display: true, text: "Price difference vs first asking price" }, suggestedMin: -10, suggestedMax: 2, grace: "5%", ticks: { callback: (v) => fmtDiffPct(v) },
+             grid: { color: (c) => c.tick && c.tick.value === 0 ? withAlpha(INK, 0.45) : GRID, lineWidth: (c) => c.tick && c.tick.value === 0 ? 1.5 : 1 } }
       }
     },
     plugins: [brushPlugin]
@@ -1168,6 +1216,7 @@ if (chartsReady) {
 
   function applyTab() {
     if (!isMobile()) {   // desktop: back to the side panels, no leftovers from the phone layout
+      delete document.body.dataset.mtab;
       tabBar.style.display = "none";
       listingsEl.style.display = "none";
       if (areasEl) areasEl.style.display = "none";
@@ -1176,23 +1225,15 @@ if (chartsReady) {
       return;
     }
     if (areasTab) areasTab.hidden = areaMode !== "neighbourhood";
-    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = "insights";
-    tabBar.style.display = "flex";
+    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = window._phoneHomeTab || "insights";
+    // Phone: what is on screen is decided by CSS from body[data-mtab] (map | listings | insights | areas), not by inline styles
+    document.body.dataset.mtab = activeTab;
+    [tabBar, listingsEl, areasEl, insightsEl].forEach((el) => { if (el) el.style.display = ""; });
+    insightsEl.classList.remove("mobile-hidden", "hidden");
     tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === activeTab));
-
-    listingsEl.style.display = "none";
-    if (areasEl) areasEl.style.display = "none";
-    if (activeTab === "insights") {
-      insightsEl.classList.remove("mobile-hidden", "hidden");
-      insightsEl.style.display = "";
-      setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
-    } else {
-      insightsEl.classList.add("mobile-hidden");
-      insightsEl.style.display = "none";
-      if (activeTab === "areas" && areasEl) areasEl.style.display = "flex";
-      if (activeTab === "listings") { listingsEl.style.display = "flex"; renderMobileListings(); }
-    }
-    setTimeout(() => map.invalidateSize(), 50);
+    // (neighbourhoods.js, which defines the banner the list starts with, loads after this file: the first call comes with the data)
+    if (typeof appendAreaBanner === "function") renderMobileListings();   // cheap (one page of rows); keeps the list current whichever view shows it
+    setTimeout(() => { map.invalidateSize(); resizeCharts(); }, 60);   // the charts and the map were laid out while hidden
   }
 
   function renderMobileListings() {
@@ -1203,7 +1244,22 @@ if (chartsReady) {
     rowsEl.innerHTML = "";
     appendListBanners(rowsEl, list.length);
     if (!list.length) rowsEl.insertAdjacentHTML("beforeend", `<p class="empty-note">No active listings match.</p>`);
-    list.slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
+    // The listing picked on the map, in the list or in the scatter sits first, marked as selected, with its own way to clear it
+    const picked = focusedMls && list.find((pt) => pt.mls === focusedMls);
+    if (picked) {
+      const card = listingRow(picked, { mobile: true });
+      card.classList.add("highlight", "is-selected");
+      const head = document.createElement("div");
+      head.className = "sel-head";
+      head.innerHTML = `<span class="sel-badge">Selected listing</span><span class="sel-hint">Clear it with the bar above</span>`;
+      card.prepend(head);
+      const note = document.createElement("p");
+      note.className = "sell-note";
+      note.textContent = sellNote(picked);
+      card.querySelector(".listing-info").insertBefore(note, card.querySelector(".view-btn"));
+      rowsEl.appendChild(card);
+    }
+    list.filter((pt) => pt !== picked).slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
     renderPagination(document.getElementById("mobilePaginationControls"), mobilePage, totalPages, list.length, (page) => {
       mobilePage = page;
       renderMobileListings();
@@ -1211,8 +1267,8 @@ if (chartsReady) {
     });
   }
 
-  // Through setView (wrapped below), so the desktop view state stays in step and a resize lands on the right panel
-  tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.addEventListener("click", () => window.setView(btn.dataset.tab)));
+  // Straight to the view: the bottom bar also has Map and Filters tabs, which the desktop view state knows nothing about
+  tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.addEventListener("click", () => { activeTab = btn.dataset.tab; applyTab(); }));
   if (sortEl) sortEl.addEventListener("change", () => { mobilePage = 1; renderMobileListings(); });
   if (mobileSearch) mobileSearch.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase();
@@ -1222,7 +1278,7 @@ if (chartsReady) {
   });
 
   // New data: redraw the phone list when it is the one on screen (new data starts at page 1)
-  window._refreshMobileListings = () => { if (isMobile() && activeTab === "listings") { mobilePage = 1; renderMobileListings(); } };
+  window._refreshMobileListings = () => { if (isMobile()) { mobilePage = 1; renderMobileListings(); } };
 
   // A marker tap (or the scatter) opens the list: on a phone that means the Listings tab
   const desktopSetView = setView;
