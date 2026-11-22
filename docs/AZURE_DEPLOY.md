@@ -30,11 +30,14 @@ merge to master
   -> the workflow tests the new revision on its own web address (/ and /ottawa_map must answer 200)
   -> 100% of the visitors move to the new revision
   -> the workflow tests https://quartierinsights.ca/, /ottawa_map and https://www.quartierinsights.ca/
-  -> older revisions are switched off, but the PREVIOUS one keeps running: that is your rollback
+  -> every other revision is switched off (deactivated), so only one copy of the app runs and is billed
 ```
 
-If anything fails after the new revision exists, the visitors go back to the previous revision by themselves and the job turns
+If anything fails before that last step, the visitors go back to the previous revision by themselves and the job turns
 red. A failed deploy therefore leaves the site on the old version.
+
+**Cost:** while a deploy runs, two copies of the app run for a few minutes (the old and the new). Afterwards only one runs, so the
+monthly bill stays about what it is today. A deactivated revision costs nothing and is kept, so you can activate it again to roll back.
 
 A **revision** is one version of the app (an image plus its settings). In **Multiple** revision mode several revisions can
 exist at once and you decide what share of visitors each gets. In Single mode Azure keeps only the newest.
@@ -47,7 +50,7 @@ The workflow runs only when something that goes into the image changes: `app/`, 
 
 ## Part 1: switch the Container App to Multiple revision mode
 
-Why: the workflow tests the new version before visitors see it, and keeps the old one for rollback. Both need Multiple mode.
+Why: the workflow tests the new version before visitors see it, and the old version stays available for rollback. Both need Multiple mode.
 The workflow refuses to run (with a clear message) if the app is still in Single mode.
 
 1. Portal: search **Container Apps** → **ca-alexis-web**.
@@ -146,8 +149,8 @@ Before merging, check that parts 1 to 5 are done. Then:
 2. GitHub: tab **Actions** → in the left list **Deploy to Azure** → the newest run (the yellow dot means running).
 3. Open the run → click the job **deploy**. Steps appear with a green tick (done), spinner (running) or red cross (failed).
 4. **Check:** every step is green; the run's **Summary** page lists the image tag, the live revision and the previous
-   revision. In the portal, Container App → Revisions shows the new revision at 100% and the old one (your `v1`) at 0%, both
-   "Running". Open https://quartierinsights.ca/ and https://quartierinsights.ca/ottawa_map.
+   revision. In the portal, Container App → Revisions and replicas: **Active revisions** lists only the new revision at 100%, and
+   **Inactive revisions** lists the old one (your `v1`). Open https://quartierinsights.ca/ and https://quartierinsights.ca/ottawa_map.
 
 The whole run takes about 8 to 15 minutes the first time (the image build is the long part; the app also needs about a
 minute to download its data when a revision starts).
@@ -180,21 +183,28 @@ Nothing in the log contains the storage connection string: the workflow never re
 
 Use this when the deploy was green but the site misbehaves.
 
-1. Portal: **Container Apps** → **ca-alexis-web** → **Application** → **Revisions** (or **Revision management**).
-2. In the table, the **Traffic** column shows 100% on the newest revision. Set the **previous** revision to **100** and the
-   newest to **0**, then **Save**. (Revision names end with the commit's first 7 characters, so you can tell which is which;
-   the previous one is also in the run's Summary.)
-3. **Check:** reload https://quartierinsights.ca/ after a few seconds; the old behaviour is back. Nothing restarts.
+Only the live revision runs; every older one is inactive (stopped, free, kept). So a rollback has two parts: start the old
+revision, then move the visitors to it.
+
+1. Portal: **Container Apps** → **ca-alexis-web** → **Revisions and replicas**.
+2. Tab **Inactive revisions**. Revision names end with the commit's first 7 characters; the previous one is also named in the
+   run's **Summary** in GitHub (Actions → the run → Summary). Select it and click **Activate** (in the panel on the right, or
+   the toolbar). Confirm if asked.
+3. **Check:** go back to **Active revisions** and click **Refresh** until the old revision shows **Running**. This takes
+   about a minute (the app downloads its data when it starts). It has **0%** traffic for now, so visitors are unaffected.
+4. In **Active revisions**, in the **Traffic** column set the old revision to **100** and the new (bad) one to **0**, then **Save**.
+5. **Check:** reload https://quartierinsights.ca/ and https://quartierinsights.ca/ottawa_map; the old behaviour is back.
+6. Optional, to stop paying for the bad revision: select it and click **Deactivate**.
 
 Notes:
-- Only the **previous** revision is kept running. Older ones are deactivated to save memory and money. To go back further,
-  use the portal's **Show inactive revisions**, select it → **Activate**, then move the traffic; or rebuild an old version:
-  revert the change on `master` (a revert is a normal commit, so it deploys itself).
-- The next merge to master deploys normally and takes the traffic again, even after a rollback. If you want the old version
-  to stay until a fix is ready, turn the automation off first (below).
+- To go back further than one deploy, activate any older revision in the same way (the list keeps them). Or revert the change
+  on `master`: a revert is a normal commit, so it deploys itself (about 10 minutes).
+- The next merge to master deploys normally and takes the traffic again, even after a rollback, and then deactivates the
+  revision you rolled back to. If you want the old version to stay until a fix is ready, turn the automation off first (below).
 - Every image stays in the registry under its commit SHA (Container registries → acralexisbruneau → Repositories →
-  `alexis-website`), so nothing you ever deployed is lost. A single revision costs about the same as the app does now
-  (0.5 CPU / 1 GiB), so keeping one extra is a small extra bill.
+  `alexis-website`), so nothing you ever deployed is lost. Images use storage space (about 200 MB each; the Basic registry
+  includes 10 GiB).
+- Rolling back is slower than switching traffic between two running copies: that is the price of not paying for a second copy.
 
 ## Turn the automation off
 

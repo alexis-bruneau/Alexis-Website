@@ -389,10 +389,14 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   revision of `ca-alexis-web`, which is tested on its own revision address, gets 100% of the traffic, and is then smoke tested
   on `quartierinsights.ca` (`/`, `/ottawa_map`) and `www.quartierinsights.ca`. Concurrency group `deploy-azure`,
   `cancel-in-progress: false` (a running deploy finishes; only the newest waiting one is kept).
-- **Why Multiple revision mode**: the previous revision stays running with 0% traffic, so a rollback is a traffic change in the
-  portal, and a failed test after the switch sends the traffic back automatically. In Single mode only the newest is kept and
-  there is no test before visitors arrive. The workflow stops with a message if the app is still in Single mode. Revisions
-  older than the previous one are deactivated to bound memory and cost.
+- **Why Multiple revision mode**: the new revision is created with 0% traffic and tested on its own address before visitors
+  arrive, and a failed test after the switch sends the traffic back automatically (the previous revision is still running at
+  that point). In Single mode there is no test before visitors arrive. The workflow stops with a message if the app is still
+  in Single mode.
+- **Cost choice**: once both tests pass, every revision except the new one is deactivated, so only one copy (0.5 CPU / 1 GiB,
+  min replicas 1) is billed. Rollback after a green deploy is then "activate the previous revision in the portal, then move
+  the traffic" (about a minute) instead of an instant traffic switch. Keeping the previous revision running was rejected: it
+  roughly doubles the compute bill for an instant rollback this site does not need.
 - **Authentication**: OpenID Connect with `azure/login` (federated credential for `repo:alexis-bruneau/Alexis-Website:ref:refs/heads/master`);
   no client secret exists. Only `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` are stored in GitHub (identifiers, not
   passwords). `permissions: id-token: write, contents: read`. The storage connection string stays in the Container App secret

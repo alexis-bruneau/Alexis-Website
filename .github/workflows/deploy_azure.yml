@@ -7,8 +7,9 @@ name: Deploy to Azure
 #   1. build the image, tagged with the commit SHA
 #   2. create a NEW revision that gets 0% of the traffic, and test it on its own address
 #   3. move 100% of the traffic to it, then test the public site
-#   4. if anything after step 2 fails, the traffic goes back to the previous revision
-# The previous revision stays running, so a rollback in the portal is a traffic change, not a rebuild.
+#   4. if anything after step 2 fails, the traffic goes back to the previous revision (still running at that point)
+#   5. once both tests pass, every other revision is deactivated, so only one copy of the app runs and bills
+# A rollback later means activating the previous revision in the portal and moving the traffic to it (docs/AZURE_DEPLOY.md).
 
 on:
   push:
@@ -141,13 +142,15 @@ jobs:
             "https://quartierinsights.ca/ottawa_map" \
             "https://www.quartierinsights.ca/"
 
-      - name: Keep the previous revision, switch off older ones
+      - name: Switch off every other revision (an inactive revision costs nothing and can be activated again)
         if: ${{ !inputs.build_only }}
         run: |
+          # Only reached when the new revision passed both tests. A running revision bills for its CPU and memory, so
+          # the previous one is deactivated too; rolling back means activating it again in the portal.
           az containerapp revision list -n "$APP_NAME" -g "$AZ_RG" --query "[?properties.active].name" -o tsv \
             | tr -d '\r' | while read -r rev; do
-                if [ -n "$rev" ] && [ "$rev" != "$NEW_REVISION" ] && [ "$rev" != "$PREV_REVISION" ]; then
-                  echo "Deactivating old revision $rev"
+                if [ -n "$rev" ] && [ "$rev" != "$NEW_REVISION" ]; then
+                  echo "Deactivating revision $rev"
                   az containerapp revision deactivate -n "$APP_NAME" -g "$AZ_RG" --revision "$rev" -o none
                 fi
               done
@@ -159,7 +162,7 @@ jobs:
             echo "### Deployed"
             echo "- Image: \`$ACR_NAME.azurecr.io/$IMAGE_REPO:$GITHUB_SHA\`"
             echo "- Live revision: \`$NEW_REVISION\`"
-            echo "- Previous revision (rollback target): \`$PREV_REVISION\`"
+            echo "- Previous revision (inactive now; activate it in the portal to roll back): \`$PREV_REVISION\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Roll the traffic back to the previous revision
