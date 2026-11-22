@@ -122,7 +122,7 @@ body {
   top: 0;
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
   color: white;
   border: none;
   font-weight: 600;
@@ -133,7 +133,7 @@ body {
 }
 
 .toolbar-btn:hover {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: linear-gradient(135deg, #075985 0%, #0c4a6e 100%);
 }
 
 /* Search Container */
@@ -169,7 +169,7 @@ body {
 }
 
 .search-container input::placeholder {
-  color: #94a3b8;
+  color: #667085;
 }
 
 .search-container input:focus {
@@ -282,7 +282,7 @@ body {
 .card strong {
   font-size: 11px;
   font-weight: 600;
-  color: #64748b;
+  color: #526071;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
@@ -359,7 +359,7 @@ body {
   padding: 6px 12px;
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #526071;
   font-size: 13px;
   font-weight: 500;
   border-radius: 6px;
@@ -427,7 +427,7 @@ body {
 
 .clear-filters-btn {
   padding: 6px 12px;
-  background: #ef4444;
+  background: #dc2626;
   color: white;
   border: none;
   border-radius: 6px;
@@ -438,7 +438,7 @@ body {
 }
 
 .clear-filters-btn:hover {
-  background: #dc2626;
+  background: #b91c1c;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
 }
@@ -535,7 +535,7 @@ body {
 .filter-mode-indicator .mode-label {
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: #526071;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -549,7 +549,7 @@ body {
 .filter-hint {
   margin: 10px 0 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: #526071;
   font-style: italic;
   line-height: 1.4;
 }
@@ -691,14 +691,14 @@ body {
   margin-top: -2px;
 }
 
-.ask-diff.up { color: #059669; }
+.ask-diff.up { color: #047857; }
 .ask-diff.down { color: #dc2626; }
-.ask-diff.flat { color: #64748b; }
+.ask-diff.flat { color: #526071; }
 
 .listing-info p {
   margin: 0;
   font-size: 13px;
-  color: #64748b;
+  color: #526071;
   line-height: 1.4;
 }
 
@@ -714,7 +714,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
   color: white;
   font-size: 13px;
   font-weight: 600;
@@ -772,7 +772,7 @@ body {
 
 .page-btn:hover {
   background: #f1f5f9;
-  border-color: #94a3b8;
+  border-color: #667085;
 }
 
 .page-btn.active {
@@ -802,7 +802,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #94a3b8;
+  color: #667085;
   font-size: 14px;
   font-weight: 600;
   user-select: none;
@@ -810,7 +810,7 @@ body {
 
 .pagination-info {
   font-size: 12px;
-  color: #94a3b8;
+  color: #667085;
   margin-left: 8px;
 }
 
@@ -986,7 +986,7 @@ body {
 }
 
 /* ── Mobile ── */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
 
   /* Body: full-height, no overflow so bottom panel fills space */
   html,
@@ -1150,7 +1150,7 @@ body {
     background: transparent;
     font-size: 14px;
     font-weight: 600;
-    color: #64748b;
+    color: #526071;
     cursor: pointer;
     transition: all 0.2s ease;
     border-bottom: 3px solid transparent;
@@ -1453,7 +1453,7 @@ body {
     border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
     background: white !important;
-    color: #64748b !important;
+    color: #526071 !important;
     border-bottom: 1px solid #cbd5e1 !important;
     transition: all 0.15s ease !important;
   }
@@ -1565,7 +1565,6 @@ body {
 
   /* Filter panel: drop centered below controls */
   #filterPanel {
-    max-height: 85vh !important;
     width: 260px !important;
     left: 50% !important;
     right: auto !important;
@@ -1657,17 +1656,17 @@ body {
 }
 
 .chg.down { color: #dc2626; }
-.chg.up { color: #059669; }
-.chg.flat { color: #94a3b8; font-weight: 500; }
+.chg.up { color: #047857; }
+.chg.flat { color: #526071; font-weight: 500; }
 
 .price-marker .price-label .arrow { font-size: 10px; }
 .price-marker .price-label .arrow.down { color: #dc2626; }
-.price-marker .price-label .arrow.up { color: #059669; }
+.price-marker .price-label .arrow.up { color: #047857; }
 .price-marker:hover .price-label .arrow { color: #ffffff; }
 
 .as-of {
   font-size: 12px;
-  color: #64748b;
+  color: #526071;
 }
 
 .recent-changes {
@@ -1692,11 +1691,11 @@ body {
 
 .recent-row:hover { background: #f8fafc; }
 .recent-addr { color: #334155; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.recent-date { color: #94a3b8; font-size: 12px; }
+.recent-date { color: #667085; font-size: 12px; }
 
 .empty-note {
   padding: 16px;
-  color: #94a3b8;
+  color: #526071;
   font-size: 13px;
 }
 
@@ -1724,7 +1723,7 @@ body {
 .insight-tab {
   border: 1px solid transparent;
   background: transparent;
-  color: #64748b;
+  color: #526071;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -1759,7 +1758,7 @@ body {
   min-height: 22px;
   margin-bottom: 4px;
   font-size: 12px;
-  color: #64748b;
+  color: #526071;
 }
 
 .pane-hint { margin-right: auto; }
@@ -1823,7 +1822,7 @@ body {
   margin: 6px 0 0;
   font-size: 11px;
   line-height: 1.4;
-  color: #64748b;
+  color: #526071;
 }
 
 /* What the charts are filtering by */
@@ -1921,14 +1920,14 @@ canvas.brushing { touch-action: none; }
 }
 
 /* Tablets: a narrower cards column gives the charts room (the sold page keeps its 450px) */
-@media (min-width: 769px) and (max-width: 1100px) {
+@media (min-width: 901px) and (max-width: 1100px) {
   .insights-charts .insights-left {
     flex-basis: 300px;
   }
 }
 
 /* Phones (portrait and landscape): the footer scrolls, so each chart gets a fixed height instead of filling it */
-@media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
   .insights-charts .insights-right {
     min-height: 0;
   }
@@ -2030,7 +2029,7 @@ canvas.brushing { touch-action: none; }
 }
 
 #controls #toggleAreas.is-on {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
 }
 
 /* Which neighbourhood the cards and chart describe (above the cards) */
@@ -2071,7 +2070,7 @@ canvas.brushing { touch-action: none; }
 .area-hint {
   margin-bottom: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #526071;
 }
 
 /* The neighbourhood table: a left panel on desktop (like the listings), the Areas tab on phones */
@@ -2124,7 +2123,7 @@ canvas.brushing { touch-action: none; }
   margin-top: 6px;
   min-height: 16px;
   font-size: 12px;
-  color: #64748b;
+  color: #526071;
 }
 
 .areas-scroll {
@@ -2162,7 +2161,7 @@ canvas.brushing { touch-action: none; }
   font-family: inherit;
   font-size: 11px;
   font-weight: 700;
-  color: #64748b;
+  color: #526071;
   text-transform: uppercase;
   cursor: pointer;
   text-align: inherit;
@@ -2196,13 +2195,13 @@ canvas.brushing { touch-action: none; }
 .area-row { cursor: pointer; }
 .area-row:hover { background: #f1f5f9; }
 .area-row.is-selected { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
-.area-row.is-low td.is-stat { color: #94a3b8; font-weight: 400; }   /* fewer than the minimum sample: the estimates are greyed out */
+.area-row.is-low td.is-stat { color: #667085; font-weight: 400; }   /* fewer than the minimum sample: the estimates are greyed out */
 .area-row.is-unassigned td.c-name { font-style: italic; }
 
 .areas-empty {
   padding: 24px 12px;
   text-align: center;
-  color: #64748b;
+  color: #526071;
 }
 
 .areas-foot {
@@ -2212,7 +2211,7 @@ canvas.brushing { touch-action: none; }
   background: #f8fafc;
   font-size: 11px;
   line-height: 1.4;
-  color: #64748b;
+  color: #526071;
 }
 
 /* Hover and selection of a neighbourhood on the map. The hover is a glow (white edge, warm halo, brighter fill) so the area
@@ -2275,7 +2274,7 @@ path.nb-selected.nb-hover {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: #64748b;
+  color: #526071;
 }
 
 .area-legend-low {
@@ -2283,7 +2282,7 @@ path.nb-selected.nb-hover {
   align-items: center;
   margin-top: 6px;
   font-size: 11px;
-  color: #64748b;
+  color: #526071;
 }
 
 .area-legend-swatch {
@@ -2303,13 +2302,10 @@ path.nb-selected.nb-hover {
 }
 
 /* Narrow desktop windows: the controls bar is wider now, so keep it clear of the Sold | Active switch */
-@media (min-width: 769px) and (max-width: 1000px) {
-  #controls { left: calc(50% - 60px); }
-}
 
 /* A 420px sidebar (listings or the neighbourhood table) is open: the bar sits on the map beside it, not over the sidebar's header
    (it used to cover the "View Insights" button on windows under ~1250px) and wraps if the map is narrow. */
-@media (min-width: 769px) and (min-height: 501px) {
+@media (min-width: 901px) and (min-height: 501px) {
   body.side-open #controls {
     left: 436px;
     transform: none;
@@ -2320,16 +2316,16 @@ path.nb-selected.nb-hover {
 }
 
 /* Phones: the table is the Areas tab; the controls bar gets a second row for the switch */
-@media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
   #areasPanel { display: none !important; }
 }
 
-@media (max-width: 768px) and (min-height: 501px) {
+@media (max-width: 900px) and (min-height: 501px) {
   /* Sold | Active becomes a slim strip above the map: the controls bar used to sit on top of it and hide it */
   .sold-map .mode-tabs, .active-map .mode-tabs { position: static; align-self: center; flex: none; margin: 4px 0; padding: 2px; border-radius: 10px; }
-  .sold-map .mode-tabs a, .active-map .mode-tabs a { padding: 4px 22px; font-size: 13px; }
-  .sold-map #controls, .active-map #controls { top: 46px; }
-  .sold-map #map, .active-map #map { height: calc(55vh - 36px); min-height: 214px; }   /* the strip took 36px: keep the panel below the same size */
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { padding: 0 22px; font-size: 13px; }
+  .sold-map #controls, .active-map #controls { top: 58px; }
+  .sold-map #map, .active-map #map { height: calc(55vh - 52px); min-height: 214px; }   /* the strip takes 52px: keep the panel below the same size */
 
   /* Controls bar: [Circle | Neighbourhood] [Filters] on one row, the radius on a second row (Circle mode only).
      The tab bar under the map replaces the Listings and Neighbourhoods buttons. */
@@ -2341,20 +2337,20 @@ path.nb-selected.nb-hover {
   #controls .area-toggle button.area-btn.area-btn.area-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .mobile-areas-panel { overflow: hidden; }
   .mobile-areas-panel .areas-body { background: #ffffff; }
   .areas-table td { padding: 10px 5px; }
   .areas-table td.c-name { font-size: 12px; }
   .areas-table { font-size: 12px; }
-  .area-legend { width: 196px; padding: 6px 8px; margin-bottom: 40px; }   /* clear of the attribution, which wraps to two lines */
+  .area-legend { width: 196px; padding: 6px 8px; margin-bottom: 4px; }   /* clear of the attribution, which wraps to two lines */
   .area-legend-metric { font-size: 11px; }
   .area-legend-metric select { font-size: 11px; }
   .area-title { font-size: 13px; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  .area-legend { margin-left: 52px; width: 196px; margin-bottom: 40px; }   /* the zoom buttons sit bottom-left here */
+  .area-legend { width: 196px; margin-bottom: 4px; }
   /* Sold | Active would cover the third tab of the right-hand column: move it to the map's bottom-right corner (this page only) */
   .sold-map .mode-tabs, .active-map .mode-tabs { top: auto; bottom: 34px; right: calc(40% + 8px); padding: 2px; }
   .sold-map .mode-tabs a, .active-map .mode-tabs a { padding: 4px 10px; font-size: 12px; }
@@ -2364,3 +2360,237 @@ path.nb-selected.nb-hover {
   .areas-table { font-size: 11px; }
   .areas-filter { padding: 4px 8px; font-size: 12px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   15. PHASE 0 FIXES: layout, states, touch targets
+   Every rule here fixes a measured bug; the look is unchanged.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Focus: one visible ring for every control (keyboard only) */
+button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.toolbar-btn:focus-visible, .selection-banner button:focus-visible, .mode-tabs a.active:focus-visible,
+.page-btn.active:focus-visible, .mobile-tab.active:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: -4px;
+  box-shadow: 0 0 0 2px #1d4ed8;
+}
+
+/* "Sold" on the Sold page is where you already are: it must not look like a button */
+.mode-tabs a.active { cursor: default; pointer-events: none; }
+
+/* Property type in a listing row: a label, not a second price */
+.listing-info p .ptype-text { font-size: inherit; }
+
+/* "View Details" looks like what it is: a button */
+.listing-info .view-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.listing-info .view-btn:hover { background: #2563eb; color: #ffffff; }
+
+/* The Leaflet zoom buttons moved to the bottom right; the legend is lifted above the attribution by script (neighbourhoods.js) */
+
+/* ── Controls bar: as wide as its content, wraps instead of squeezing the buttons, stays clear of Sold | Active ── */
+.mode-tabs { z-index: 10000; }
+@media (min-width: 901px) and (min-height: 501px) {
+  #controls {
+    width: max-content;
+    max-width: calc(100vw - 372px);
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+  }
+  body.side-open #controls { width: max-content; }
+  #insights { overflow: hidden; min-height: 0; }
+}
+#controls button, #controls label, #controls .radius-group { white-space: nowrap; }
+.chart-header { flex-wrap: wrap; gap: 8px; }
+
+/* ── Filter panel: never taller than the screen, scrolls inside itself (max-height is set from script) ── */
+#filterPanel { display: none; overflow-y: auto; overscroll-behavior: contain; }   /* script sets display: block while it is open */
+
+/* ── Insights footer: the cards fill their column (no empty band above or below them), and the footer follows the
+      width of the column it is in, not the window: with a sidebar open the chart used to be squeezed to 60px ── */
+#mainPanel { container-type: inline-size; container-name: main; }
+.insights-left { justify-content: flex-start; min-height: 0; }
+.insights-left > .area-title, .insights-left > .area-hint, .insights-left > .data-status { flex: none; }
+.summary-cards { flex: 1 1 auto; min-height: 0; grid-auto-rows: minmax(0, 1fr); gap: 10px; }
+.card { min-height: 0; padding: 8px 10px; }
+.card strong { text-align: center; line-height: 1.25; }
+
+@container main (max-width: 1000px) {
+  .insights-left { flex-basis: 300px; }
+}
+@container main (max-width: 760px) {
+  #insights, #insights.insights-charts {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    max-height: 48vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 12px;
+  }
+  .insights-left { flex: none; width: 100%; }
+  .summary-cards { flex: none; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: auto; }
+  .card { padding: 8px 6px; }
+  .insights-right, .insights-charts .insights-right { flex: none; min-height: 300px; width: 100%; }
+  .insight-pane { flex: none; }
+  .insight-pane .chart-box { flex: none; height: 230px; }
+  .chart-pair .chart-box { height: 190px; }
+  .chart-container-full { min-height: 200px; }
+  .insight-tabs { width: 100%; }
+  .insight-tab { flex: 1 1 auto; text-align: center; }
+  .pane-toolbar { flex-wrap: wrap; }
+}
+@container main (max-width: 520px) {
+  .summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-pair { grid-template-columns: 1fr; grid-template-rows: none; }
+}
+
+/* ── Loading, empty and error states (status.js) ── */
+.data-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.data-status[hidden] { display: none; }
+.data-status.is-empty { background: #fffbeb; border: 1px solid #fcd34d; color: #78350f; }
+.data-status.is-error { background: #fef2f2; border: 1px solid #fca5a5; color: #7f1d1d; }
+.data-status-text { flex: 1 1 140px; min-width: 0; }
+.data-status-btn {
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: #ffffff;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.data-status-btn:hover { background: #f8fafc; }
+
+.chart-container-full, .chart-box { position: relative; }
+.chart-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.94);
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+}
+.chart-empty[hidden] { display: none; }
+
+@keyframes skeleton-shimmer { to { background-position: -200% 0; } }
+.is-loading .card span {
+  display: inline-block;
+  min-width: 64px;
+  min-height: 1.3em;
+  color: transparent !important;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  animation: skeleton-shimmer 1.3s linear infinite;
+}
+.is-loading .chart-container-full::after,
+.is-loading .chart-box::after {
+  content: "Loading…";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: #475569;
+  font-size: 13px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-loading .card span { animation: none; }
+}
+
+/* ── Phones and short landscape screens: 40px touch targets (WCAG AA asks for 24px, thumbs want more) ── */
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  .mode-tabs a { display: inline-flex; align-items: center; min-height: 40px; }
+  #controls .area-toggle button.area-btn.area-btn.area-btn,
+  #controls #filterToggle { min-height: 40px; }
+  #controls input[type="number"] { height: 40px; width: 56px; }
+  .clear-filters-btn, .bed-btn, .ptype-btn, .chart-btn, .insight-tab, .chip-btn, .th-btn,
+  .listing-info .view-btn, .selection-banner button, .area-clear, .data-status-btn { min-height: 40px; }
+  .area-clear { min-width: 40px; }
+  .mobile-tab { min-height: 44px; }
+  .page-btn, .page-ellipsis { width: 40px; height: 40px; }
+  .pagination-controls { gap: 6px; }
+  .search-container input, .sort-container select, .areas-filter, .area-legend-metric select { min-height: 40px; }
+  .areas-table td { padding-top: 12px; padding-bottom: 12px; }
+  .recent-row { min-height: 44px; }
+  .leaflet-touch .leaflet-bar a, .leaflet-control-zoom a { width: 40px; height: 40px; line-height: 40px; }
+  #controls #toggleListings, #controls #toggleAreas { min-height: 40px; }
+  .areas-table td { height: 44px; }
+  .leaflet-control-attribution a { display: inline-block; padding: 12px 3px; margin: -12px 0; }
+  #filterPanel .noUi-handle {
+    width: 40px; height: 40px; top: -17px; right: -20px;
+    background: transparent; border: 0; box-shadow: none;
+  }
+  #filterPanel .noUi-handle::after {
+    content: ""; display: block; position: absolute; top: 10px; left: 10px;
+    width: 20px; height: 20px; box-sizing: border-box; border-radius: 50%;
+    background: #ffffff; border: 2.5px solid #2563eb; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  }
+  #filterPanel .filter-section .noUi-target { margin: 10px 0 14px; }
+}
+
+/* Short landscape phones: the controls bar sits top left over the map, Sold | Active top right of the map (the bottom corners
+   belong to the zoom buttons and the legend) */
+@media (max-height: 500px) and (orientation: landscape) {
+  #controls { left: 8px !important; transform: none !important; max-width: calc(60vw - 150px) !important; flex-wrap: wrap !important; row-gap: 4px !important; }
+  .sold-map .mode-tabs, .active-map .mode-tabs { top: 4px !important; bottom: auto !important; right: calc(40vw + 8px) !important; }
+}
+
+/* ── Design tokens read by the scripts (charts) and available to every rule: the defaults are the current look ── */
+:root {
+  --accent: #2563eb;
+  --accent-dim: #bfdbfe;
+  --ink: #1e293b;
+  --up: #047857;
+  --down: #dc2626;
+  --flat: #94a3b8;
+  --chart-text: #526071;
+  --chart-grid: #f1f5f9;
+  --chart-bar: rgba(54, 162, 235, 1);
+  --chart-bar-fill: rgba(54, 162, 235, 0.2);
+  --chart-line: red;
+  --chart-line-fill: rgba(255, 0, 0, 0.2);
+  --chart-line-dom: #f59e0b;
+  --chart-line-dom-fill: rgba(245, 158, 11, 0.2);
+  --chart-line-diff: #8b5cf6;
+  --chart-line-diff-fill: rgba(139, 92, 246, 0.2);
+}
+
+.insight-pane .chart-box { min-height: 140px; }

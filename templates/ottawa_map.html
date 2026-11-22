@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ottawa Map with Draggable Circle</title>
+  <title>Ottawa Sold Homes</title>
+  <link rel="icon" href="data:," />
 
   <!-- ─── Vendor styles ─────────────────────────────────── -->
   <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet" />
@@ -17,7 +18,7 @@
   <link rel="stylesheet" href="/static/css/map.css" />
 </head>
 
-<body class="sold-map">
+<body class="sold-map is-loading">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
   <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map" class="active" aria-current="page">Sold</a>
@@ -177,6 +178,7 @@
       <div id="insights">
         <!-- LEFT: Cards Grid -->
         <div class="insights-left">
+          <div id="dataStatus" class="data-status" hidden></div>
           <!-- Neighbourhood mode only: which area the cards and the chart describe -->
           <div class="area-title" id="areaTitle" hidden>
             <span class="area-title-name" id="areaTitleName"></span>
@@ -248,7 +250,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/status.js"></script>
     <script src="/static/js/map.js"></script>
     <script src="/static/js/neighbourhoods.js"></script>
     <script>

@@ -63,7 +63,9 @@ function changeBadge(pt) {
 }
 
 /************** MAP **************/
-const map = L.map("map", { minZoom: 10, scrollWheelZoom: true }).setView([45.4215, -75.6972], 13);
+const map = L.map("map", { minZoom: 10, scrollWheelZoom: true, zoomControl: false }).setView([45.4215, -75.6972], 13);
+// Bottom right, like on phones: the top left belongs to the sidebars and the controls bar
+L.control.zoom({ position: "bottomright" }).addTo(map);
 const ottawaBounds = L.latLngBounds([45.25, -76.0], [45.75, -75.4]);
 map.setMaxBounds(ottawaBounds);
 map.on("drag", () => map.panInsideBounds(ottawaBounds, { animate: false }));
@@ -71,8 +73,8 @@ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, att
 
 const markersCluster = L.markerClusterGroup({
   showCoverageOnHover: false,
-  maxClusterRadius: 30,
-  disableClusteringAtZoom: 15,
+  maxClusterRadius: 90,           // the labels are ~80px wide: closer than this they pile on top of each other
+  disableClusteringAtZoom: 17,
   spiderfyOnMaxZoom: true,
   removeOutsideVisibleBounds: true,
   animate: true,
@@ -156,6 +158,46 @@ map.on("click", () => {
   if (currentView === "listings") setView(homeView());
 });
 
+
+/** The filter panel never runs off the screen: on a phone it ends above the tab bar (the bottom of the map), on a desktop at the
+ *  bottom of the window. Longer than that, it scrolls inside itself. */
+function fitFilterPanel() {
+  const panel = document.getElementById("filterPanel");
+  if (!panel || panel.style.display === "none") return;
+  const top = panel.getBoundingClientRect().top;
+  const mapBottom = document.getElementById("map").getBoundingClientRect().bottom;
+  const phone = window.innerWidth <= 900 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+  const limit = phone ? mapBottom : window.innerHeight;
+  panel.style.maxHeight = `${Math.max(160, limit - top - 12)}px`;
+}
+window.addEventListener("resize", () => fitFilterPanel());
+
+/** Axis label for a dollar amount, with only as many decimals as the tick spacing needs ($1.0M three times never happens). */
+function fmtMoneyTick(v, ticks) {
+  const step = ticks && ticks.length > 1 ? Math.abs(ticks[1].value - ticks[0].value) : 1000;
+  const abs = Math.abs(v);
+  if (abs >= 1e6) {
+    const d = step >= 1e6 ? 0 : step >= 1e5 ? 1 : 2;
+    return `$${Number((v / 1e6).toFixed(d)).toFixed(d === 0 ? 0 : Math.max(1, d))}M`;
+  }
+  if (abs >= 1000) return `$${Number((v / 1000).toFixed(step >= 1000 ? 0 : 1))}k`;
+  return `$${Math.round(v)}`;
+}
+
+/** Shows (or, with null, hides) a centred message over a chart's box, so a chart with nothing to draw says why. */
+function setChartEmpty(box, message) {
+  if (!box) return;
+  let el = box.querySelector(".chart-empty");
+  if (!message) { if (el) el.hidden = true; return; }
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "chart-empty";
+    box.appendChild(el);
+  }
+  el.textContent = message;
+  el.hidden = false;
+}
+
 /************** FILTERS **************/
 const priceSlider = document.getElementById("priceRangeSlider");
 noUiSlider.create(priceSlider, { start: [MIN_PRICE, MAX_PRICE], connect: true, range: { min: MIN_PRICE, max: MAX_PRICE }, step: 10000 });
@@ -187,6 +229,7 @@ document.getElementById("filterToggle").addEventListener("click", (e) => {
     setTimeout(() => { if (!panel.classList.contains("show")) panel.style.display = "none"; }, 200);
   } else {
     panel.style.display = "block";
+    fitFilterPanel();
     requestAnimationFrame(() => panel.classList.add("show"));
   }
 });
@@ -281,9 +324,20 @@ async function fetchActivePoints() {
     // on the old set would hide or point at the wrong things in the new one, so every fetch starts clean.
     resetChartSelection();
     focusedMls = null;
+    finishLoading();
+    clearDataStatus();
     refreshView();
+    if (!summary || summary.count === 0) {
+      setDataStatus("empty", "No active listings match these filters.", [
+        { label: "Clear filters", run: () => document.getElementById("clearFilters").click() }
+      ]);
+    }
   } catch (err) {
     console.error("Failed to fetch active listings:", err);
+    if (seq !== fetchSeq) return;
+    finishLoading();
+    setDataStatus("error", "Couldn't load the listings.", [{ label: "Try again", run: () => fetchActivePoints() }]);
+    document.querySelectorAll(".chart-box").forEach((box) => setChartEmpty(box, "Couldn't load the chart."));
   }
 }
 
@@ -503,7 +557,7 @@ function listingRow(pt, { mobile = false } = {}) {
       <strong>${money(pt.price)}</strong>
       ${changeBadge(pt)}
       <p>${address}</p>
-      <p>${pt.beds ?? "–"} 🛏 | ${pt.baths ?? "–"} 🛁 | <span class="ptype-text">${escapeHtml(pt.ptype || "Unknown Type")}</span></p>
+      <p>${pt.beds ?? "–"} bd · ${pt.baths ?? "–"} ba · <span class="ptype-text">${escapeHtml(pt.ptype || "Unknown Type")}</span></p>
       <p>${dom}${pt.original_price && pt.original_price !== pt.price ? ` · listed at ${money(pt.original_price)}` : ""}</p>
       <a href="${escapeHtml(pt.url)}" target="_blank" rel="noopener" class="view-btn">View Details</a>
     </div>`;
@@ -607,7 +661,7 @@ function updateInsights(s, points) {
     const a = document.createElement("a");
     a.className = "recent-row";
     a.href = pt.url; a.target = "_blank"; a.rel = "noopener";
-    a.innerHTML = `${changeBadge(pt)}<span class="recent-addr">${pt.address ? escapeHtml(pt.address) : "Address not shown"}</span>
+    a.innerHTML = `${changeBadge(pt)}<span class="recent-addr" title="${pt.address ? escapeHtml(pt.address) : "Address not shown"}">${pt.address ? escapeHtml(pt.address) : "Address not shown"}</span>
       <span class="recent-date">${formatDate(pt.last_change_date)}</span>`;
     box.appendChild(a);
   });
@@ -616,10 +670,12 @@ function updateInsights(s, points) {
 /************** INSIGHT CHARTS **************/
 // Chart.js comes from a CDN. If it is blocked the map and the list still work and the chart panes say so.
 const chartsReady = typeof Chart !== "undefined";
-const CHANGE_COLORS = { down: "#dc2626", up: "#059669", none: "#94a3b8" };   // the colours of the .chg price-change badges
-const ACCENT = "#2563eb";
-const ACCENT_DIM = "#bfdbfe";
-const INK = "#1e293b";
+// Colours come from the page's design tokens (map.css :root); the fallbacks are the original values
+const CHANGE_COLORS = { down: cssVar("--down", "#dc2626"), up: cssVar("--up", "#047857"), none: cssVar("--flat", "#94a3b8") };   // the colours of the .chg price-change badges
+const ACCENT = cssVar("--accent", "#2563eb");
+const ACCENT_DIM = cssVar("--accent-dim", "#bfdbfe");
+const INK = cssVar("--ink", "#1e293b");
+const GRID = cssVar("--chart-grid", "#f1f5f9");
 const charts = {};   // scatter, dom, cut, curve
 const changeKind = (pt) => hasChange(pt) ? pt.last_change_direction : "none";
 const withAlpha = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16}, ${(n >> 8) & 255}, ${n & 255}, ${a})`; };
@@ -762,8 +818,8 @@ function initScatter() {
         }
       },
       scales: {
-        x: { type: "linear", min: 0, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
-        y: { title: { display: true, text: "Asking price" }, grace: "5%", ticks: { callback: (v) => compactPrice(v) }, grid: { color: "#f1f5f9" } }
+        x: { type: "linear", min: 0, suggestedMax: 90, title: { display: true, text: "Days on market" }, grid: { color: GRID } },
+        y: { title: { display: true, text: "Asking price" }, min: 0, suggestedMax: 1000000, grace: "5%", ticks: { callback: (v, i, ticks) => fmtMoneyTick(v, ticks) }, grid: { color: GRID } }
       }
     },
     plugins: [brushPlugin]
@@ -845,6 +901,8 @@ function updateScatter() {
   charts.scatter.options.scales.x.suggestedMax = shown.length ? undefined : 90;
   charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 1000000;
   charts.scatter.update("none");
+  setChartEmpty(charts.scatter.canvas.parentElement, shown.length ? null
+    : (areaMode === "neighbourhood" && !selectedNeighbourhood ? "Pick a neighbourhood to see its listings." : "No listings to plot."));
   charts.scatter.canvas.setAttribute("aria-label",
     `Scatter chart of asking price against days on market: ${shown.length} active listings`);
 }
@@ -915,7 +973,7 @@ function initBuckets() {
         },
         scales: {
           x: { grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#f1f5f9" } }
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: GRID } }
         }
       },
       plugins: [barCountPlugin]
@@ -955,6 +1013,8 @@ function updateBuckets() {
     ds.data = counts;
     ds.backgroundColor = counts.map((_, i) => (!picked.size || picked.has(i)) ? ACCENT : ACCENT_DIM);
     charts[cfg.key].update("none");
+    setChartEmpty(charts[cfg.key].canvas.parentElement, counts.some((n) => n > 0) ? null
+      : (areaMode === "neighbourhood" && !selectedNeighbourhood ? "Pick a neighbourhood." : "No listings."));
   });
 }
 
@@ -1025,8 +1085,8 @@ function initCurve() {
         } }
       },
       scales: {
-        x: { type: "linear", min: 0, max: 180, ticks: { stepSize: 30 }, title: { display: true, text: "Days on market" }, grid: { color: "#f1f5f9" } },
-        y: { min: 0, max: 100, ticks: { stepSize: 25, callback: (v) => `${v}%` }, title: { display: true, text: "Sold by then" }, grid: { color: "#f1f5f9" } }
+        x: { type: "linear", min: 0, max: 180, ticks: { stepSize: 30 }, title: { display: true, text: "Days on market" }, grid: { color: GRID } },
+        y: { min: 0, max: 100, ticks: { stepSize: 25, callback: (v) => `${v}%` }, title: { display: true, text: "Sold by then" }, grid: { color: GRID } }
       }
     },
     plugins: [curvePlugin]
@@ -1061,7 +1121,7 @@ function updateCurve() {
 if (chartsReady) {
   Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
   Chart.defaults.font.size = 11;
-  Chart.defaults.color = "#64748b";
+  Chart.defaults.color = cssVar("--chart-text", "#526071");
   initScatter();
   initBuckets();
   initCurve();
@@ -1088,7 +1148,7 @@ if (chartsReady) {
 
   let activeTab = "insights";
   let mobilePage = 1;
-  const isMobile = () => window.innerWidth <= 768 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+  const isMobile = () => window.innerWidth <= 900 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
 
   function applyTab() {
     if (!isMobile()) {   // desktop: back to the side panels, no leftovers from the phone layout

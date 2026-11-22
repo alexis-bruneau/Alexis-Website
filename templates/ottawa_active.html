@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ottawa Active Listings</title>
+  <link rel="icon" href="data:," />
 
   <!-- ─── Vendor styles ─────────────────────────────────── -->
   <link href="https://cdn.jsdelivr.net/npm/nouislider@15.7.0/dist/nouislider.min.css" rel="stylesheet" />
@@ -17,7 +18,7 @@
   <link rel="stylesheet" href="/static/css/map.css" />
 </head>
 
-<body class="active-map">
+<body class="active-map is-loading">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
   <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map">Sold</a>
@@ -171,6 +172,7 @@
       <!-- ═══ INSIGHTS FOOTER ═══ -->
       <div id="insights" class="insights-charts">
         <div class="insights-left">
+          <div id="dataStatus" class="data-status" hidden></div>
           <!-- Neighbourhood mode only: which area the cards and the charts describe -->
           <div class="area-title" id="areaTitle" hidden>
             <span class="area-title-name" id="areaTitleName"></span>
@@ -278,6 +280,7 @@
   <!-- Chart.js, pinned to an exact version and checked with an integrity hash -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"
     integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t" crossorigin="anonymous"></script>
+  <script src="/static/js/status.js"></script>
   <script src="/static/js/active.js"></script>
   <script src="/static/js/neighbourhoods.js"></script>
 </body>
