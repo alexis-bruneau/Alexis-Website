@@ -691,8 +691,8 @@ body {
   margin-top: -2px;
 }
 
-.ask-diff.up { color: #047857; }
-.ask-diff.down { color: #dc2626; }
+.ask-diff.up { color: var(--up, #047857); }
+.ask-diff.down { color: var(--down, #dc2626); }
 .ask-diff.flat { color: #526071; }
 
 .listing-info p {
@@ -1655,8 +1655,8 @@ body {
   margin-top: -2px;
 }
 
-.chg.down { color: #dc2626; }
-.chg.up { color: #047857; }
+.chg.down { color: var(--down, #dc2626); }
+.chg.up { color: var(--up, #047857); }
 .chg.flat { color: #526071; font-weight: 500; }
 
 .price-marker .price-label .arrow { font-size: 10px; }

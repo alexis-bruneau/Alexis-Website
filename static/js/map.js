@@ -1007,7 +1007,7 @@ function updateStats(summary, points) {
     if (avg_diff_pct !== null && avg_diff_pct !== undefined) {
       const sign = avg_diff_pct > 0 ? "+" : "";
       diffEl.textContent = `${sign}${Number(avg_diff_pct).toFixed(1)}%`;
-      diffEl.style.color = avg_diff_pct >= 0 ? "#047857" : "#dc2626"; // Green if positive (sold over list), Red if negative (both pass AA on white)
+      diffEl.style.color = avg_diff_pct >= 0 ? cssVar("--up", "#047857") : cssVar("--down", "#dc2626"); // Green if positive (sold over list), Red if negative (design tokens; both pass AA on white)
     } else {
       diffEl.textContent = "–";
       diffEl.style.color = "";
