@@ -275,7 +275,7 @@ body.rail .active-map .card:nth-child(n+7), body.active-map.rail .card:nth-child
   .period-seg { width: 100%; }
   .period-btn { flex: 1; min-height: 40px; padding: 0 2px; }
   .period-label { min-width: 0; text-align: left; font-size: 12px; white-space: normal; }
-  .period-dock { position: static; width: auto; max-width: none; order: 4; width: 100%; }
+  .period-dock { position: absolute; top: calc(100% - 4px); left: 12px; right: 12px; width: auto; max-width: none; }
   .sold-map #controls, .active-map #controls {
     position: relative; top: auto; left: auto; width: 100%; max-width: none; transform: none; flex: none;
     border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--line); background: var(--panel); backdrop-filter: none; padding: 6px 10px;
