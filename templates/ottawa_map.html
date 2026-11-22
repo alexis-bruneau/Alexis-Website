@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/static/css/map.css" />
 </head>
 
-<body>
+<body class="sold-map">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
   <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map" class="active" aria-current="page">Sold</a>
@@ -26,11 +26,20 @@
 
   <!-- ─── Radius / filter controls ───────────────────────── -->
   <div id="controls">
-    <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
-    <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+    <!-- How the area is picked: a circle you drag, or a fixed Ottawa neighbourhood -->
+    <div class="area-toggle" id="areaToggle" role="group" aria-label="Pick the area by">
+      <button type="button" class="area-btn active" data-mode="circle" aria-pressed="true">Circle</button>
+      <button type="button" class="area-btn" data-mode="neighbourhood" aria-pressed="false">Neighbourhood</button>
+    </div>
+
+    <span id="radiusGroup" class="radius-group">
+      <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
+      <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+    </span>
 
     <button id="filterToggle">Filters ⚙️</button>
     <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
+    <button id="toggleAreas" type="button" hidden>📋 Neighbourhoods</button>
 
     <div id="filterPanel">
       <div class="filter-header">
@@ -115,6 +124,14 @@
       <div id="paginationControls" class="pagination-controls"></div>
     </div>
 
+    <!-- Neighbourhood summary table (desktop; phones use the Areas tab below the map) -->
+    <div id="areasPanel" class="hidden" aria-label="All neighbourhoods">
+      <button class="toolbar-btn" onclick="setView('insights')">
+        📊 View Insights
+      </button>
+      <div class="areas-body" id="areasBodyDesktop"></div>
+    </div>
+
     <!-- Map + insights column -->
     <div id="mainPanel">
       <div id="map"></div>
@@ -125,6 +142,7 @@
       <div class="mobile-tab-bar" id="mobileTabBar" style="display:none;">
         <button class="mobile-tab active" data-tab="insights">📊 Insights</button>
         <button class="mobile-tab" data-tab="listings">🏠 Listings</button>
+        <button class="mobile-tab" data-tab="areas" id="mobileAreasTab" hidden>📍 Areas</button>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════ -->
@@ -148,12 +166,23 @@
         <div id="mobilePaginationControls" class="pagination-controls"></div>
       </div>
 
+      <!-- Mobile: the neighbourhood table, same content as the desktop panel -->
+      <div id="mobileAreasPanel" class="mobile-listings-panel mobile-areas-panel" style="display:none;">
+        <div class="areas-body" id="areasBodyMobile"></div>
+      </div>
+
       <!-- ═══════════════════════════════════════════════════════ -->
       <!-- INSIGHTS FOOTER (expandable)                            -->
       <!-- ═══════════════════════════════════════════════════════ -->
       <div id="insights">
         <!-- LEFT: Cards Grid -->
         <div class="insights-left">
+          <!-- Neighbourhood mode only: which area the cards and the chart describe -->
+          <div class="area-title" id="areaTitle" hidden>
+            <span class="area-title-name" id="areaTitleName"></span>
+            <button type="button" id="areaClear" class="area-clear" title="Clear the selected neighbourhood" aria-label="Clear the selected neighbourhood">✕</button>
+          </div>
+          <p class="area-hint" id="areaHint" hidden>Click a neighbourhood on the map, or a row in the table.</p>
           <div class="summary-cards">
             <div class="card">
               <strong>Listings Sold</strong>
@@ -221,6 +250,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="/static/js/map.js"></script>
+    <script src="/static/js/neighbourhoods.js"></script>
     <script>
       // Simple script to handle chart toggle UI state (logic in map.js)
       document.querySelectorAll('.chart-btn[data-metric]').forEach(btn => {

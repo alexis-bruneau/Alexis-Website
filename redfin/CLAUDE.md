@@ -36,11 +36,12 @@ redfin/
       daily.py               the once-a-day command, with how many listings to take (--limit-sold, --limit-active)
       verify.py              read-only freshness check (silver vs newest bronze day and latest census); daily.py runs it last
 
-    analytics/             read-time helpers for the map (property_types, sale_curve)
+    analytics/             read-time helpers for the map (property_types, sale_curve, sale_filters, neighbourhoods)
     runstats.py            steps report their counts to run/daily.py through a JSON file (no-op outside it)
-  scripts/                 one-off maintenance: backfill_images.py, compare_silver.py
+  scripts/                 one-off maintenance: backfill_images.py, compare_silver.py, build_neighbourhoods.py (City of Ottawa boundaries, not redfin.ca)
   tests/ (+ fixtures/)     pure-function tests, no network, no Azure
   data/queue/              property_urls.txt (sold-URL queue, committed)
+  data/neighbourhoods/     Ottawa neighbourhood polygons for the sold map (committed; source, licence and attribution in its README)
   docs/                    see the index below
 ```
 

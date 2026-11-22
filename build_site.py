@@ -12,7 +12,7 @@ OUT = ROOT / "_site"
 
 # Pages that need the Flask/Azure backend (or aren't ready) stay out of the public site.
 EXCLUDE_TEMPLATES = {"ottawa_map.html", "ottawa_active.html", "ASL.html", "Webscraping.html"}
-EXCLUDE_STATIC = {"js/map.js", "js/active.js", "css/map.css", "js/asl.js", "js/webscraper.js"}
+EXCLUDE_STATIC = {"js/map.js", "js/neighbourhoods.js", "js/active.js", "css/map.css", "js/asl.js", "js/webscraper.js"}
 
 
 def main():

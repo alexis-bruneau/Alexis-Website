@@ -1,0 +1,525 @@
+/************** NEIGHBOURHOOD MODE (sold map) **************
+ * A second way to pick the area on /ottawa_map: instead of dragging a circle, click one of Ottawa's 116 fixed
+ * neighbourhoods (Ottawa Neighbourhood Study, City of Ottawa open data).
+ *
+ *  - the polygons are fetched once from /neighbourhood-boundaries.geojson;
+ *  - POST /neighbourhood-summary returns one row per neighbourhood for the current filters: the table and the colours;
+ *  - a selected neighbourhood goes through the same POST /filtered-points as the circle, with area = {type, id}.
+ *
+ * Loaded after map.js, whose globals it uses (map, circle, handle, diffBasis, fetchFilteredPoints, setView, ...).
+ * map.js calls refreshNeighbourhoodSummary, showNoNeighbourhoodSelected, appendAreaBanner and
+ * refreshNeighbourhoodViews, which are defined here.
+ */
+
+// Kept short (it sits on the map); the full wording is in the table footer and in redfin/data/neighbourhoods/README.md
+const NB_ATTRIBUTION =
+  'Boundaries: <a href="https://open.ottawa.ca" target="_blank" rel="noopener">Ottawa Neighbourhood Study</a>, ' +
+  '<a href="https://ottawa.ca/en/city-hall/get-know-your-city/open-data#open-data-licence-version-2-0" ' +
+  'target="_blank" rel="noopener">OGL – City of Ottawa</a>';
+
+// Colours (dataviz method): one-hue sequential ramp for magnitudes, blue <-> red with a grey midpoint for % vs asking,
+// grey for areas with too few sales. The ramp is the blue 100 -> 700 scale.
+const SEQ_STOPS = ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"];
+const DIV_MID = "#f0efec";
+const DIV_OVER = "#1c5cab";    // sold over asking
+const DIV_UNDER = "#d03b3b";   // sold under asking
+const LOW_FILL = "#9ca3af";
+
+const nbState = {
+  rows: [],                 // rows of the last /neighbourhood-summary
+  byId: new Map(),
+  meta: { minSample: 10, total: 0, noCoordinates: 0 },
+  status: "loading",        // "loading" | "ready" | "error"
+  layer: null,              // L.geoJSON of the polygons
+  layers: new Map(),        // id -> polygon layer
+  boundariesPromise: null,
+  metric: "median_price",   // what the map is coloured by: "median_price" | "avg_dom" | "diff"
+  sort: { key: "n", dir: -1 },
+  filterText: "",
+  summaryRequestId: 0,
+  scale: null,              // {kind, lo, hi} of the current colour scale
+};
+
+const NB_METRICS = {
+  median_price: { label: "Median price", kind: "seq", value: r => r.median_price, fmt: v => fmtNbPrice(v) },
+  avg_dom: { label: "Avg days on market", kind: "seq", value: r => r.avg_dom, fmt: v => `${Math.round(v)} d` },
+  diff: { label: "Avg sold vs ask", kind: "div", value: r => r[`avg_diff_pct_${diffBasis}`], fmt: v => fmtNbDiff(v) },
+};
+
+// ─── formatting ────────────────────────────────────────────────
+const nbIsNum = v => v !== null && v !== undefined && !isNaN(v);
+function fmtNbPrice(v) {
+  if (!nbIsNum(v)) return "–";
+  return v >= 1e6 ? `$${(v / 1e6).toFixed(2)}M` : `$${Math.round(v / 1000)}k`;
+}
+function fmtNbDiff(v) {
+  if (!nbIsNum(v)) return "–";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+}
+function nbEsc(text) {
+  return String(text).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function nbMetricValue(row, metric = nbState.metric) {
+  const v = NB_METRICS[metric].value(row);
+  return nbIsNum(v) ? v : null;
+}
+/** A row's statistics are only trusted when it has enough sales; a row without the value has none either way. */
+function nbUsable(row, metric = nbState.metric) {
+  return row && !row.low_sample && nbMetricValue(row, metric) !== null;
+}
+
+// ─── colour scale ──────────────────────────────────────────────
+function lerpHex(a, b, t) {
+  const pa = [1, 3, 5].map(i => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map(i => parseInt(b.slice(i, i + 2), 16));
+  return "#" + pa.map((x, i) => Math.round(x + (pb[i] - x) * t).toString(16).padStart(2, "0")).join("");
+}
+function seqColor(t) {
+  const x = Math.min(Math.max(t, 0), 1) * (SEQ_STOPS.length - 1);
+  const i = Math.min(Math.floor(x), SEQ_STOPS.length - 2);
+  return lerpHex(SEQ_STOPS[i], SEQ_STOPS[i + 1], x - i);
+}
+function divColor(t) {   // t in [-1, 1]: -1 = most under asking, +1 = most over
+  return t >= 0 ? lerpHex(DIV_MID, DIV_OVER, Math.min(t, 1)) : lerpHex(DIV_MID, DIV_UNDER, Math.min(-t, 1));
+}
+function quantile(sorted, q) {
+  const pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+/** Scale from the areas with enough sales, clipped at the 5th/95th percentile so one outlier cannot wash out the rest. */
+function computeScale() {
+  const metric = NB_METRICS[nbState.metric];
+  const values = nbState.rows.filter(r => nbUsable(r)).map(r => nbMetricValue(r)).sort((a, b) => a - b);
+  if (!values.length) return null;
+  let lo = values.length >= 8 ? quantile(values, 0.05) : values[0];
+  let hi = values.length >= 8 ? quantile(values, 0.95) : values[values.length - 1];
+  if (metric.kind === "div") {
+    const m = Math.max(Math.abs(lo), Math.abs(hi), 0.5);
+    return { kind: "div", lo: -m, hi: m };
+  }
+  if (hi - lo < 1e-9) hi = lo + 1;
+  return { kind: "seq", lo, hi };
+}
+function colorFor(value) {
+  const s = nbState.scale;
+  if (!s) return LOW_FILL;
+  return s.kind === "div" ? divColor(value / s.hi) : seqColor((value - s.lo) / (s.hi - s.lo));
+}
+
+// ─── the polygons ──────────────────────────────────────────────
+function styleFor(feature) {
+  const id = feature.properties.id;
+  const row = nbState.byId.get(id);
+  const selected = selectedNeighbourhood && selectedNeighbourhood.id === id;
+  const style = { weight: selected ? 3 : 1, color: selected ? "#0f172a" : "#475569", opacity: selected ? 1 : 0.7 };
+  if (nbUsable(row)) {
+    return { ...style, fillColor: colorFor(nbMetricValue(row)), fillOpacity: 0.6, dashArray: null };
+  }
+  if (!row && nbState.status === "loading") {
+    return { ...style, fillColor: "#cbd5e1", fillOpacity: 0.3, dashArray: null };
+  }
+  return { ...style, fillColor: LOW_FILL, fillOpacity: 0.22, dashArray: "3 3" };   // too few sales: greyed out
+}
+
+function tooltipHtml(id, name) {
+  const row = nbState.byId.get(id);
+  if (!row) return `<strong>${nbEsc(name)}</strong>`;
+  const metric = NB_METRICS[nbState.metric];
+  let line;
+  if (row.low_sample) {
+    line = row.n === 0 ? "No sales with these filters"
+      : `Only ${row.n} sale${row.n === 1 ? "" : "s"} (fewer than ${nbState.meta.minSample}): too few to colour`;
+  } else {
+    const v = nbMetricValue(row);
+    line = `${metric.label}: <strong>${v === null ? "–" : metric.fmt(v)}</strong> · ${row.n.toLocaleString()} sales`;
+  }
+  return `<strong>${nbEsc(name)}</strong><br>${line}`;
+}
+
+function loadBoundaries() {
+  if (!nbState.boundariesPromise) {
+    nbState.boundariesPromise = fetch("/neighbourhood-boundaries.geojson")
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        nbState.layer = L.geoJSON(data, {
+          style: styleFor,
+          attribution: NB_ATTRIBUTION,
+          onEachFeature: (feature, layer) => {
+            const { id, name } = feature.properties;
+            nbState.layers.set(id, layer);
+            layer.bindTooltip(() => tooltipHtml(id, name), { sticky: true, className: "area-tip" });
+            layer.on("click", e => {
+              L.DomEvent.stopPropagation(e);   // not a click on the map background
+              hideFilterPanel();
+              selectNeighbourhood(id, { name });
+            });
+          },
+        });
+        return nbState.layer;
+      })
+      .catch(err => {
+        console.error("Failed to load the neighbourhood boundaries:", err);
+        nbState.boundariesPromise = null;   // let a later switch to Neighbourhood mode try again
+        return null;
+      });
+  }
+  return nbState.boundariesPromise;
+}
+
+function restylePolygons() {
+  if (nbState.layer) nbState.layer.setStyle(styleFor);
+  if (selectedNeighbourhood && nbState.layers.has(selectedNeighbourhood.id)) {
+    nbState.layers.get(selectedNeighbourhood.id).bringToFront();
+  }
+}
+
+// ─── legend (map control) ──────────────────────────────────────
+let nbLegend = null;
+function createLegend() {
+  const control = L.control({ position: "bottomleft" });
+  control.onAdd = function () {
+    const div = L.DomUtil.create("div", "area-legend");
+    div.innerHTML = `
+      <label class="area-legend-metric">Colour by
+        <select id="areaMetricSelect" aria-label="Colour the map by">
+          <option value="median_price">Median price</option>
+          <option value="avg_dom">Avg days on market</option>
+          <option value="diff">Avg sold vs ask</option>
+        </select>
+      </label>
+      <div class="area-legend-bar" id="areaLegendBar"></div>
+      <div class="area-legend-scale" id="areaLegendScale"></div>
+      <div class="area-legend-low"><i class="area-legend-swatch"></i><span id="areaLegendLow"></span></div>`;
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+    div.querySelector("select").addEventListener("change", e => setMetric(e.target.value));
+    return div;
+  };
+  return control;
+}
+
+function renderLegend() {
+  const bar = document.getElementById("areaLegendBar");
+  const scale = document.getElementById("areaLegendScale");
+  const low = document.getElementById("areaLegendLow");
+  const select = document.getElementById("areaMetricSelect");
+  if (!bar) return;
+  select.value = nbState.metric;
+  const metric = NB_METRICS[nbState.metric];
+  const s = nbState.scale;
+  low.textContent = `Fewer than ${nbState.meta.minSample} sales`;
+  if (nbState.status === "loading") {
+    bar.style.background = "#e2e8f0";
+    scale.innerHTML = "<span>Loading…</span>";
+    return;
+  }
+  if (!s) {
+    bar.style.background = "#e2e8f0";
+    scale.innerHTML = "<span>No area has enough sales</span>";
+    return;
+  }
+  if (s.kind === "div") {
+    bar.style.background = `linear-gradient(to right, ${DIV_UNDER}, ${DIV_MID}, ${DIV_OVER})`;
+    scale.innerHTML = `<span>${nbEsc(fmtNbDiff(s.lo))} under ask</span><span>0</span><span>${nbEsc(fmtNbDiff(s.hi))} over ask</span>`;
+  } else {
+    bar.style.background = `linear-gradient(to right, ${SEQ_STOPS.join(", ")})`;
+    scale.innerHTML = `<span>≤ ${nbEsc(metric.fmt(s.lo))}</span><span>≥ ${nbEsc(metric.fmt(s.hi))}</span>`;
+  }
+}
+
+function setMetric(metric) {
+  nbState.metric = metric;
+  nbState.scale = computeScale();
+  restylePolygons();
+  renderLegend();
+  renderAreaTables();
+}
+
+// ─── the summary table (desktop panel + mobile tab share one markup) ────
+const AREA_COLUMNS = [
+  { key: "name", label: "Neighbourhood", cls: "c-name", width: "" },
+  { key: "n", label: "Sales", cls: "c-num", width: "50px", title: "Number of sales" },
+  { key: "median_price", label: "Median", cls: "c-num", width: "66px", metric: "median_price", title: "Median sold price" },
+  { key: "avg_dom", label: "DOM", cls: "c-num", width: "50px", metric: "avg_dom", title: "Average days on market" },
+  { key: "diff", label: "vs ask", cls: "c-num", width: "62px", metric: "diff", title: "Average sold price vs the asking price" },
+];
+
+function areaContainers() {
+  return ["areasBodyDesktop", "areasBodyMobile"].map(id => document.getElementById(id)).filter(Boolean);
+}
+
+function initAreaTables() {
+  areaContainers().forEach(container => {
+    container.innerHTML = `
+      <div class="areas-head">
+        <input type="search" class="areas-filter" placeholder="Filter neighbourhoods…" autocomplete="off" aria-label="Filter neighbourhoods by name" />
+        <p class="areas-meta" aria-live="polite"></p>
+      </div>
+      <div class="areas-scroll">
+        <table class="areas-table">
+          <colgroup>${AREA_COLUMNS.map(c => `<col${c.width ? ` style="width:${c.width}"` : ""}>`).join("")}</colgroup>
+          <thead><tr>${AREA_COLUMNS.map(c =>
+            `<th class="${c.cls}" scope="col"><button type="button" class="th-btn" data-key="${c.key}"${c.metric ? ` data-metric="${c.metric}"` : ""}
+               title="${(c.title ? c.title + ". " : "") + (c.metric ? "Click to sort by this and colour the map by it" : "Click to sort by this")}"><span class="th-label"></span><span class="th-arrow" aria-hidden="true"></span></button></th>`).join("")}
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="areas-foot"></p>`;
+    container.querySelector(".areas-filter").addEventListener("input", e => {
+      nbState.filterText = e.target.value.trim().toLowerCase();
+      areaContainers().forEach(c => { const i = c.querySelector(".areas-filter"); if (i !== e.target) i.value = e.target.value; });
+      renderAreaTables();
+    });
+    container.querySelector("thead").addEventListener("click", e => {
+      const btn = e.target.closest(".th-btn");
+      if (!btn) return;
+      const key = btn.dataset.key;
+      nbState.sort = nbState.sort.key === key
+        ? { key, dir: -nbState.sort.dir }
+        : { key, dir: key === "name" ? 1 : -1 };       // names A-Z first, numbers biggest first
+      if (btn.dataset.metric && btn.dataset.metric !== nbState.metric) setMetric(btn.dataset.metric);
+      else renderAreaTables();
+    });
+    const tbody = container.querySelector("tbody");
+    const pick = e => {
+      const tr = e.target.closest("tr.area-row");
+      if (tr) selectNeighbourhood(Number(tr.dataset.id), { zoom: true, name: tr.dataset.name });
+    };
+    tbody.addEventListener("click", pick);
+    tbody.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(e); } });
+  });
+}
+
+function sortKeyValue(row, key) {
+  if (key === "name") return row.name.toLowerCase();
+  if (key === "diff") return nbMetricValue(row, "diff");
+  return nbIsNum(row[key]) ? row[key] : null;
+}
+
+function sortedRows() {
+  const { key, dir } = nbState.sort;
+  const unassigned = nbState.rows.find(r => r.id === 0);
+  const rows = nbState.rows.filter(r => r.id !== 0 && (!nbState.filterText || r.name.toLowerCase().includes(nbState.filterText)));
+  const byMetric = AREA_COLUMNS.some(c => c.key === key && c.metric);
+  rows.sort((a, b) => {
+    // Sorting by a statistic: areas with too few sales rank after the reliable ones, whatever the direction
+    if (byMetric && a.low_sample !== b.low_sample) return a.low_sample ? 1 : -1;
+    const va = sortKeyValue(a, key), vb = sortKeyValue(b, key);
+    if (va === null && vb === null) return a.name.localeCompare(b.name);
+    if (va === null) return 1;                          // rows with no value sink to the bottom either way
+    if (vb === null) return -1;
+    const cmp = typeof va === "string" ? va.localeCompare(vb) : va - vb;
+    return cmp * dir || a.name.localeCompare(b.name);
+  });
+  // The unassigned bucket is always listed, last, so the rows add up to the total
+  if (unassigned && (!nbState.filterText || unassigned.name.toLowerCase().includes(nbState.filterText))) rows.push(unassigned);
+  return rows;
+}
+
+function rowHtml(r) {
+  const selected = selectedNeighbourhood && selectedNeighbourhood.id === r.id;
+  const cls = ["area-row", r.low_sample ? "is-low" : "", selected ? "is-selected" : "", r.id === 0 ? "is-unassigned" : ""].join(" ").trim();
+  const dom = nbIsNum(r.avg_dom) ? Math.round(r.avg_dom) : "–";
+  const diff = nbMetricValue(r, "diff");
+  const title = r.low_sample ? ` title="${r.n === 0 ? "No sales" : `Only ${r.n} sale${r.n === 1 ? "" : "s"}`} with these filters (fewer than ${nbState.meta.minSample}): too few to rely on"` : "";
+  return `<tr class="${cls}" data-id="${r.id}" data-name="${nbEsc(r.name)}" tabindex="0" aria-selected="${selected ? "true" : "false"}"${title}>
+    <td class="c-name">${nbEsc(r.name)}</td>
+    <td class="c-num">${r.n.toLocaleString()}</td>
+    <td class="c-num">${fmtNbPrice(r.median_price)}</td>
+    <td class="c-num">${dom}</td>
+    <td class="c-num">${fmtNbDiff(diff)}</td></tr>`;
+}
+
+function renderAreaTables() {
+  const containers = areaContainers();
+  if (!containers.length) return;
+  const rows = sortedRows();
+  const withSales = nbState.rows.filter(r => r.id !== 0 && r.n > 0).length;
+  const total = nbState.rows.filter(r => r.id !== 0).length;
+  let body, meta, foot;
+  if (nbState.status === "error") {
+    body = `<tr><td colspan="5" class="areas-empty">Could not load the neighbourhood summary. Change a filter to try again.</td></tr>`;
+    meta = "";
+    foot = "";
+  } else if (nbState.status === "loading" && !nbState.rows.length) {
+    body = `<tr><td colspan="5" class="areas-empty">Loading…</td></tr>`;
+    meta = "";
+    foot = "";
+  } else {
+    body = rows.length ? rows.map(rowHtml).join("") : `<tr><td colspan="5" class="areas-empty">No neighbourhood matches “${nbEsc(nbState.filterText)}”.</td></tr>`;
+    meta = `${nbState.meta.total.toLocaleString()} sales in ${withSales} of ${total} neighbourhoods. Greyed rows have fewer than ${nbState.meta.minSample} sales.`;
+    const missing = nbState.meta.noCoordinates;
+    foot = (missing ? `${missing.toLocaleString()} more sale${missing === 1 ? " has" : "s have"} no coordinates, so ${missing === 1 ? "it is" : "they are"} on no map. ` : "") +
+      `Boundaries: Ottawa Neighbourhood Study (Gen 3), City of Ottawa open data, Open Government Licence – City of Ottawa. Median price; averages for days on market and sold vs ${diffBasis === "last" ? "final" : "original"} ask.`;
+  }
+  containers.forEach(c => {
+    c.querySelector("tbody").innerHTML = body;
+    c.querySelector(".areas-meta").textContent = meta;
+    c.querySelector(".areas-foot").textContent = foot;
+    c.querySelectorAll(".th-btn").forEach(btn => {
+      const col = AREA_COLUMNS.find(x => x.key === btn.dataset.key);
+      btn.querySelector(".th-label").textContent = col.label;
+      if (col.key === "diff") {
+        btn.title = `Average sold price vs the ${diffBasis === "last" ? "final" : "original"} asking price. Click to sort by this and colour the map by it`;
+      }
+      const sorted = nbState.sort.key === col.key;
+      btn.querySelector(".th-arrow").textContent = sorted ? (nbState.sort.dir > 0 ? "▲" : "▼") : "";
+      btn.closest("th").setAttribute("aria-sort", sorted ? (nbState.sort.dir > 0 ? "ascending" : "descending") : "none");
+      btn.classList.toggle("on-map", !!col.metric && col.metric === nbState.metric);
+    });
+  });
+}
+
+function scrollSelectedRowIntoView() {
+  areaContainers().forEach(c => {
+    const row = c.querySelector("tr.is-selected");
+    if (row && row.offsetParent !== null) row.scrollIntoView({ block: "nearest" });
+  });
+}
+
+// ─── data: the summary for the current filters ─────────────────
+async function refreshNeighbourhoodSummary(filters) {
+  const requestId = ++nbState.summaryRequestId;
+  if (!nbState.rows.length) { nbState.status = "loading"; renderAreaTables(); }
+  try {
+    const res = await fetch("/neighbourhood-summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filters }),
+    });
+    const data = await res.json();
+    if (requestId !== nbState.summaryRequestId) return;   // a newer request is on its way
+    if (data.error) throw new Error(data.error);
+    nbState.rows = data.rows;
+    nbState.byId = new Map(data.rows.map(r => [r.id, r]));
+    nbState.meta = { minSample: data.min_sample, total: data.total, noCoordinates: data.no_coordinates };
+    nbState.status = "ready";
+  } catch (err) {
+    if (requestId !== nbState.summaryRequestId) return;
+    console.error("Failed to load the neighbourhood summary:", err);
+    nbState.status = "error";
+  }
+  refreshNeighbourhoodViews();
+}
+
+/** Redraw everything that depends on the summary rows or on the "vs ask" basis (no request). */
+function refreshNeighbourhoodViews() {
+  if (areaMode !== "neighbourhood") return;
+  nbState.scale = computeScale();
+  restylePolygons();
+  renderLegend();
+  renderAreaTables();
+}
+
+// ─── selection ─────────────────────────────────────────────────
+function selectNeighbourhood(id, { zoom = false, name = null } = {}) {
+  const row = nbState.byId.get(id);
+  selectedNeighbourhood = { id, name: name || (row && row.name) || `Neighbourhood ${id}` };
+  restylePolygons();
+  renderAreaTables();
+  scrollSelectedRowIntoView();
+  if (zoom && nbState.layers.has(id)) {
+    map.fitBounds(nbState.layers.get(id).getBounds(), { padding: [24, 24], maxZoom: 15 });
+  }
+  updateAreaTitle();
+  fetchFilteredPoints();
+}
+
+function clearNeighbourhoodSelection() {
+  selectedNeighbourhood = null;
+  restylePolygons();
+  renderAreaTables();
+  fetchFilteredPoints();   // shows the "pick one" state
+}
+
+function updateAreaTitle() {
+  const title = document.getElementById("areaTitle");
+  const hint = document.getElementById("areaHint");
+  const inNb = areaMode === "neighbourhood";
+  title.hidden = !(inNb && selectedNeighbourhood);
+  hint.hidden = !(inNb && !selectedNeighbourhood);
+  if (inNb && selectedNeighbourhood) document.getElementById("areaTitleName").textContent = selectedNeighbourhood.name;
+}
+
+/** Neighbourhood mode with nothing selected: no markers, no listings, empty cards. */
+function showNoNeighbourhoodSelected() {
+  updateAreaTitle();
+  updateMapMarkers([]);
+  updateStats(null, []);
+  currentPoints = [];
+  currentPage = 1;
+  selectedLocationKey = null;
+  selectedMarkerRef = null;
+  updateListingsSidebar([]);
+  if (window._refreshMobileListings) window._refreshMobileListings();
+}
+
+/** Banner at the top of the listings (desktop sidebar and mobile tab). Nothing in Circle mode. */
+function appendAreaBanner(container, total) {
+  if (areaMode !== "neighbourhood") return;
+  const banner = document.createElement("div");
+  banner.className = "selection-banner";
+  if (selectedNeighbourhood) {
+    banner.innerHTML = `<span>${total.toLocaleString()} sale${total !== 1 ? "s" : ""} in <strong>${nbEsc(selectedNeighbourhood.name)}</strong></span>
+      <button type="button" class="area-banner-clear">✕ Clear</button>`;
+    banner.querySelector("button").addEventListener("click", clearNeighbourhoodSelection);
+  } else {
+    banner.innerHTML = "<span>Pick a neighbourhood on the map, or in the table, to list its sales.</span>";
+  }
+  container.appendChild(banner);
+}
+
+// ─── switching between Circle and Neighbourhood ────────────────
+async function setAreaMode(mode) {
+  if (mode === areaMode) return;
+  areaMode = mode;
+  document.querySelectorAll("#areaToggle .area-btn").forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const radiusGroup = document.getElementById("radiusGroup");
+  const areasBtn = document.getElementById("toggleAreas");
+
+  if (mode === "neighbourhood") {
+    if (radiusGroup) radiusGroup.hidden = true;
+    if (areasBtn) areasBtn.hidden = false;
+    map.removeLayer(circle);
+    map.removeLayer(handle);
+    if (!nbLegend) nbLegend = createLegend();
+    nbLegend.addTo(map);
+    nbState.status = nbState.rows.length ? "ready" : "loading";
+    renderLegend();
+    // Polygons and summary load side by side; the polygons are fetched once per page load
+    loadBoundaries().then(layer => {
+      if (layer && areaMode === "neighbourhood") {
+        layer.addTo(map);
+        restylePolygons();
+      }
+    });
+    updateAreaTitle();
+    fetchFilteredPoints();                               // requests the summary, shows the "pick one" state
+    setView("areas");                                    // table beside the map (desktop) / Areas tab (phones)
+    if (window._syncMobileTabs) window._syncMobileTabs("areas");
+  } else {
+    if (nbState.layer) map.removeLayer(nbState.layer);
+    if (nbLegend) map.removeLayer(nbLegend);
+    selectedNeighbourhood = null;
+    if (radiusGroup) radiusGroup.hidden = false;
+    if (areasBtn) areasBtn.hidden = true;
+    circle.addTo(map);
+    handle.addTo(map);
+    updateAreaTitle();
+    if (currentView === "areas") setView("insights");
+    if (window._syncMobileTabs) window._syncMobileTabs();   // drops the Areas tab
+    fetchFilteredPoints();
+  }
+}
+
+document.querySelectorAll("#areaToggle .area-btn").forEach(btn =>
+  btn.addEventListener("click", () => setAreaMode(btn.dataset.mode)));
+document.getElementById("toggleAreas").addEventListener("click", () => setView(currentView === "areas" ? "insights" : "areas"));
+document.getElementById("areaClear").addEventListener("click", clearNeighbourhoodSelection);
+initAreaTables();
+renderAreaTables();
