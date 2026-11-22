@@ -972,7 +972,7 @@ function initBuckets() {
           } }
         },
         scales: {
-          x: { grid: { display: false } },
+          x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: false, font: { size: 10 } } },
           y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: GRID } }
         }
       },
