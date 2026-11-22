@@ -303,3 +303,182 @@
 @media (max-height: 500px) and (orientation: landscape) {
   .sold-map .mode-tabs, .active-map .mode-tabs { left: auto !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PHONE · B · LIST FIRST
+   The page opens on a list of listing cards. A sticky header holds the search box, a row of filter chips (each opens a small
+   bottom sheet with that one control) and a summary strip (tap it for the full insights). A floating button flips between the
+   list and the map. Desktop (901px and wider) ignores all of this: the phone-only elements are display: none.
+   ═══════════════════════════════════════════════════════════ */
+.m-only { display: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@media (max-width: 900px), (max-height: 500px) and (orientation: landscape) {
+  :root {
+    --m-top: env(safe-area-inset-top, 0px);
+    --m-bottom: env(safe-area-inset-bottom, 0px);
+    --m-head-h: 168px;   /* measured by script */
+    --m-sheet-max: 84vh;
+    --tap: 44px;
+    --m-bg: #f1f4f9;
+  }
+  @supports (height: 100dvh) { :root { --m-sheet-max: 84dvh; } }
+
+  /* the page: a fixed map with the list laid over it; nothing scrolls except the list */
+  html, body { height: 100% !important; overflow: hidden !important; overscroll-behavior: none; }
+  body { display: block !important; }
+  #appContainer, #mainPanel { position: fixed !important; inset: 0 !important; display: block !important; height: auto !important; min-height: 0 !important; flex: none !important; grid-template-columns: none !important; grid-template-rows: none !important; }
+  #map { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; min-height: 0 !important; grid-column: auto !important; grid-row: auto !important; }
+  #listingsPanel, #areasPanel { display: none !important; }
+
+  /* ── header: [Sold | Active] [search] / chips / summary strip ── */
+  .m-header { display: block; position: fixed; top: 0; left: 0; right: 0; z-index: 1150; padding-top: calc(6px + var(--m-top)); background: var(--glass-solid); box-shadow: 0 1px 0 var(--line), 0 6px 16px rgba(15, 23, 42, 0.1); }
+  .sold-map .mode-tabs, .active-map .mode-tabs {
+    position: fixed !important; top: calc(6px + var(--m-top)) !important; left: 12px !important; right: auto !important; bottom: auto !important;
+    margin: 0 !important; padding: 3px !important; border-radius: 14px !important; z-index: 1200 !important; gap: 0;
+    background: #e8ecf3; border: 0; box-shadow: none; backdrop-filter: none;
+  }
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { display: inline-flex; align-items: center; justify-content: center; min-height: var(--tap); padding: 0 14px; font-size: 14px; font-weight: 700; border-radius: 11px; }
+  .sold-map .mode-tabs a.active, .active-map .mode-tabs a.active { background: var(--ink); color: #fff; }
+  .m-head-row { display: flex; align-items: center; min-height: 50px; padding: 0 12px 0 152px; }
+  .m-head-row .search-container { display: flex !important; flex: 1; min-width: 0; padding: 0; background: transparent !important; border: 0; position: relative; top: auto !important; }
+  .m-head-row .search-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; pointer-events: none; }
+  .m-head-row .search-container input { width: 100%; min-height: var(--tap); padding: 0 10px 0 36px; border: 1px solid #cdd6e3; border-radius: 22px; font-size: 15px; background: #fff; }
+  body[data-mtab="map"] .m-head-row .search-container { visibility: hidden; }
+
+  .m-chips { display: flex; gap: 8px; padding: 4px 12px 8px; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .m-chips::-webkit-scrollbar { display: none; }
+  .m-chip { flex: none; scroll-snap-align: start; display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 14px; border: 1px solid #c4cddb; border-radius: 999px; background: #fff; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+  .m-chip:not(.m-chip-clear)::after { content: "▾"; font-size: 11px; color: var(--muted); }
+  .m-chip.is-on { background: #eef0ff; border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .m-chip.is-on::after { color: var(--accent-ink); }
+  .m-chip-clear { border-color: #f1c5c5; color: var(--down); background: #fff; }
+  .m-chip-clear[hidden] { display: none; }
+
+  /* Areas | Listings, only in Neighbourhood mode */
+  .mobile-tab-bar { display: none !important; margin: 0 12px 8px; padding: 3px; gap: 2px; border: 0 !important; border-radius: 13px; background: #e8ecf3 !important; }
+  body.area-mode-nb:not([data-mtab="map"]) .mobile-tab-bar { display: flex !important; }
+  .mobile-tab { flex: 1; min-height: var(--tap); padding: 0 6px; border: 0 !important; border-bottom: 0 !important; border-radius: 10px !important; background: transparent !important; box-shadow: none !important; color: var(--ink-2) !important; font-size: 14px; font-weight: 700; }
+  .mobile-tab.active { background: #ffffff !important; color: var(--accent-ink) !important; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.18) !important; }
+  .mobile-tab[hidden], .mobile-tab[data-tab="insights"] { display: none !important; }
+
+  .m-strip { display: flex; align-items: stretch; width: 100%; min-height: 54px; padding: 4px 12px 8px; border: 0; border-top: 1px solid var(--line); background: transparent; font: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .m-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+  .m-cell b { font-size: 16px; line-height: 1.2; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .m-cell i { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .m-cell b.is-down { color: var(--down); }
+  .m-more { align-self: center; flex: none; padding-left: 8px; font-size: 13px; font-weight: 700; color: var(--accent-ink); }
+  body[data-mtab="map"] .m-strip, body.m-scrolled .m-strip, body.m-no-area .m-strip { display: none; }
+  .m-sum-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 14px 8px; font-size: 13px; color: #78350f; background: #fffbeb; border-top: 1px solid #fcd34d; }
+  .m-sum-status[hidden] { display: none; }
+  .m-sum-status.is-error { color: #7f1d1d; background: #fef2f2; border-color: #fca5a5; }
+  .m-sum-status button { min-height: var(--tap); padding: 0 14px; border: 1px solid #cdd6e3; border-radius: 10px; background: #fff; font: inherit; font-weight: 700; color: var(--ink); }
+
+  /* ── the list view ── */
+  #mobileListingsPanel, #mobileAreasPanel {
+    display: none !important; position: fixed !important; left: 0; right: 0; top: var(--m-head-h) !important; bottom: 0; z-index: 1000;
+    flex-direction: column; overflow-y: auto !important; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    background: var(--m-bg) !important; border: 0 !important; padding: 0 !important; margin: 0 !important; min-height: 0 !important;
+  }
+  body[data-mtab="listings"] #mobileListingsPanel, body[data-mtab="insights"] #mobileListingsPanel, body[data-mtab="areas"] #mobileAreasPanel { display: flex !important; }
+  #mobileListingsPanel .sort-container { position: static; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px 0; background: transparent !important; border: 0; }
+  #mobileListingsPanel .sort-container label { font-size: 13px; font-weight: 700; color: var(--muted); }
+  #mobileListingsPanel .sort-container select { flex: 0 1 220px; min-height: var(--tap); padding: 0 8px; font-size: 15px; background: #fff; }
+  #mobileListingsPanel .listing-rows { flex: none !important; overflow: visible !important; padding: 8px 14px 6px !important; min-height: 0; }
+  #mobileListingsPanel .pagination-controls { position: static !important; flex: none; padding: 6px 14px calc(96px + var(--m-bottom)); background: transparent !important; border: 0 !important; flex-wrap: wrap; justify-content: center; }
+  .page-btn, .page-ellipsis { min-width: var(--tap) !important; width: var(--tap) !important; height: var(--tap) !important; }
+  .listing-info .view-btn, .selection-banner button, .data-status-btn, .area-clear, .chart-btn, .insight-tab, .chip-btn { min-height: var(--tap) !important; min-width: var(--tap); }
+  #mobileAreasPanel .areas-body { flex: none; padding-bottom: calc(96px + var(--m-bottom)); background: #fff; }
+  .areas-filter, .area-legend-metric select, .th-btn { min-height: var(--tap) !important; }
+
+  /* listing cards: a photo on top, the facts under it; the whole card is the link to the listing */
+  #mobileListingsPanel .listing-row { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0; margin: 0 0 14px; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
+  #mobileListingsPanel .image-wrapper { width: 100% !important; height: 176px !important; flex: none; }
+  #mobileListingsPanel .listing-row img, #mobileListingsPanel .no-image-placeholder { width: 100% !important; height: 176px !important; object-fit: cover; border-radius: 0; }
+  #mobileListingsPanel .listing-info { padding: 10px 14px 12px; gap: 2px; }
+  #mobileListingsPanel .listing-info strong { font-size: 22px; letter-spacing: -0.01em; }
+  #mobileListingsPanel .listing-info p { font-size: 14px; margin: 0; }
+  #mobileListingsPanel .listing-info .view-btn { position: absolute; inset: 0; min-height: 0 !important; min-width: 0; padding: 0; border: 0; border-radius: 16px; font-size: 0; background: transparent; }
+  #mobileListingsPanel .listing-info .view-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+  #mobileListingsPanel .selection-banner, #mobileListingsPanel .area-banner { margin: 0 0 12px; border-radius: 12px; }
+
+  /* ── Map | List button ── */
+  .m-view-btn { display: inline-flex !important; align-items: center; gap: 8px; position: fixed; left: 50%; bottom: calc(26px + var(--m-bottom)); transform: translateX(-50%); z-index: 1160; min-height: 52px; padding: 0 24px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; font: inherit; font-size: 16px; font-weight: 800; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.45); -webkit-tap-highlight-color: transparent; }
+  body[data-chip] .m-view-btn, body.m-insights-open .m-view-btn { display: none !important; }
+  .leaflet-top.leaflet-left { display: none; }
+  .leaflet-bottom { margin-bottom: 0; }
+  .leaflet-bottom.leaflet-right .leaflet-control-zoom { margin-bottom: 14px; margin-right: 12px; }
+  .leaflet-control-zoom a, .leaflet-touch .leaflet-bar a { width: var(--tap) !important; height: var(--tap) !important; line-height: var(--tap) !important; }
+  .leaflet-control-attribution a { display: inline-block; padding: 14px 3px !important; margin: -14px 0 !important; }
+  body.area-mode-nb .leaflet-bottom.leaflet-left { margin-bottom: 132px; }
+  body.area-mode-nb .m-view-btn { bottom: calc(72px + var(--m-bottom)); }
+  .drag-handle::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; }
+
+  /* ── scrim + the two bottom sheets (a chip's control, the insights) ── */
+  #appContainer { z-index: 1100; }
+  body[data-chip] #appContainer, body.m-insights-open #appContainer { z-index: 10095; }   /* the scrim, which lives inside it, then covers the header too */
+  .m-scrim:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 10090; background: rgba(15, 23, 42, 0.5); }
+  #controls { display: none !important; }
+  body[data-chip] #controls {
+    display: flex !important; flex-direction: column; align-items: stretch !important; gap: 14px; position: fixed !important; top: auto !important; left: 0 !important; right: 0; bottom: 0; z-index: 10100 !important;
+    width: auto !important; max-width: none !important; max-height: var(--m-sheet-max); height: auto !important; transform: none !important; transition: none !important;
+    padding: 0 18px calc(14px + var(--m-bottom)) !important; border: 0 !important; border-radius: 22px 22px 0 0 !important; box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.3) !important; backdrop-filter: none !important;
+    background: #fff !important; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  body[data-chip] #controls .m-filter-head { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 4; margin: 0 -18px; padding: 10px 18px 6px; background: #fff; }
+  body[data-chip] #controls .m-filter-title { margin: 0; font-size: 20px; font-weight: 800; color: var(--ink); }
+  body[data-chip] #controls .m-icon-btn { width: var(--tap); height: var(--tap); padding: 0 !important; border: 0 !important; border-radius: 50% !important; background: #eef1f7 !important; color: var(--ink) !important; font-size: 18px !important; }
+  body[data-chip] #controls #filterPanel { display: contents !important; visibility: visible !important; opacity: 1 !important; pointer-events: auto !important; transform: none !important; }
+  body[data-chip] #controls .filter-header, body[data-chip] #controls #toggleListings, body[data-chip] #controls #toggleAreas, body[data-chip] #controls #filterToggle, body[data-chip] #controls #periodMenuBtn { display: none !important; }
+  body[data-chip] #controls [data-sec] { display: none !important; }
+  body[data-chip="area"] #controls .area-toggle { display: flex !important; width: 100%; padding: 3px; }
+  body[data-chip="area"] #controls .radius-group:not([hidden]) { display: flex !important; align-items: center; gap: 10px; }
+  body[data-chip="period"] #controls .period-menu { display: block !important; position: static; width: 100%; }
+  body[data-chip="price"] #controls [data-sec="price"], body[data-chip="beds"] #controls [data-sec="beds"], body[data-chip="ptype"] #controls [data-sec="ptype"], body[data-chip="change"] #controls [data-sec="change"] { display: block !important; }
+  body[data-chip] #controls .area-toggle button.area-btn.area-btn.area-btn { flex: 1; min-height: var(--tap); font-size: 15px; }
+  body[data-chip] #controls .radius-group label { font-size: 15px; color: var(--ink-2); }
+  body[data-chip] #controls input[type="number"] { width: 84px !important; height: var(--tap) !important; font-size: 16px !important; padding: 0 10px !important; }
+  body[data-chip] #controls .period-menu .period-menu-pop, body[data-chip] #controls .period-menu .period-menu-pop[hidden] {
+    display: grid !important; position: static; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; min-width: 0; max-height: none; padding: 0; border: 0; box-shadow: none; background: transparent; overflow: visible;
+  }
+  body[data-chip] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm { min-height: var(--tap); padding: 8px 10px; border: 1px solid #d5dce8; border-radius: 12px; font-size: 14px; line-height: 1.2; white-space: normal !important; }
+  body[data-chip] #controls .period-menu .period-menu-pop button.pm.pm-opt.pm.is-active { border-color: var(--accent); }
+  body[data-chip] #controls .period-menu .period-dock { grid-column: 1 / -1; margin: 4px 0 0; padding: 14px 6px 6px; }
+  body[data-chip] #controls .filter-section { margin: 0; padding: 4px 0 0; border: 0; min-width: 0; background: transparent; }
+  body[data-chip] #controls .filter-section legend { display: none; }
+  body[data-chip] #controls .range-labels span { font-size: 15px; padding: 6px 12px; }
+  body[data-chip] #controls .bed-btn, body[data-chip] #controls .ptype-btn { min-height: var(--tap); font-size: 15px; }
+  body[data-chip] #controls #bedFilter { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  body[data-chip] #controls #ptypeFilter, body[data-chip] #controls #changeFilter { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  body[data-chip] #controls .bed-btn { min-width: 0; padding: 0; }
+  body[data-chip] #controls .ptype-btn { padding: 0 6px; font-size: 14px; }
+  body[data-chip] #controls .filter-hint { font-size: 13px; color: var(--muted); }
+  body[data-chip] #controls .filter-section .noUi-target { margin: 14px 20px 16px !important; }
+  body[data-chip] #controls .noUi-handle { width: var(--tap) !important; height: var(--tap) !important; top: -19px !important; right: -22px !important; }
+  body[data-chip] #controls .noUi-handle::after { top: 12px !important; left: 12px !important; }
+  body[data-chip] #controls .m-filter-foot { display: block; position: sticky; bottom: 0; z-index: 4; margin: 0 -18px -14px; padding: 10px 18px calc(14px + var(--m-bottom)); background: #fff; }
+  body[data-chip] #controls .m-filter-foot .m-apply { width: 100%; min-height: 52px; padding: 0 16px; border: 0; border-radius: 14px; background: var(--accent); background-image: none; color: #fff; font: inherit; font-size: 17px; font-weight: 800; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4); }
+
+  #insights { display: none !important; }
+  body.m-insights-open #insights {
+    display: flex !important; flex-direction: column; gap: 14px !important; position: fixed !important; top: auto !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    height: var(--m-sheet-max) !important; min-height: 0 !important; max-height: none !important; z-index: 10100 !important;
+    padding: 0 14px calc(24px + var(--m-bottom)) !important; border: 0 !important; border-radius: 22px 22px 0 0 !important; box-shadow: 0 -10px 34px rgba(15, 23, 42, 0.3) !important;
+    background: #fff !important; backdrop-filter: none !important; overflow-y: auto !important; overscroll-behavior: contain;
+  }
+  body.m-insights-open .m-sheet-close { display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 4; flex: none; min-height: 58px; margin: 0 -14px; padding: 0 18px; border: 0; border-bottom: 1px solid var(--line); background: #fff; font: inherit; font-size: 18px; font-weight: 800; color: var(--ink); }
+  .insights-left, .insights-right { flex: none !important; width: 100% !important; min-height: 0 !important; }
+  .insights-right { display: flex; flex-direction: column; }
+  .chart-container-full { flex: none !important; height: 260px !important; min-height: 260px !important; }
+  #insights .drawer-period { display: block; }
+}
+
+/* a phone on its side: no summary strip (the height is precious), photo beside the facts */
+@media (max-height: 500px) and (orientation: landscape) {
+  .m-strip { display: none; }
+  .m-head-row { min-height: 50px; }
+  #mobileListingsPanel .listing-row { flex-direction: row; }
+  #mobileListingsPanel .image-wrapper { width: 42% !important; height: 150px !important; }
+  #mobileListingsPanel .listing-row img, #mobileListingsPanel .no-image-placeholder { height: 150px !important; }
+  #mobileListingsPanel .listing-info { flex: 1; min-width: 0; }
+}

@@ -27,20 +27,58 @@
     <a href="/ottawa_active" class="active" aria-current="page">Active</a>
   </nav>
 
+  <!-- ═══ PHONE · B: list first. A sticky header (search, filter chips, a summary strip), the list, and a floating Map / List switch ═══ -->
+  <header id="mHeader" class="m-header m-only">
+    <div class="m-head-row">
+      <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="mobileListingSearch" placeholder="Search by address, price…" autocomplete="off" />
+        </div>
+    </div>
+    <div id="mChips" class="m-chips" role="toolbar" aria-label="Filters">
+      <button type="button" class="m-chip" data-chip="price" id="mChipPrice">Price</button>
+      <button type="button" class="m-chip" data-chip="beds" id="mChipBeds">Beds</button>
+      <button type="button" class="m-chip" data-chip="ptype" id="mChipPtype">Type</button>
+      <button type="button" class="m-chip" data-chip="period" id="mChipPeriod">Period</button>
+      <button type="button" class="m-chip" data-chip="change" id="mChipChange">Price changes</button>
+      <button type="button" class="m-chip" data-chip="area" id="mChipArea">Circle · 15 km</button>
+      <button type="button" class="m-chip m-chip-clear" id="mChipsClear" hidden>Clear all</button>
+    </div>
+    <div class="mobile-tab-bar" id="mobileTabBar" style="display:none;" role="group" aria-label="Neighbourhoods or their listings">
+      <button type="button" class="mobile-tab" data-tab="areas" id="mobileAreasTab" hidden>📍 Neighbourhoods</button>
+      <button type="button" class="mobile-tab" data-tab="listings">🏠 Listings</button>
+      <button type="button" class="mobile-tab" data-tab="insights" hidden>📊 Insights</button>
+    </div>
+    <div id="mSumStatus" class="m-sum-status" hidden></div>
+    <button type="button" id="mStrip" class="m-strip" aria-label="Show all the insights">
+        <span class="m-cell"><b id="mS1">–</b><i>listings</i></span>
+        <span class="m-cell"><b id="mS2">–</b><i>avg ask</i></span>
+        <span class="m-cell"><b id="mS3">–</b><i>avg days</i></span>
+        <span class="m-cell"><b id="mS4">–</b><i>price cuts</i></span>
+        <span class="m-more" aria-hidden="true">More ›</span>
+    </button>
+  </header>
+  <button type="button" id="mViewBtn" class="m-view-btn m-only"><span id="mViewIcon" aria-hidden="true">🗺️</span> <span id="mViewText">Map</span></button>
+
   <!-- ─── Radius / filter controls ───────────────────────── -->
-  <div id="controls">
+  <div id="controls" role="dialog" aria-modal="true" aria-labelledby="mFilterTitle">
+    <!-- PHONE: #controls is the bottom sheet behind a filter chip (it shows the one section the chip is about) -->
+    <div class="m-filter-head m-only">
+      <h2 class="m-filter-title" id="mFilterTitle">Filters</h2>
+      <button type="button" id="mFilterClose" class="m-icon-btn" aria-label="Close">✕</button>
+    </div>
     <!-- How the area is picked: a circle you drag, or a fixed Ottawa neighbourhood -->
-    <div class="area-toggle" id="areaToggle" role="group" aria-label="Pick the area by">
+    <div class="area-toggle" data-sec="area" id="areaToggle" role="group" aria-label="Pick the area by">
       <button type="button" class="area-btn active" data-mode="circle" aria-pressed="true">Circle</button>
       <button type="button" class="area-btn" data-mode="neighbourhood" aria-pressed="false">Neighbourhood</button>
     </div>
 
-    <span id="radiusGroup" class="radius-group">
+    <span id="radiusGroup" class="radius-group" data-sec="area">
       <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
       <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
     </span>
 
-    <div class="period-menu">
+    <div class="period-menu" data-sec="period">
       <button type="button" id="periodMenuBtn" class="pm pm-btn" aria-haspopup="true" aria-expanded="false" aria-controls="periodMenu" title="Time period">
         <svg class="pm-icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M10 5.5V10l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         <span class="pm-text"><span class="pm-name" data-period-name>All time</span><span class="pm-range" data-period-range></span></span>
@@ -69,7 +107,7 @@
       </div>
 
       <!-- Asking price filter -->
-      <fieldset class="filter-section">
+      <fieldset class="filter-section" data-sec="price">
         <legend><strong>Asking Price</strong></legend>
         <div id="priceRangeSlider"></div>
         <div class="range-labels">
@@ -89,7 +127,7 @@
       </fieldset>
 
       <!-- Beds filter -->
-      <fieldset class="filter-section">
+      <fieldset class="filter-section" data-sec="beds">
         <legend><strong>Bedrooms</strong></legend>
         <div id="bedFilter">
           <button class="bed-btn" data-bed="1">1</button>
@@ -102,7 +140,7 @@
       </fieldset>
 
       <!-- Property Type filter -->
-      <fieldset class="filter-section">
+      <fieldset class="filter-section" data-sec="ptype">
         <legend><strong>Property Type</strong></legend>
         <div id="ptypeFilter">
           <button class="ptype-btn" data-ptype="Condo">Condo</button>
@@ -113,7 +151,7 @@
       </fieldset>
 
       <!-- Price-change filter -->
-      <fieldset class="filter-section">
+      <fieldset class="filter-section" data-sec="change">
         <legend><strong>Price Changes</strong></legend>
         <div id="changeFilter">
           <button class="ptype-btn" data-change="down">▼ Price cut</button>
@@ -121,6 +159,7 @@
         </div>
       </fieldset>
     </div>
+    <div class="m-filter-foot m-only"><button type="button" id="mFilterApply" class="m-apply">Done</button></div>
   </div>
 
   <!-- ─── Main flex layout ───────────────────────────────── -->
@@ -157,19 +196,9 @@
 
     <div id="mainPanel">
       <div id="map"></div>
-
-      <!-- ═══ PHONE: tab bar and panels under the map (hidden on larger screens) ═══ -->
-      <div class="mobile-tab-bar" id="mobileTabBar" style="display:none;">
-        <button type="button" class="mobile-tab active" data-tab="insights">📊 Insights</button>
-        <button type="button" class="mobile-tab" data-tab="listings">🏠 Listings</button>
-        <button type="button" class="mobile-tab" data-tab="areas" id="mobileAreasTab" hidden>📍 Areas</button>
-      </div>
+      <div id="mScrim" class="m-scrim m-only" hidden></div>
 
       <div id="mobileListingsPanel" class="mobile-listings-panel" style="display:none;">
-        <div class="search-container">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="mobileListingSearch" placeholder="Search by address, price…" autocomplete="off" />
-        </div>
         <div class="sort-container">
           <label for="mobileSortSelect">Sort By:</label>
           <select id="mobileSortSelect">
@@ -191,6 +220,7 @@
 
       <!-- ═══ INSIGHTS FOOTER ═══ -->
       <div id="insights" class="insights-charts">
+        <button type="button" id="mInsightsClose" class="m-sheet-close m-only">Insights <span aria-hidden="true">✕</span><span class="sr-only"> close</span></button>
         <button type="button" id="drawerToggle" class="drawer-toggle" aria-expanded="true" aria-controls="insights"><span class="dt-label">Hide insights</span><span class="dt-caret" aria-hidden="true">⌄</span></button>
         <div class="insights-left">
           <p class="drawer-period" data-period-label></p>
