@@ -1,5 +1,6 @@
 /* Active listings map. Same layout and behaviour as map.js (the sold map), reading /active-points.
-   Each listing shows an arrow for its last asking-price change: ▼ cut, ▲ increase. */
+   Each listing shows an arrow for its last asking-price change: ▼ cut, ▲ increase.
+   The area is a draggable circle or one of Ottawa's neighbourhoods (neighbourhoods.js, loaded after this file). */
 
 /************** STATE **************/
 let currentPoints = [];
@@ -10,7 +11,10 @@ let rangeMode = false;       // first bed click = "X or more", second = "exactly
 let selectedPTypes = [];
 let selectedChanges = [];    // ["down"], ["up"], both, or none
 let selectedLocationKey = null;
-let currentView = "insights";
+let currentView = "insights";   // "insights" | "listings" | "areas" (the neighbourhood table, Neighbourhood mode only)
+// How the area is picked (see neighbourhoods.js): a draggable "circle", or a fixed "neighbourhood".
+let areaMode = "circle";
+let selectedNeighbourhood = null;   // {id, name} in Neighbourhood mode once one is clicked
 let basePoints = [];         // what the server returned, after the price-change filter, before the chart selections
 let serverSummary = null;    // the server's summary of the points it returned
 let soldInfo = { curve: null, sample: 0, window: null };   // sell-time curve for the current circle and filters
@@ -28,6 +32,7 @@ const sortSelect = document.getElementById("sortSelect");
 const listingsPanel = document.getElementById("listingsPanel");
 const insightsEl = document.getElementById("insights");
 const mainPanel = document.getElementById("mainPanel");
+const areasPanel = document.getElementById("areasPanel");
 
 /************** FORMATTING **************/
 const money = (n) => (n === null || n === undefined || isNaN(n)) ? "–" : `$${Math.round(n).toLocaleString()}`;
@@ -116,18 +121,39 @@ function setView(view) {
     insightsEl.classList.remove("hidden");
     mainPanel.classList.remove("full-map");
   }
+  // The neighbourhood table slides in on the left like the listings; the insights stay visible beside it
+  if (areasPanel) {
+    if (view === "areas") {
+      areasPanel.classList.remove("hidden");
+      requestAnimationFrame(() => areasPanel.classList.add("open"));
+    } else {
+      areasPanel.classList.remove("open");
+      setTimeout(() => { if (currentView !== "areas") areasPanel.classList.add("hidden"); }, 300);
+    }
+  }
+  const areasBtn = document.getElementById("toggleAreas");
+  if (areasBtn) areasBtn.classList.toggle("is-on", view === "areas");
+  document.body.classList.toggle("side-open", view === "listings" || view === "areas");   // CSS keeps the controls bar off the sidebar
   setTimeout(() => map.invalidateSize(), 310);
-  if (view === "insights") setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
+  if (view === "insights" || view === "areas") setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
 }
 document.getElementById("toggleListings").addEventListener("click", () => setView("listings"));
-document.getElementById("viewInsightsBtn").addEventListener("click", () => setView(currentView === "insights" ? "listings" : "insights"));
+/** Where closing the listings sidebar goes back to: the neighbourhood table in Neighbourhood mode, else the insights. */
+function homeView() { return areaMode === "neighbourhood" ? "areas" : "insights"; }
+document.getElementById("viewInsightsBtn").addEventListener("click", () => setView(currentView === "listings" ? homeView() : "listings"));
+
+function hideFilterPanel() {
+  const panel = document.getElementById("filterPanel");
+  if (panel) {
+    panel.classList.remove("show");
+    panel.style.display = "none";
+  }
+}
 
 map.on("click", () => {
   if (selectedLocationKey) clearLocationSelection();
-  const panel = document.getElementById("filterPanel");
-  panel.classList.remove("show");
-  panel.style.display = "none";
-  if (currentView === "listings") setView("insights");
+  hideFilterPanel();
+  if (currentView === "listings") setView(homeView());
 });
 
 /************** FILTERS **************/
@@ -204,9 +230,8 @@ document.querySelectorAll("#changeFilter .ptype-btn").forEach((btn) => btn.addEv
 }));
 
 /************** DATA **************/
-let fetchSeq = 0;
-async function fetchActivePoints() {
-  const center = circle.getLatLng();
+/** The filter panel as the server's `filters` object (the price-change buttons are applied here, not by /active-points). */
+function currentFilters() {
   const [minPrice, maxPrice] = priceSlider.noUiSlider.get().map((v) => Math.round(v));
   const filters = {};
   if (minPrice > MIN_PRICE) filters.min_price = minPrice;
@@ -216,13 +241,34 @@ async function fetchActivePoints() {
   if (maxDom < MAX_DOM) filters.max_dom = maxDom;
   if (selectedBeds.length) filters.beds = selectedBeds;
   if (selectedPTypes.length) filters.ptypes = selectedPTypes;
+  return filters;
+}
 
+let fetchSeq = 0;
+async function fetchActivePoints() {
+  const filters = currentFilters();
   const seq = ++fetchSeq;
+
+  let area;
+  if (areaMode === "neighbourhood") {
+    // The table and the colours follow the filters too, whether or not a neighbourhood is selected. They also follow the
+    // price-change buttons, so the table counts the same listings as the map.
+    refreshNeighbourhoodSummary(selectedChanges.length ? { ...filters, changes: selectedChanges } : filters);
+    if (!selectedNeighbourhood) {
+      showNoNeighbourhoodSelected();
+      return;
+    }
+    area = { type: "neighbourhood", id: selectedNeighbourhood.id };
+  } else {
+    const center = circle.getLatLng();
+    area = { type: "circle", center: [center.lat, center.lng], radius_km: circle.getRadius() / 1000 };
+  }
+
   try {
     const res = await fetch("/active-points", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ center: [center.lat, center.lng], radius_km: circle.getRadius() / 1000, filters })
+      body: JSON.stringify({ area, filters })
     });
     const { points, summary, error, sold_curve, sold_sample, sold_window } = await res.json();
     if (error) throw new Error(error);
@@ -372,7 +418,7 @@ function updateMapMarkers(points) {
       L.DomEvent.stopPropagation(e);
       currentPage = 1;
       selectedLocationKey = group.length > 1 ? key : null;
-      if (currentView === "insights") setView("listings");
+      if (currentView !== "listings") setView("listings");
       updateListingsSidebar();
       if (group.length === 1) setTimeout(() => highlightListing(first.mls), 150);
     });
@@ -382,7 +428,7 @@ function updateMapMarkers(points) {
 }
 
 /************** SIDEBAR **************/
-function sortedList() {
+function sortedList(sortValue = sortSelect.value) {
   let list = currentPoints.slice();
   if (selectedLocationKey) list = list.filter((pt) => locationKey(pt) === selectedLocationKey);
   if (searchQuery) {
@@ -390,7 +436,7 @@ function sortedList() {
       || money(pt.price).toLowerCase().includes(searchQuery) || String(pt.price).includes(searchQuery));
   }
   const num = (v, fallback) => (v == null ? fallback : v);
-  switch (sortSelect.value) {
+  switch (sortValue) {
     case "asc-price": list.sort((a, b) => a.price - b.price); break;
     case "desc-price": list.sort((a, b) => b.price - a.price); break;
     case "oldest": list.sort((a, b) => num(b.dom, -1) - num(a.dom, -1)); break;
@@ -438,6 +484,53 @@ function clearLocationSelection() {
 }
 window.clearLocationSelection = clearLocationSelection;
 
+/** One listing card. The desktop list marks the clicked row on the sell-time curve; the phone list has no curve beside it. */
+function listingRow(pt, { mobile = false } = {}) {
+  const row = document.createElement("div");
+  row.className = "listing-row";
+  if (!mobile) {
+    row.id = `listing-${pt.mls}`;
+    row.style.cursor = "pointer";
+  }
+  const dom = pt.dom == null ? "" : `${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`;
+  const address = pt.address ? escapeHtml(pt.address) : "Address not shown";
+  row.innerHTML = `
+    <div class="image-wrapper">
+      <img src="${escapeHtml(pt.photo || "")}" referrerpolicy="no-referrer" loading="lazy"
+           onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';" alt="" />
+    </div>
+    <div class="listing-info">
+      <strong>${money(pt.price)}</strong>
+      ${changeBadge(pt)}
+      <p>${address}</p>
+      <p>${pt.beds ?? "–"} 🛏 | ${pt.baths ?? "–"} 🛁 | <span class="ptype-text">${escapeHtml(pt.ptype || "Unknown Type")}</span></p>
+      <p>${dom}${pt.original_price && pt.original_price !== pt.price ? ` · listed at ${money(pt.original_price)}` : ""}</p>
+      <a href="${escapeHtml(pt.url)}" target="_blank" rel="noopener" class="view-btn">View Details</a>
+    </div>`;
+  if (!mobile) {
+    // Clicking a row marks it on the sell-time curve; "View Details" is what opens the listing page.
+    row.addEventListener("click", (e) => {
+      if (e.target.closest(".view-btn")) return;
+      focusedMls = pt.mls;
+      markFocusedRow();
+      updateCurve();
+    });
+  }
+  return row;
+}
+
+/** The banners above the list: which neighbourhood (Neighbourhood mode) and which address (a marker with several listings). */
+function appendListBanners(container, count) {
+  appendAreaBanner(container, currentPoints.length);
+  if (selectedLocationKey) {
+    const banner = document.createElement("div");
+    banner.className = "selection-banner";
+    banner.innerHTML = `<span>Showing ${count} listing${count !== 1 ? "s" : ""} at this address</span>
+      <button onclick="clearLocationSelection()">✕ Show All</button>`;
+    container.appendChild(banner);
+  }
+}
+
 function updateListingsSidebar() {
   const list = sortedList();
   const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
@@ -446,46 +539,11 @@ function updateListingsSidebar() {
 
   const container = document.getElementById("listingRows");
   container.innerHTML = "";
-  if (selectedLocationKey) {
-    const banner = document.createElement("div");
-    banner.className = "selection-banner";
-    banner.innerHTML = `<span>Showing ${list.length} listing${list.length !== 1 ? "s" : ""} at this address</span>
-      <button onclick="clearLocationSelection()">✕ Show All</button>`;
-    container.appendChild(banner);
-  }
+  appendListBanners(container, list.length);
   if (!pageItems.length) {
     container.insertAdjacentHTML("beforeend", `<p class="empty-note">No active listings match.</p>`);
   }
-
-  pageItems.forEach((pt) => {
-    const row = document.createElement("div");
-    row.className = "listing-row";
-    row.id = `listing-${pt.mls}`;
-    row.style.cursor = "pointer";
-    const dom = pt.dom == null ? "" : `${pt.dom} day${pt.dom === 1 ? "" : "s"} on market`;
-    const address = pt.address ? escapeHtml(pt.address) : "Address not shown";
-    row.innerHTML = `
-      <div class="image-wrapper">
-        <img src="${escapeHtml(pt.photo || "")}" referrerpolicy="no-referrer" loading="lazy"
-             onerror="this.outerHTML = '<div class=&quot;no-image-placeholder&quot;></div>';" alt="" />
-      </div>
-      <div class="listing-info">
-        <strong>${money(pt.price)}</strong>
-        ${changeBadge(pt)}
-        <p>${address}</p>
-        <p>${pt.beds ?? "–"} 🛏 | ${pt.baths ?? "–"} 🛁 | <span class="ptype-text">${escapeHtml(pt.ptype || "Unknown Type")}</span></p>
-        <p>${dom}${pt.original_price && pt.original_price !== pt.price ? ` · listed at ${money(pt.original_price)}` : ""}</p>
-        <a href="${escapeHtml(pt.url)}" target="_blank" rel="noopener" class="view-btn">View Details</a>
-      </div>`;
-    // Clicking a row marks it on the sell-time curve; "View Details" is what opens the listing page.
-    row.addEventListener("click", (e) => {
-      if (e.target.closest(".view-btn")) return;
-      focusedMls = pt.mls;
-      markFocusedRow();
-      updateCurve();
-    });
-    container.appendChild(row);
-  });
+  pageItems.forEach((pt) => container.appendChild(listingRow(pt)));
   markFocusedRow();
 
   renderPagination(document.getElementById("paginationControls"), currentPage, totalPages, list.length, (page) => {
@@ -493,6 +551,7 @@ function updateListingsSidebar() {
     updateListingsSidebar();
     container.scrollTop = 0;
   });
+  if (window._refreshMobileListings) window._refreshMobileListings();   // the phone's Listings tab shows the same list
 }
 
 function renderPagination(container, current, totalPages, totalItems, onPageClick) {
@@ -516,7 +575,13 @@ function renderPagination(container, current, totalPages, totalItems, onPageClic
 }
 
 const searchInput = document.getElementById("listingSearch");
-searchInput.addEventListener("input", (e) => { searchQuery = e.target.value.toLowerCase(); currentPage = 1; updateListingsSidebar(); });
+searchInput.addEventListener("input", (e) => {
+  searchQuery = e.target.value.toLowerCase();
+  const mobileSearch = document.getElementById("mobileListingSearch");
+  if (mobileSearch) mobileSearch.value = e.target.value;
+  currentPage = 1;
+  updateListingsSidebar();
+});
 sortSelect.addEventListener("change", () => { currentPage = 1; updateListingsSidebar(); });
 
 /************** INSIGHTS **************/
@@ -776,6 +841,9 @@ function updateScatter() {
   charts.scatter.data.datasets.forEach((ds) => {
     ds.data = shown.filter((pt) => changeKind(pt) === ds.kind).map((pt) => ({ x: pt.dom, y: pt.price, pt }));
   });
+  // Nothing to draw (no neighbourhood picked yet): give the empty axes a sensible range instead of $0K ticks
+  charts.scatter.options.scales.x.suggestedMax = shown.length ? undefined : 90;
+  charts.scatter.options.scales.y.suggestedMax = shown.length ? undefined : 1000000;
   charts.scatter.update("none");
   charts.scatter.canvas.setAttribute("aria-label",
     `Scatter chart of asking price against days on market: ${shown.length} active listings`);
@@ -791,7 +859,7 @@ function openListing(pt) {
   selectedLocationKey = null;
   if (searchQuery) { searchQuery = ""; searchInput.value = ""; }
   setEmphasis("is-linked", []);
-  if (currentView === "insights") setView("listings");
+  if (currentView !== "listings") setView("listings");
   updateListingsSidebar();
   setTimeout(() => highlightListing(pt.mls), 150);
 }
@@ -968,18 +1036,20 @@ function initCurve() {
 function updateCurve() {
   const { curve, sample, window: win } = soldInfo;
   const pt = focusedPoint();
+  const place = areaMode === "neighbourhood" ? "neighbourhood" : "search circle";
   let note = "Click a listing on the map, in the list or in the scatter to see where it sits.";
-  if (pt) note = sellNote(pt);
-  else if (!curve) note = sample ? `Only ${sample} comparable sale${sample === 1 ? "" : "s"} in this area; at least 20 are needed for a curve.`
-                              : "No comparable sales in this area.";
+  if (areaMode === "neighbourhood" && !selectedNeighbourhood) note = "Pick a neighbourhood to see how long comparable homes took to sell there.";
+  else if (pt) note = sellNote(pt);
+  else if (!curve) note = sample ? `Only ${sample} comparable sale${sample === 1 ? "" : "s"} in this ${place}; at least 20 are needed for a curve.`
+                              : `No comparable sales in this ${place}.`;
   document.getElementById("curveNote").textContent = note;
   const period = win && win.start ? `${formatDate(win.start)} to ${formatDate(win.end)} (the last ${win.days} days of sold data)` : "";
   let foot = "";
   if (period && curve) {
-    foot = `Based on ${sample} sales inside the search circle, ${period}, with the same price, bedroom and property-type filters. `
+    foot = `Based on ${sample} sales inside the ${place}, ${period}, with the same price, bedroom and property-type filters. `
       + `Only homes that sold are counted: unsold and withdrawn listings are not in the data, so real waits run longer than this curve shows.`;
   } else if (period) {
-    foot = `${sample} sale${sample === 1 ? "" : "s"} inside the search circle, ${period}, with the same price, bedroom and property-type filters.`;
+    foot = `${sample} sale${sample === 1 ? "" : "s"} inside the ${place}, ${period}, with the same price, bedroom and property-type filters.`;
   }
   document.getElementById("curveFoot").textContent = foot;
   if (!chartsReady) return;
@@ -1002,5 +1072,97 @@ if (chartsReady) {
     box.textContent = "The charts could not be loaded (Chart.js is blocked or offline). The map and list still work.";
   });
 }
+
+/************** PHONE: TABBED PANEL BELOW THE MAP (Insights | Listings | Areas) **************/
+// Same pattern as the sold map. On a phone the desktop side panels are hidden by CSS, so the list and the neighbourhood
+// table are panels under the map, picked with the tab bar. The Areas tab only exists in Neighbourhood mode.
+(function initMobileTabs() {
+  const tabBar = document.getElementById("mobileTabBar");
+  const listingsEl = document.getElementById("mobileListingsPanel");
+  const rowsEl = document.getElementById("mobileListingRows");
+  const sortEl = document.getElementById("mobileSortSelect");
+  const areasEl = document.getElementById("mobileAreasPanel");
+  const areasTab = document.getElementById("mobileAreasTab");
+  const mobileSearch = document.getElementById("mobileListingSearch");
+  if (!tabBar || !listingsEl) return;
+
+  let activeTab = "insights";
+  let mobilePage = 1;
+  const isMobile = () => window.innerWidth <= 768 || (window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+
+  function applyTab() {
+    if (!isMobile()) {   // desktop: back to the side panels, no leftovers from the phone layout
+      tabBar.style.display = "none";
+      listingsEl.style.display = "none";
+      if (areasEl) areasEl.style.display = "none";
+      insightsEl.classList.remove("mobile-hidden");
+      insightsEl.style.display = "";
+      return;
+    }
+    if (areasTab) areasTab.hidden = areaMode !== "neighbourhood";
+    if (activeTab === "areas" && areaMode !== "neighbourhood") activeTab = "insights";
+    tabBar.style.display = "flex";
+    tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === activeTab));
+
+    listingsEl.style.display = "none";
+    if (areasEl) areasEl.style.display = "none";
+    if (activeTab === "insights") {
+      insightsEl.classList.remove("mobile-hidden", "hidden");
+      insightsEl.style.display = "";
+      setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
+    } else {
+      insightsEl.classList.add("mobile-hidden");
+      insightsEl.style.display = "none";
+      if (activeTab === "areas" && areasEl) areasEl.style.display = "flex";
+      if (activeTab === "listings") { listingsEl.style.display = "flex"; renderMobileListings(); }
+    }
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+
+  function renderMobileListings() {
+    if (!rowsEl) return;
+    const list = sortedList(sortEl ? sortEl.value : "newest");
+    const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
+    if (mobilePage > totalPages) mobilePage = 1;
+    rowsEl.innerHTML = "";
+    appendListBanners(rowsEl, list.length);
+    if (!list.length) rowsEl.insertAdjacentHTML("beforeend", `<p class="empty-note">No active listings match.</p>`);
+    list.slice((mobilePage - 1) * ITEMS_PER_PAGE, mobilePage * ITEMS_PER_PAGE).forEach((pt) => rowsEl.appendChild(listingRow(pt, { mobile: true })));
+    renderPagination(document.getElementById("mobilePaginationControls"), mobilePage, totalPages, list.length, (page) => {
+      mobilePage = page;
+      renderMobileListings();
+      rowsEl.scrollTop = 0;
+    });
+  }
+
+  // Through setView (wrapped below), so the desktop view state stays in step and a resize lands on the right panel
+  tabBar.querySelectorAll(".mobile-tab").forEach((btn) => btn.addEventListener("click", () => window.setView(btn.dataset.tab)));
+  if (sortEl) sortEl.addEventListener("change", () => { mobilePage = 1; renderMobileListings(); });
+  if (mobileSearch) mobileSearch.addEventListener("input", (e) => {
+    searchQuery = e.target.value.toLowerCase();
+    searchInput.value = e.target.value;
+    mobilePage = 1;
+    renderMobileListings();
+  });
+
+  // New data: redraw the phone list when it is the one on screen (new data starts at page 1)
+  window._refreshMobileListings = () => { if (isMobile() && activeTab === "listings") { mobilePage = 1; renderMobileListings(); } };
+
+  // A marker tap (or the scatter) opens the list: on a phone that means the Listings tab
+  const desktopSetView = setView;
+  window.setView = function (view) {
+    desktopSetView(view);
+    if (isMobile()) {
+      activeTab = view === "listings" ? "listings" : view === "areas" ? "areas" : "insights";
+      applyTab();
+    }
+  };
+  // neighbourhoods.js calls this when the area mode changes (shows or hides the Areas tab)
+  window._syncMobileTabs = (openTab) => { if (openTab) activeTab = openTab; applyTab(); };
+
+  window.addEventListener("resize", () => { applyTab(); setTimeout(() => map.invalidateSize(), 100); });
+  window.addEventListener("orientationchange", () => setTimeout(() => { applyTab(); map.invalidateSize(); }, 300));
+  applyTab();
+})();
 
 fetchActivePoints();

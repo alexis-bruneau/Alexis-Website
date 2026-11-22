@@ -27,6 +27,9 @@ load_dotenv(REPO_ROOT / ".env")
 # ---------------- local files --------------------------------------------------
 # Sold-listing URLs found by discovery and waiting to be fetched (committed to git).
 URLS_FILE = PROJECT_DIR / "data" / "queue" / "property_urls.txt"
+# Ottawa neighbourhood polygons for the sold map (committed, read-only; rebuilt by scripts/build_neighbourhoods.py).
+# Source, licence and attribution: data/neighbourhoods/README.md.
+NEIGHBOURHOODS_FILE = PROJECT_DIR / "data" / "neighbourhoods" / "ottawa_neighbourhoods.geojson"
 # Redfin login cookies exported from Chrome (gitignored; the daily Action writes it from the REDFIN_COOKIES_JSON secret).
 COOKIE_FILE = Path(os.getenv("REDFIN_COOKIE_FILE") or PROJECT_DIR / "chrome_cookies.json")
 # Local, gitignored output (e.g. the screenshot discovery saves when Redfin blocks it).

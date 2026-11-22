@@ -34,10 +34,22 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
   original listing price vs days on market (linked to the map and list; header, tabs, legend and grid styled like the sold chart), clickable days-on-market and cut-depth histograms that cross-filter, and a sell-time curve from the sold
   data (`redfin.analytics.sale_curve`, D13). Flask-only: not in the Pages build or the daily scrape.
 
+- **Neighbourhoods on the sold and the active map** (branch `feature/neighbourhoods`, D17, D18; not merged yet): `/ottawa_map` and
+  `/ottawa_active` have a Circle | Neighbourhood switch. Neighbourhood mode draws the 116 Ottawa Neighbourhood Study (Gen 3, City of
+  Ottawa open data) polygons shaded by a metric (sold: median price, days on market, sold vs ask; active: listing count, median
+  asking price, days on market, share with a price cut) with a legend; the area under the pointer glows; a click or a table row
+  selects one, and the insights, markers and listings then show that neighbourhood under the same filters. A sortable table lists
+  every neighbourhood, reruns on every filter change, and is the "Areas" tab on phones. Estimates are greyed below 10 sales (sold) or
+  5 listings (active); the active listing count is exact and always coloured. The active page also got the phone tab bar it lacked
+  (its "Listings" button showed nothing on a phone), and on both pages the Sold | Active switch is no longer hidden by the controls
+  bar on phones. Read time only (`redfin.analytics.neighbourhoods`, `sale_filters`, `active_filters`): nothing new in silver, no blob
+  change; the daily scrape and the Pages build are untouched. Boundaries and licence: `redfin/data/neighbourhoods/README.md`.
+
 ## In progress
 
 - `feature/daily-run` (D14, D15): the daily command, merged with master (which has the restructure). PR to master not merged yet.
 - `feature/active-insights-charts` (insight charts, D13).
+- `feature/neighbourhoods` (D17, D18): PR to master not merged yet.
 
 ## Next
 
@@ -49,11 +61,18 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
    (`daily_scrape.yml` has never run the census), then observations / listing state per
    [ACTIVE_LISTINGS.md](ACTIVE_LISTINGS.md) "First slice".
 5. Gold tables (DuckDB), then the Q&A layer (P1).
+6. Neighbourhoods on the map, what is left: judge the active minimum sample (5, D18) after a few weeks of daily runs, when each
+   neighbourhood has more listings; decide P5 (store the id) once gold or the Q&A layer needs the assignment.
 
 ## Known issues
 
 | Issue | Where | Notes |
 |---|---|---|
+| Sold "5+ beds" button matches exactly 5 bedrooms; the active map's matches 5 or more | `analytics/sale_filters.py` (sold) vs `beds_mask` in `app/main.py` (active) | 204 of 7,852 sold sales have 6+ bedrooms and are excluded by "5+". Kept as it was so circle mode did not change in the neighbourhood work; one-line fix if wanted |
+| Neighbourhood boundaries are generalised by the publisher (about 15 m after our simplification) | `data/neighbourhoods/` | a home within roughly 15-50 m of a border can be placed in the neighbour. ONS neighbourhoods are statistical areas, not official limits |
+| Active neighbourhood estimates are thin: 326 listings (2026-11-21) is about 3 per neighbourhood, and with a filter or two almost every area is below the minimum of 5 | `analytics/neighbourhoods.py` (`ACTIVE_MIN_SAMPLE`) | the listing count is exact and still coloured; medians and averages grey out. Improves as the active snapshot grows (D18) |
+| The neighbourhood table follows the filter panel but not the chart picks (scatter brush, histogram bars) on the active page | `static/js/active.js` | by design: the table counts the listings for sale, the charts narrow what is on the map |
+| The 25 sales with no longitude are on no map, so also in no neighbourhood | `transform/parsing.py` | `/neighbourhood-summary` reports them as `no_coordinates`; fixed by the longitude parser fix below |
 | 25 silver rows have `longitude = NaN` (latitude is fine) | `transform/parsing.py` `extract_between(html, 'longitude":', "}")` misses a variant | rows can't be placed on the map. Re-checked 2026-11-21 |
 | ~113 unsold listings in `listed_properties` show as sales | transform writes every parsed page | D7, not implemented |
 | `transform.text` and the whole active path are not in `daily_scrape.yml` | workflow | run by hand for now |

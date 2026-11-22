@@ -15,6 +15,7 @@ dependencies = [
     "pyarrow",
     "python-dotenv",
     "requests",
+    "shapely>=2.0",   # analytics.neighbourhoods: point-in-polygon for the sold map
 ]
 
 [project.optional-dependencies]

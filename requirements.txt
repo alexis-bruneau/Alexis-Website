@@ -10,3 +10,4 @@ python-dotenv
 playwright
 beautifulsoup4
 pyarrow
+shapely>=2.0

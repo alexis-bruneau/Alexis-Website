@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="/static/css/map.css" />
 </head>
 
-<body>
+<body class="active-map">
   <!-- ─── Sold | Active ──────────────────────────────────── -->
   <nav class="mode-tabs" aria-label="Listing type">
     <a href="/ottawa_map">Sold</a>
@@ -26,11 +26,20 @@
 
   <!-- ─── Radius / filter controls ───────────────────────── -->
   <div id="controls">
-    <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
-    <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+    <!-- How the area is picked: a circle you drag, or a fixed Ottawa neighbourhood -->
+    <div class="area-toggle" id="areaToggle" role="group" aria-label="Pick the area by">
+      <button type="button" class="area-btn active" data-mode="circle" aria-pressed="true">Circle</button>
+      <button type="button" class="area-btn" data-mode="neighbourhood" aria-pressed="false">Neighbourhood</button>
+    </div>
+
+    <span id="radiusGroup" class="radius-group">
+      <label for="radiusInput">Radius&nbsp;(km):&nbsp;</label>
+      <input type="number" id="radiusInput" min="0" max="60" step="0.1" value="15" />
+    </span>
 
     <button id="filterToggle">Filters ⚙️</button>
     <button id="toggleListings" class="map-floating-btn">🏠 Listings</button>
+    <button id="toggleAreas" type="button" hidden>📋 Neighbourhoods</button>
 
     <div id="filterPanel">
       <div class="filter-header">
@@ -119,12 +128,55 @@
       <div id="paginationControls" class="pagination-controls"></div>
     </div>
 
+    <!-- Neighbourhood summary table (desktop; phones use the Areas tab below the map) -->
+    <div id="areasPanel" class="hidden" aria-label="All neighbourhoods">
+      <button class="toolbar-btn" type="button" onclick="setView('insights')">📊 View Insights</button>
+      <div class="areas-body" id="areasBodyDesktop"></div>
+    </div>
+
     <div id="mainPanel">
       <div id="map"></div>
+
+      <!-- ═══ PHONE: tab bar and panels under the map (hidden on larger screens) ═══ -->
+      <div class="mobile-tab-bar" id="mobileTabBar" style="display:none;">
+        <button type="button" class="mobile-tab active" data-tab="insights">📊 Insights</button>
+        <button type="button" class="mobile-tab" data-tab="listings">🏠 Listings</button>
+        <button type="button" class="mobile-tab" data-tab="areas" id="mobileAreasTab" hidden>📍 Areas</button>
+      </div>
+
+      <div id="mobileListingsPanel" class="mobile-listings-panel" style="display:none;">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="mobileListingSearch" placeholder="Search by address, price…" autocomplete="off" />
+        </div>
+        <div class="sort-container">
+          <label for="mobileSortSelect">Sort By:</label>
+          <select id="mobileSortSelect">
+            <option value="newest">Newest on Market</option>
+            <option value="oldest">Longest on Market</option>
+            <option value="recent-change">Latest Price Change</option>
+            <option value="biggest-drop">Biggest Price Drop</option>
+            <option value="desc-price">Highest Price</option>
+            <option value="asc-price">Lowest Price</option>
+          </select>
+        </div>
+        <div id="mobileListingRows" class="listing-rows"></div>
+        <div id="mobilePaginationControls" class="pagination-controls"></div>
+      </div>
+
+      <div id="mobileAreasPanel" class="mobile-listings-panel mobile-areas-panel" style="display:none;">
+        <div class="areas-body" id="areasBodyMobile"></div>
+      </div>
 
       <!-- ═══ INSIGHTS FOOTER ═══ -->
       <div id="insights" class="insights-charts">
         <div class="insights-left">
+          <!-- Neighbourhood mode only: which area the cards and the charts describe -->
+          <div class="area-title" id="areaTitle" hidden>
+            <span class="area-title-name" id="areaTitleName"></span>
+            <button type="button" id="areaClear" class="area-clear" title="Clear the selected neighbourhood" aria-label="Clear the selected neighbourhood">✕</button>
+          </div>
+          <p class="area-hint" id="areaHint" hidden>Click a neighbourhood on the map, or a row in the table.</p>
           <div class="summary-cards">
             <div class="card"><strong>Active Listings</strong><span id="stat-count">–</span></div>
             <div class="card"><strong>With a Price Cut</strong><span id="stat-cuts">–</span></div>
@@ -227,6 +279,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"
     integrity="sha384-G436+Z2nlA8+PNoeRvWdxKbvOf8E/y+lYxqht2iBwNHTQDV5CJr3+AGVj8fGZi5t" crossorigin="anonymous"></script>
   <script src="/static/js/active.js"></script>
+  <script src="/static/js/neighbourhoods.js"></script>
 </body>
 
 </html>

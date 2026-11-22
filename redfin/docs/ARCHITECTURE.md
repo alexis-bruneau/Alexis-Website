@@ -137,3 +137,39 @@ Computed in the browser (`static/js/active.js`) from the points `/active-points`
 | Days-on-market buckets | `days_on_market` in under 7 / 7-30 / 30-60 / 60-90 / 90+ (lower bound included: 7 is in "7-30") |
 | Cut-depth buckets | `(original_price - list_price) / original_price`, the **total** cut since the first asking price (not `last_change_pct`, which is only the latest change): no cut (zero or priced above the first ask) / under 3% / 3-5% / 5-10% / 10%+ |
 | Sell-time curve | `redfin.analytics.sale_curve`: for N = 0..180, the share of sales whose `days_on_market <= N`. Sales = rows of the sold `properties` view inside the search circle and passing the price / beds / property-type filters, sold in the 180 days ending on the **latest sale in the data** (not today's date). `null` below 20 sales. Counts sales only, so it is survivorship-biased: withdrawn and unsold listings are not in the data |
+
+## Neighbourhoods on the sold and the active map (read time, nothing stored)
+
+`/ottawa_map` and `/ottawa_active` can pick their area by a circle or by one of Ottawa's 116 ONS neighbourhoods (D17, D18). Silver,
+bronze and every blob name are unchanged: the app places each sale and each active listing on a polygon when it loads the data.
+
+```
+redfin/data/neighbourhoods/ottawa_neighbourhoods.geojson   committed; id + name + geometry; built by scripts/build_neighbourhoods.py
+analytics/neighbourhoods.py   load_neighbourhoods, assign (vectorized point-in-polygon), aggregate / aggregate_active (rows per neighbourhood)
+analytics/sale_filters.py     apply_sale_filters: the sold map's date / price / beds / property-type filters, one function
+analytics/active_filters.py   prepare_active_frame, apply_active_filters (price / days on market / beds / type / price changes), beds_mask
+app/main.py                   sold_frame(), active_frame() (cached per load: numbers, dates, diffs, neighbourhood_id)
+                              POST /filtered-points   {area: circle | neighbourhood, filters}  (old center/radius_km = circle)
+                              POST /active-points     the same area, for the active listings (+ the sell-time curve of that area)
+                              POST /neighbourhood-summary, /active-neighbourhood-summary {filters} -> rows + min_sample + total + no_coordinates
+                              GET  /neighbourhood-boundaries.geojson
+static/js/neighbourhoods.js   one file for both pages (an NB object per page): polygons (fetched once), hover glow, choropleth +
+                              legend, sortable table, selection, mode switch; map.js and active.js call into it
+```
+
+| Column of a summary row | Definition |
+|---|---|
+| `id`, `name` | the ONS id (3001-3117) and title-case name; `0` = "Outside Ottawa / unassigned" (always the last row) |
+| `n` | sales in the area that pass the filters; `low_sample` is true when `n` < `MIN_SAMPLE` (10; the active map uses `ACTIVE_MIN_SAMPLE`, 5) |
+| `median_price` | median sold price (right-skewed, so not the mean) |
+| `avg_dom`, `median_dom` | mean and median `days_on_market`; sales without it are skipped, not counted as 0 |
+| `avg_diff_pct_last`, `avg_diff_pct_original` | mean % over (+) / under (-) the final / first asking price, after the plausibility limit of `add_asking_diffs` |
+
+The rows always add up: the sum of `n` over every row equals the number of sales with coordinates that pass the filters, which is
+also the `count` of `/filtered-points` for a circle covering the city. Sales with no coordinates are not in the frame and are
+reported once as `no_coordinates`. A point on a border shared by two neighbourhoods goes to the lower id.
+
+Active summary rows (`/active-neighbourhood-summary`) have `id`, `name`, `n` (listings for sale that pass the filters, always exact),
+`low_sample` (`n` < `ACTIVE_MIN_SAMPLE`), `median_price` (median asking price), `avg_dom` / `median_dom` (days on market so far),
+`with_cut` and `cut_pct` (listings whose last change was a cut, and their share of `n` in %; no share when `n` is 0). The rows add
+up the same way: the sum of `n` equals the `count` of `/active-points` for a circle covering the city.

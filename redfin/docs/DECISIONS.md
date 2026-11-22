@@ -194,6 +194,147 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   `scrape/` (edits `daily_scrape.yml`, a production change for a nicer name); flattening `src/redfin` to `redfin/redfin`.
 - **Status**: accepted. Refines D11.
 
+## D17. Ottawa neighbourhoods on the sold map: ONS Gen 3 boundaries, assigned at read time
+- **Date**: 2026-11-21 (branch `feature/neighbourhoods`)
+- **Decision**: the sold map (`/ottawa_map`) gets a second way to pick an area, next to the draggable circle: one of the 116
+  **Ottawa Neighbourhood Study (ONS) Gen 3** neighbourhoods (City of Ottawa open data, Open Government Licence - City of Ottawa
+  v2.0, downloaded 2026-11-21). Each sale is placed with a point-in-polygon test on its own latitude/longitude, in
+  `redfin.analytics.neighbourhoods`, **at read time**: the app assigns every sale once when it loads the data and keeps the id in
+  memory. Nothing is added to silver and no blob prefix or file name changes. Redfin's own `neighbourhood` text is not used.
+- **Boundary research** (all queried 2026-11-21; "sales/area" = the 7,852 sales with coordinates in live silver that day, so it
+  changes as data grows):
+
+  | Set | Licence | Areas | Sales/area (median; share of areas with >= 20 sales) | Names | Coverage | Verdict |
+  |---|---|---|---|---|---|---|
+  | **ONS Gen 3** (City of Ottawa) | OGL - City of Ottawa 2.0 | 116 | 46; 86% | residents' names (Glebe-Dows Lake, Old Ottawa South, Stittsville, Carp) | the whole city, urban, suburban and rural (rural areas are 60-260 km2) | **chosen** |
+  | ONS Gen 2 (City of Ottawa) | same | 111 | not run | same, older | whole city | superseded by Gen 3; published as "Historical" |
+  | City wards 2022-2026 and 2026-2030 | same | 24 each | 296; 100% | "Ward 15 Kitchissippi": political, not how people name areas | whole city | too coarse: one ward mixes Westboro with Hintonburg |
+  | StatCan census tracts 2021 | OGL - Canada | 231 (Ottawa side of the Ottawa-Gatineau CMA) | 30; 75% | numbers (5050001.00) | whole city | no names; many small tracts |
+  | StatCan forward sortation areas 2021 | OGL - Canada (the reference guide says the equivalent Statistics Canada Open Licence) | 44 (K0A, K1, K2, K4) | 152; 86% | postal prefixes (K2J) | whole city | recognised by some, but not neighbourhoods |
+  | StatCan dissemination areas 2021 | OGL - Canada | 1,392 in the Ottawa census division | 4; 4% | numbers | whole city | far too small for our sample |
+  | OpenStreetMap place tags | ODbL (share-alike on a derived database) | not downloaded | not run | residents' names | volunteer-drawn, not checked | not evaluated: ONS already fits, and ODbL would add obligations |
+
+  Other City sets found and dismissed: community design plan boundaries, child-care planning areas and police divisions (not
+  neighbourhoods). Census files are from 2021 (published 2022-09-21; the next set follows the 2026 census). ONS Gen 3 was created
+  2024-02-09 and last modified 2026-08-12, with "official review every 5 years". Its description says the boundaries come from
+  census tracts, barriers (waterways, highways), **maps used by the real estate profession (the Ottawa MLS)**, community
+  consultation and fieldwork, which is why its areas line up with how homes are advertised.
+- **Why ONS Gen 3**: the only set that is at once the right size for our data (116 areas, 91% with at least 10 sales), named the way
+  residents and listings name places, current, openly licensed for redistribution with attribution, and complete across suburban
+  and rural Ottawa (its rural areas are 60-260 km2 each). The publisher warns the
+  boundaries "are not indicative of actual neighbourhood limits" and that small communities can sit inside a larger one; the page
+  repeats the attribution and the README says so.
+- **The file**: `redfin/data/neighbourhoods/ottawa_neighbourhoods.geojson` (123 KB, 31 KB gzipped): WGS84, only `id` (the ONS id,
+  3001-3117) and `name`. Built by `redfin/scripts/build_neighbourhoods.py`, which downloads from the City's servers (never
+  redfin.ca), repairs the two Greenbelt polygons whose rings self-intersect in the source, and simplifies all polygons together
+  with `shapely.coverage_simplify` (about 15 m) so shared borders cannot open gaps. Checked on the download: 116 valid polygons,
+  0 overlap, no holes between neighbours, union 2,890 km2 against 2,892 km2 for the ward outline (shoreline generalisation). The
+  same file is served to the browser (`/neighbourhood-boundaries.geojson`), so what you see is what is counted. Attribution is on
+  the map and in the table footer. Source, date and licence: `redfin/data/neighbourhoods/README.md`.
+- **Assignment rules** (`analytics/neighbourhoods.py`): inside a polygon gets its id; a point exactly on a border counts as
+  inside, and on a border shared by two areas the **lowest id wins** (never file order); a point in no polygon, or with a missing
+  coordinate, gets id 0 and is returned as its own row, **"Outside Ottawa / unassigned"**, which is always listed (last, even with
+  0 sales) so the rows add up to the total. Nothing is dropped. Sales with no coordinates at all (25 today: the longitude parser
+  gap in Known issues) are on no map; the summary reports their number separately instead of putting them in the bucket. On
+  2026-11-21 the bucket was empty: all 7,852 placed sales fall inside an ONS polygon.
+- **Minimum sample**: a neighbourhood with fewer than **10 sales** (`MIN_SAMPLE`) after the filters is flagged `low_sample`: the
+  table greys the row and the map greys the polygon and leaves it out of the colour scale. The row is still returned with its `n`.
+  Why 10: sold prices here have a coefficient of variation near 0.5 (sd 339k on a mean of 697k), which puts the standard error
+  of a median price at about 19% with 10 sales and 11% with 30, and below 10 one sale moves an average by 10% or more. 20 (the
+  sell-time curve's floor, D13, which needs a whole distribution) would grey out most areas as soon as price, beds or type
+  filters are used. Statistics: median price (prices are right-skewed), average and median days on market (long tail), average
+  % sold vs final and vs original ask. The colour scale is clipped at the 5th/95th percentile of the areas that qualify.
+- **One filter path**: `redfin.analytics.sale_filters.apply_sale_filters` holds the sold filters (date, price, beds, property
+  type). `/filtered-points` takes `area` = `{"type": "circle", "center": [lat, lng], "radius_km": r}` or
+  `{"type": "neighbourhood", "id": n}`; the old top-level `center` / `radius_km` still means a circle. `POST /neighbourhood-summary`
+  takes the same `filters` and returns the rows. The sold frame is built once per data load (asking differences and ids
+  included) and cleared by `/refresh-data`, so the point-in-polygon test never runs per request. The sold map's "5+ beds" button
+  still matches exactly 5 (the active map uses `beds_mask`); kept as is so circle mode behaves exactly as before.
+- **Alternatives rejected**: a column in silver (would tie every silver rebuild to a boundary version; see P5); grouping by Redfin's
+  `neighbourhood` string (spelling varies, does not match official areas); dropping unassigned sales (hides data problems);
+  a hosted boundary service or tiles (one 123 KB file is enough); reducing the file to the census set because it is "more official"
+  (231 unnamed tracts are not an area a buyer recognises).
+- **Consequences**: a changed boundary file needs no re-scrape and no silver rebuild, only an app reload. The change is read-only for
+  the pipeline: no extract or transform code runs, the daily scrape and `daily_scrape.yml` are untouched, and the Pages build is
+  byte-identical (`neighbourhoods.js` is on the exclusion list of `build_site.py`, like `map.js`). It adds `shapely>=2.0`.
+- **Status**: accepted
+
+## D18. Neighbourhoods on the active map too: a lower minimum, a count that needs none, and phone tabs
+- **Date**: 2026-11-21 (same branch as D17, `feature/neighbourhoods`)
+- **Decision**: `/ottawa_active` gets the same Circle | Neighbourhood switch as the sold map (D17, same ONS Gen 3 polygons, same
+  point-in-polygon assignment, read time only, nothing stored). `POST /active-points` takes the same `area` (circle or
+  neighbourhood; the old top-level `center` / `radius_km` still means a circle), and `POST /active-neighbourhood-summary` returns
+  one row per neighbourhood plus the unassigned bucket: `n`, median asking price, average and median days on market, `with_cut`
+  and `cut_pct` (the listings whose last asking-price change was a cut: the page's "With a Price Cut" card). The sell-time curve
+  (D13) is computed for the selected neighbourhood the same way as for a circle: `comparable_sales` takes an area.
+- **Minimum sample 5, not 10 (`ACTIVE_MIN_SAMPLE`)**: on 2026-11-21 the snapshot held 326 active listings, about 3 per
+  neighbourhood. Listings per neighbourhood: 90 of 116 areas have at least 1, 27 have 5 or more, only 5 have 10 or more. With
+  D17's floor of 10 almost every area would be grey, and with a filter or two (condo, a price band) none would. 5 keeps the 27
+  busiest areas; below that a median asking price of a handful of homes says little. It is a constant in
+  `analytics/neighbourhoods.py` and moves with the snapshot (it grows by up to 200 pages a day once `run.daily` runs).
+- **The count needs no minimum**: the number of listings for sale in an area is a fact, not an estimate, so "Listing count" is
+  the default colour of the active map and colours every area that has at least one listing, whatever the sample. Only the
+  median, days on market and cut share are greyed below the floor (in the table the count stays dark and only those cells are
+  grey). The legend says "No listings" for empty areas and "Fewer than 5 listings" for the estimates.
+- **One front-end file for both maps**: `static/js/neighbourhoods.js` now holds one `NB` object per page (wording, metrics,
+  columns, which request to repeat, the "nothing picked yet" state). `active.js` keeps its own state and calls into it; the
+  active page's price-change buttons (applied in the browser for the map) are also sent to the summary as `changes`, so the table
+  and the map count the same listings. The table follows the filter panel, not the chart selections (brush, bars).
+- **Filters in one place**: `analytics/active_filters.py` holds `prepare_active_frame`, `apply_active_filters` (asking price, days
+  on market, beds, property type, price changes) and `beds_mask` (moved from `app/main.py` unchanged). The active frame is built
+  once per snapshot load and cleared by `load_active_data()`, like the sold frame.
+- **Hover and selection on the polygons (both maps)**: the area under the pointer glows (white edge, warm halo, brighter fill; no
+  glow on touch screens, where a tap selects) and the selected area has a white edge with a blue halo. D17's near-black selected
+  outline (`#0f172a`) is gone: it stayed on after a click and read as a black border on hover.
+- **Phones**: the active page had no tab bar, and its "Listings" button showed nothing on a phone (the desktop sidebar is hidden
+  there and there was no phone panel). It now has the sold map's tabs, Insights | Listings | Areas (Areas only in Neighbourhood
+  mode). On both pages the Sold | Active switch, which the controls bar used to cover on phones, is a slim strip above the map; the
+  controls are [Circle | Neighbourhood] [Filters] with the radius on a second row in Circle mode, and the tab bar replaces the
+  Listings and Neighbourhoods buttons.
+- **Alternatives rejected**: keeping 10 (a map of grey); letting the user set the minimum (one more control for a number that should
+  follow the data); wards for the active map (a second boundary set to explain; the same polygons answer "where" on both pages);
+  a separate `active_neighbourhoods.js` (the two files would drift).
+- **Consequences**: changes the production Flask pages `/ottawa_active` and `/ottawa_map` and adds routes; no extract, transform or
+  workflow code changes, so the daily scrape and `daily_scrape.yml` are untouched; none of the changed pages or scripts is in the
+  Pages build (`ottawa_active.html`, `active.js`, `neighbourhoods.js`, `map.css` are all on the exclusion lists of `build_site.py`).
+  A bad `area` on `/active-points` is now a 400 (it was a 500). P5 (store the id in silver or a gold dimension) now has two users.
+- **Status**: accepted
+
+## D19. The selected neighbourhood is an outline with a clear middle
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: the selected neighbourhood is drawn as a blue 4 px edge with a white and a blue glow and a fully clear fill, so the
+  map underneath and the listings on it show through. The other neighbourhoods keep their colours, and the hover glow (D18) is
+  unchanged (on the selected area it only adds a faint 10 % veil). This supersedes D18's "white edge with a blue halo" for the
+  selected state, which kept a 75 % fill over the street map.
+- **Why not `fill: false`**: a clear fill with `fillOpacity` 0 still counts as a click target, so clicking inside the selected area
+  behaves like clicking any area.
+- **Consequences**: front end only (`static/js/neighbourhoods.js` `styleFor`, `static/css/map.css`); no endpoint, daily scrape or
+  Pages build change.
+- **Status**: accepted
+
+## D20. In Neighbourhood mode, closing the listings goes back to the neighbourhood table
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: clicking a listing marker opens the Listings sidebar, which replaces the neighbourhood table (both are 420 px
+  panels on the left). Closing the sidebar (the "View Insights" button, a click on the map) now returns to the table in
+  Neighbourhood mode and to the insights in Circle mode (`homeView()` in `map.js` and `active.js`). Before, the table was gone
+  after the first marker click and only the "Neighbourhoods" button brought it back, so it looked as if the comparison never showed.
+- **Controls bar**: while a sidebar is open (`body.side-open`, desktop only) the Circle | Neighbourhood bar sits at the sidebar's edge
+  and wraps when the map is narrow. It was centred on the window and covered the "View Insights" button under about 1250 px, so the
+  listings sidebar could not be closed with its button.
+- **Consequences**: front end only (`static/js/map.js`, `static/js/active.js`, `static/css/map.css`); no endpoint, daily scrape or
+  Pages build change.
+- **Status**: accepted
+
+## D21. The side panels keep their width in Chrome
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: `#areasPanel` and `#listingsPanel` are `flex: none` (always 420 px) and `#mainPanel` gets `min-width: 0` with a
+  `minmax(0, 1fr)` column, so the map and insights shrink beside an open panel. In current desktop Chrome (not the Chromium
+  build used for the earlier checks) the active page's neighbourhood table opened at 0 px wide: the insights charts gave
+  `#mainPanel` a large minimum width and the flex layout squeezed the panel instead. That is why the comparison never showed on
+  `/ottawa_active` although the code opened it. Checked in desktop Chrome at 976 to 1464 px wide on both pages; phones unchanged.
+- **Consequences**: CSS only (`static/css/map.css`); no endpoint, daily scrape or Pages build change.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)
@@ -226,3 +367,14 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Question**: the package is now self-contained under `redfin/`; a separate repo would decouple its CI and history from
   the portfolio. Cost: the map templates/JS and the Flask routes live in the portfolio repo.
 - **Status**: proposed (revisit after P3)
+
+## P5. Store `neighbourhood_id` in silver (and use it in gold)
+- **Date**: 2026-11-21
+- **Question**: D17 assigns neighbourhoods at read time, in the Flask app. Should the id become a silver column (and a gold
+  dimension) once something other than the map needs it, such as gold tables, the Q&A layer (P1) or the active map?
+- **For**: one place for the assignment, usable from DuckDB and notebooks; consistent between the sold and active maps.
+- **Against**: it ties silver to one boundary file (a new Gen of ONS would mean a full silver rebuild via `silver_v2`, D3), and it
+  puts a derived value next to parsed facts. A middle way: a separate gold dimension `sale_neighbourhood(property_id, MLS,
+  neighbourhood_id, boundary_version)` built from silver and the committed GeoJSON, leaving silver as it is.
+- **Leaning**: the gold dimension, when gold exists. Until then, read time.
+- **Status**: proposed

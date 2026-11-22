@@ -28,7 +28,12 @@ if (mobileSearchInput) mobileSearchInput.addEventListener("input", handleSearchI
 const listingsPanel = document.getElementById("listingsPanel");
 const insightsEl = document.getElementById("insights");
 const mainPanel = document.getElementById("mainPanel");
-let currentView = "insights";
+const areasPanel = document.getElementById("areasPanel");
+let currentView = "insights";   // "insights" | "listings" | "areas" (the neighbourhood table, Neighbourhood mode only)
+
+// How the area is picked (see neighbourhoods.js): a draggable "circle", or a fixed "neighbourhood".
+let areaMode = "circle";
+let selectedNeighbourhood = null;   // {id, name} in Neighbourhood mode once one is clicked
 
 function setView(view) {
   currentView = view;
@@ -43,13 +48,29 @@ function setView(view) {
     insightsEl.classList.remove("hidden");
     mainPanel.classList.remove("full-map");
   }
+  // The neighbourhood table slides in on the left like the listings; the insights stay visible beside it
+  if (areasPanel) {
+    if (view === "areas") {
+      areasPanel.classList.remove("hidden");
+      requestAnimationFrame(() => areasPanel.classList.add("open"));
+    } else {
+      areasPanel.classList.remove("open");
+      setTimeout(() => { if (currentView !== "areas") areasPanel.classList.add("hidden"); }, 300);
+    }
+  }
+  const areasBtn = document.getElementById("toggleAreas");
+  if (areasBtn) areasBtn.classList.toggle("is-on", view === "areas");
+  document.body.classList.toggle("side-open", view === "listings" || view === "areas");   // CSS keeps the controls bar off the sidebar
   setTimeout(() => map.invalidateSize(), 310);
 }
 
 // Global function for onclick handlers in HTML
 function toggleView() {
-  (window.setView || setView)(currentView === "insights" ? "listings" : "insights");
+  (window.setView || setView)(currentView === "listings" ? homeView() : "listings");
 }
+
+/** Where closing the listings sidebar goes back to: the neighbourhood table in Neighbourhood mode, else the insights. */
+function homeView() { return areaMode === "neighbourhood" ? "areas" : "insights"; }
 
 document.getElementById("toggleListings")
   .addEventListener("click", () => setView("listings"));
@@ -344,6 +365,15 @@ function clearLocationSelection() {
   updateListingsSidebar(currentPoints);
 }
 
+function hideFilterPanel() {
+  const panel = document.getElementById("filterPanel");
+  if (panel) {
+    panel.classList.remove("show");
+    // Also explicitly hide it in case CSS hasn't loaded properly
+    panel.style.display = "none";
+  }
+}
+
 // Click on map background clears selection, hides filter panel, and returns to insights view
 map.on("click", (e) => {
   console.log("DEBUG: Map background clicked", e);
@@ -352,19 +382,12 @@ map.on("click", (e) => {
     clearLocationSelection();
   }
 
-  // Hide filter panel forcefully
-  const panel = document.getElementById("filterPanel");
-  if (panel) {
-    console.log("DEBUG: Hiding filter panel");
-    panel.classList.remove("show");
-    // Also explicitly hide it in case CSS hasn't loaded properly
-    panel.style.display = "none";
-  }
+  hideFilterPanel();
 
   // If sidebar is open, close it (returning to insights)
   if (currentView === "listings") {
     console.log("DEBUG: Closing sidebar");
-    setView("insights");
+    setView(homeView());
   }
 });
 
@@ -505,6 +528,8 @@ function updateListingsSidebar(points) {
   const container = document.getElementById("listingRows");
   container.innerHTML = "";
 
+  appendAreaBanner(container, points.length);
+
   // Show selection banner if location is selected
   if (selectedLocationKey) {
     const banner = document.createElement("div");
@@ -621,10 +646,8 @@ priceSlider.noUiSlider.on("update", (values) => {
 });
 priceSlider.noUiSlider.on("change", () => fetchFilteredPoints());
 
-async function fetchFilteredPoints() {
-  const center = circle.getLatLng();
-  const radius_km = circle.getRadius() / 1000;
-
+// The filters the page sends: the same for the circle, the neighbourhood and the neighbourhood summary.
+function currentFilters() {
   const [startOffset, endOffset] = slider.noUiSlider.get().map(v => Math.round(v));
   const soldStart = offsetToDateStr(startOffset);
   const soldEnd = offsetToDateStr(endOffset);
@@ -638,20 +661,38 @@ async function fetchFilteredPoints() {
   if (maxPrice < MAX_PRICE) filters.max_price = maxPrice;
   if (selectedBeds.length) filters.beds = selectedBeds;
   if (selectedPTypes.length) filters.ptypes = selectedPTypes;
+  return filters;
+}
 
-  const payload = {
-    center: [center.lat, center.lng],
-    radius_km,
-    filters
-  };
+let pointsRequestId = 0;   // only the newest request may update the page
+
+async function fetchFilteredPoints() {
+  const filters = currentFilters();
+  const requestId = ++pointsRequestId;
+
+  let area;
+  if (areaMode === "neighbourhood") {
+    // The table and the colours follow the filters too, whether or not a neighbourhood is selected
+    refreshNeighbourhoodSummary(filters);
+    if (!selectedNeighbourhood) {
+      showNoNeighbourhoodSelected();
+      return;
+    }
+    area = { type: "neighbourhood", id: selectedNeighbourhood.id };
+  } else {
+    const center = circle.getLatLng();
+    area = { type: "circle", center: [center.lat, center.lng], radius_km: circle.getRadius() / 1000 };
+  }
 
   try {
     const res = await fetch("/filtered-points", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ area, filters }),
     });
-    const { points, summary } = await res.json();
+    const { points, summary, error } = await res.json();
+    if (requestId !== pointsRequestId) return;   // a newer request is on its way
+    if (error) throw new Error(error);
     console.log("DEBUG: Received Summary:", summary);
 
     updateMapMarkers(points); // Update markers with filtered points
@@ -752,8 +793,8 @@ function updateMapMarkers(filteredPoints) {
           if (el) el.classList.add("marker-selected");
 
           // Switch to listings view and show filtered listings
-          if (currentView === "insights") {
-            toggleView();
+          if (currentView !== "listings") {
+            setView("listings");
           }
           currentPage = 1;
           updateListingsSidebar(currentPoints);
@@ -768,8 +809,8 @@ function updateMapMarkers(filteredPoints) {
           currentPage = 1;
 
           // Switch to listings if needed
-          if (currentView === "insights") {
-            toggleView();
+          if (currentView !== "listings") {
+            setView("listings");
           }
 
           // Re-render full listings then highlight clicked one
@@ -808,6 +849,7 @@ window.setDiffBasis = function (basis) {
   if (lastSummaryData) {
     updateStats(lastSummaryData, lastPointsData);
   }
+  if (typeof refreshNeighbourhoodViews === "function") refreshNeighbourhoodViews();   // table and colours use the basis too
 };
 
 document.querySelectorAll("#diffBasisGroup .chart-btn").forEach(btn =>
@@ -1077,6 +1119,8 @@ function offsetToDateStr(offset) {
   const mobileListingsPanel = document.getElementById("mobileListingsPanel");
   const mobileListingRows = document.getElementById("mobileListingRows");
   const mobileSortSelect = document.getElementById("mobileSortSelect");
+  const mobileAreasPanel = document.getElementById("mobileAreasPanel");
+  const mobileAreasTab = document.getElementById("mobileAreasTab");
   if (!tabBar || !mobileListingsPanel) return;
 
   let activeMobileTab = "insights"; // default
@@ -1094,9 +1138,14 @@ function offsetToDateStr(offset) {
       // Desktop: hide mobile elements, restore desktop insights
       tabBar.style.display = "none";
       mobileListingsPanel.style.display = "none";
+      if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
       insightsEl.classList.remove("mobile-hidden");
       return;
     }
+
+    // The Areas tab only exists in Neighbourhood mode
+    if (mobileAreasTab) mobileAreasTab.hidden = areaMode !== "neighbourhood";
+    if (activeMobileTab === "areas" && areaMode !== "neighbourhood") activeMobileTab = "insights";
 
     // Show tab bar
     tabBar.style.display = "flex";
@@ -1106,10 +1155,16 @@ function offsetToDateStr(offset) {
       btn.classList.toggle("active", btn.dataset.tab === activeMobileTab);
     });
 
+    if (mobileAreasPanel) mobileAreasPanel.style.display = "none";
     if (activeMobileTab === "insights") {
       insightsEl.classList.remove("mobile-hidden");
       insightsEl.style.display = "flex";
       mobileListingsPanel.style.display = "none";
+    } else if (activeMobileTab === "areas") {
+      insightsEl.classList.add("mobile-hidden");
+      insightsEl.style.display = "none";
+      mobileListingsPanel.style.display = "none";
+      if (mobileAreasPanel) mobileAreasPanel.style.display = "flex";
     } else {
       insightsEl.classList.add("mobile-hidden");
       insightsEl.style.display = "none";
@@ -1169,6 +1224,8 @@ function offsetToDateStr(offset) {
     const pageItems = list.slice(startIdx, startIdx + MOBILE_PER_PAGE);
 
     mobileListingRows.innerHTML = "";
+
+    appendAreaBanner(mobileListingRows, currentPoints.length);
 
     // Selection banner
     if (selectedLocationKey) {
@@ -1260,9 +1317,15 @@ function offsetToDateStr(offset) {
   window.setView = function (view) {
     origSetView(view);
     if (isMobile()) {
-      activeMobileTab = view === "listings" ? "listings" : "insights";
+      activeMobileTab = view === "listings" ? "listings" : view === "areas" ? "areas" : "insights";
       applyMobileTab();
     }
+  };
+
+  // Called by neighbourhoods.js when the area mode changes (shows or hides the Areas tab)
+  window._syncMobileTabs = function (openTab) {
+    if (openTab) activeMobileTab = openTab;
+    applyMobileTab();
   };
 
   // Re-evaluate on resize & orientation change
