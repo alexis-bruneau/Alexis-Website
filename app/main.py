@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, redirect
 import os
 import duckdb
 import pandas as pd
@@ -205,8 +205,17 @@ def haversine_km(lon1, lat1, lon2, lat2):
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
+# On the real-estate domain the front door is the sold map. The portfolio home page is still served on any other host
+# (local development, the long azurecontainerapps.io address) and at /index.html.
+MAP_HOSTS = ("quartierinsights.ca", "www.quartierinsights.ca")
+
 @app.route("/")
 def home():
+    if request.host.split(":")[0].lower() in MAP_HOSTS:
+        # A relative Location, so the browser keeps https (behind Azure's proxy this app only sees http)
+        response = redirect("/ottawa_map")
+        response.autocorrect_location_header = False
+        return response
     return render_template("index.html")
 
 @app.route("/refresh-data", methods=["POST"])
