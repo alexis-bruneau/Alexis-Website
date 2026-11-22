@@ -280,3 +280,14 @@ body.rail .insights-right, body.rail .insights-charts .insights-right { flex: 1 
 @media (max-height: 500px) and (orientation: landscape) {
   body #controls, body.side-open #controls { max-width: calc(100% - 16px) !important; }
 }
+
+@media (min-width: 901px) and (max-height: 700px) {
+  body #controls, body.side-open #controls { gap: 5px; padding: 4px 6px; }
+  body #controls button:not(.bed-btn):not(.ptype-btn):not(.clear-filters-btn) { padding: 5px 9px; }
+  #controls .area-toggle button.area-btn.area-btn.area-btn { padding: 4px 9px; }
+  .area-legend-low { display: none; }
+}
+
+@media (min-width: 901px) and (max-height: 660px) {
+  body:not(.rail) #insights, body:not(.rail) #insights.insights-charts { min-height: 190px; }
+}
