@@ -294,7 +294,7 @@ body.rail .active-map .card:nth-child(n+7), body.active-map.rail .card:nth-child
   .period-seg { width: auto; }
   .period-btn { flex: none; }
   .brand, .period-label { display: none; }
-  .period-btn { min-height: 40px; padding: 0 8px; }
+  .period-btn { min-height: 40px; min-width: 40px; padding: 0 8px; }
   .period-bar { gap: 6px; }
   .sold-map #controls, .active-map #controls { position: absolute; top: 50px !important; width: auto; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 2px 10px rgba(15, 23, 42, 0.25); }
   .period-dock { top: calc(100% + 4px); right: 8px; width: 320px; }
