@@ -1,6 +1,7 @@
 """Which Ottawa neighbourhood is a sale in, and how does each neighbourhood look: the sold map's second way to pick an area.
 
-Read-time helper for app/main.py (POST /filtered-points with an `area`, POST /neighbourhood-summary). Pure: no Flask, no
+Read-time helper for app/main.py (POST /filtered-points and /active-points with an `area`, POST /neighbourhood-summary and
+/active-neighbourhood-summary). Pure: no Flask, no
 Azure, no clock. Nothing is stored in silver: the app assigns every sale once when it loads the data and keeps the
 result in memory, so a new boundary file never needs a re-scrape or a rebuild of silver.
 
@@ -34,6 +35,12 @@ UNASSIGNED_NAME = "Outside Ottawa / unassigned"
 # 10% or more. 20 (the sell-time curve's floor, which needs a whole distribution) would grey out far more areas as soon as
 # the price, beds or type filters are used. Rows below it are still returned, with their n.
 MIN_SAMPLE = 10
+
+# The active map's floor. There are few listings for sale at any moment (326 in the 2026-11-21 snapshot, about 3 per
+# neighbourhood, and only 5 of the 116 neighbourhoods had 10 or more), so MIN_SAMPLE would grey out nearly every area.
+# 5 keeps the 27 busiest areas; below that the median asking price of a handful of homes says little. The listing COUNT
+# is a plain fact, not an estimate, so the map can always colour by it; only the median and the averages use this floor.
+ACTIVE_MIN_SAMPLE = 5
 
 
 @dataclass(frozen=True)
@@ -103,6 +110,20 @@ def _round(value, digits):
     return None if value is None or value != value else round(float(value), digits)
 
 
+def _rows(frame, neighbourhoods, min_sample, stats):
+    """One row per neighbourhood (including those with no rows) plus the unassigned bucket, in id order with unassigned
+    last. `stats(g)` gets the neighbourhood's rows (never an empty frame) and returns that row's statistics."""
+    groups = {nid: g for nid, g in frame.groupby("neighbourhood_id")} if len(frame) else {}
+    rows = []
+    for nid, name in [(int(i), n) for i, n in zip(neighbourhoods.ids, neighbourhoods.names)] + [(UNASSIGNED_ID, UNASSIGNED_NAME)]:
+        g = groups.get(nid)
+        n = 0 if g is None else int(len(g))
+        row = {"id": nid, "name": name, "n": n, "low_sample": n < min_sample}
+        row.update(stats(g) if n else {})
+        rows.append(row)
+    return rows
+
+
 def aggregate(sales, neighbourhoods, min_sample=MIN_SAMPLE):
     """One row per neighbourhood (including those with no sales) plus the unassigned bucket, from a frame of sales.
 
@@ -118,22 +139,49 @@ def aggregate(sales, neighbourhoods, min_sample=MIN_SAMPLE):
                               plausible values by the caller)
 
     A statistic is None when no sale in the row has the value. Rows are ordered by id, unassigned last."""
-    groups = {nid: g for nid, g in sales.groupby("neighbourhood_id")} if len(sales) else {}
-    rows = []
-    for nid, name in [(int(i), n) for i, n in zip(neighbourhoods.ids, neighbourhoods.names)] + [(UNASSIGNED_ID, UNASSIGNED_NAME)]:
-        g = groups.get(nid)
-        n = 0 if g is None else int(len(g))
-        rows.append({
-            "id": nid,
-            "name": name,
-            "n": n,
-            "low_sample": n < min_sample,
-            "median_price": _round(g["price"].median(), 0) if n else None,
-            "avg_dom": _round(g["dom"].mean(), 1) if n else None,
-            "median_dom": _round(g["dom"].median(), 1) if n else None,
-            "avg_diff_pct_last": _round(g["diff_pct_last"].mean(), 2) if n else None,
-            "avg_diff_pct_original": _round(g["diff_pct_original"].mean(), 2) if n else None,
-        })
+    keys = ("median_price", "avg_dom", "median_dom", "avg_diff_pct_last", "avg_diff_pct_original")
+
+    def stats(g):
+        return {
+            "median_price": _round(g["price"].median(), 0),
+            "avg_dom": _round(g["dom"].mean(), 1),
+            "median_dom": _round(g["dom"].median(), 1),
+            "avg_diff_pct_last": _round(g["diff_pct_last"].mean(), 2),
+            "avg_diff_pct_original": _round(g["diff_pct_original"].mean(), 2),
+        }
+
+    return [{**dict.fromkeys(keys), **row} for row in _rows(sales, neighbourhoods, min_sample, stats)]
+
+
+def aggregate_active(listings, neighbourhoods, min_sample=ACTIVE_MIN_SAMPLE):
+    """The active map's twin of aggregate(): one row per neighbourhood plus the unassigned bucket.
+
+    `listings` needs `neighbourhood_id` and the numeric columns `list_price` and `days_on_market` plus
+    `last_change_direction` ("down" / "up" / empty); the caller has already applied the filters. Statistics:
+
+        n, low_sample         listings for sale; low_sample when n < min_sample (ACTIVE_MIN_SAMPLE)
+        median_price          median asking price
+        avg_dom, median_dom   days on market so far
+        with_cut, cut_pct     listings whose last asking-price change was a cut, and their share of n in %: the same
+                              definition as the page's "With a Price Cut" card
+
+    A statistic is None when no listing in the row has the value. Rows are ordered by id, unassigned last."""
+    keys = ("median_price", "avg_dom", "median_dom", "with_cut", "cut_pct")
+
+    def stats(g):
+        cuts = int((g["last_change_direction"] == "down").sum())
+        return {
+            "median_price": _round(g["list_price"].median(), 0),
+            "avg_dom": _round(g["days_on_market"].mean(), 1),
+            "median_dom": _round(g["days_on_market"].median(), 1),
+            "with_cut": cuts,
+            "cut_pct": _round(100 * cuts / len(g), 1),
+        }
+
+    rows = [{**dict.fromkeys(keys), **row} for row in _rows(listings, neighbourhoods, min_sample, stats)]
+    for row in rows:
+        if row["n"] == 0:
+            row["with_cut"] = 0   # no listings: zero cuts, but no share
     return rows
 
 

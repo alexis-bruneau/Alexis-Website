@@ -2192,7 +2192,7 @@ canvas.brushing { touch-action: none; }
 .area-row { cursor: pointer; }
 .area-row:hover { background: #f1f5f9; }
 .area-row.is-selected { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
-.area-row.is-low td { color: #94a3b8; font-weight: 400; }   /* fewer than the minimum sample: greyed out */
+.area-row.is-low td.is-stat { color: #94a3b8; font-weight: 400; }   /* fewer than the minimum sample: the estimates are greyed out */
 .area-row.is-unassigned td.c-name { font-style: italic; }
 
 .areas-empty {
@@ -2209,6 +2209,23 @@ canvas.brushing { touch-action: none; }
   font-size: 11px;
   line-height: 1.4;
   color: #64748b;
+}
+
+/* Hover and selection of a neighbourhood on the map. The hover is a glow (white edge, warm halo, brighter fill) so the area
+   under the pointer is obvious before the click; the selected area keeps a white edge with a blue halo. No dark outline. */
+.leaflet-container path.leaflet-interactive:focus,
+.leaflet-container path.leaflet-interactive:focus-visible { outline: none; }
+
+path.nb-hover {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 9px rgba(251, 191, 36, 0.9)) brightness(1.12) saturate(1.12);
+}
+
+path.nb-selected {
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 7px rgba(37, 99, 235, 0.95));
+}
+
+path.nb-selected.nb-hover {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 9px rgba(251, 191, 36, 0.9)) drop-shadow(0 0 7px rgba(37, 99, 235, 0.8)) brightness(1.1);
 }
 
 /* Map legend: what the colours mean, and the grey of areas with too few sales */
@@ -2290,8 +2307,19 @@ canvas.brushing { touch-action: none; }
 }
 
 @media (max-width: 768px) and (min-height: 501px) {
+  /* Sold | Active becomes a slim strip above the map: the controls bar used to sit on top of it and hide it */
+  .sold-map .mode-tabs, .active-map .mode-tabs { position: static; align-self: center; flex: none; margin: 4px 0; padding: 2px; border-radius: 10px; }
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { padding: 4px 22px; font-size: 13px; }
+  .sold-map #controls, .active-map #controls { top: 46px; }
+  .sold-map #map, .active-map #map { height: calc(55vh - 36px); min-height: 214px; }   /* the strip took 36px: keep the panel below the same size */
+
+  /* Controls bar: [Circle | Neighbourhood] [Filters] on one row, the radius on a second row (Circle mode only).
+     The tab bar under the map replaces the Listings and Neighbourhoods buttons. */
   #controls { flex-wrap: wrap; justify-content: center; row-gap: 6px; }
-  .area-toggle { flex: 1 0 100%; justify-content: center; }
+  #controls .area-toggle { order: 1; flex: 1 1 0; min-width: 0; justify-content: center; }
+  #controls #filterToggle { order: 2; }
+  #controls .radius-group { order: 3; flex: 1 0 100%; justify-content: center; }
+  #controls #toggleListings, #controls #toggleAreas { display: none; }
   #controls .area-toggle button.area-btn.area-btn.area-btn { flex: 1; padding: 6px 8px; font-size: 12px; }
 }
 
@@ -2310,8 +2338,8 @@ canvas.brushing { touch-action: none; }
 @media (max-height: 500px) and (orientation: landscape) {
   .area-legend { margin-left: 52px; width: 196px; margin-bottom: 40px; }   /* the zoom buttons sit bottom-left here */
   /* Sold | Active would cover the third tab of the right-hand column: move it to the map's bottom-right corner (this page only) */
-  .sold-map .mode-tabs { top: auto; bottom: 34px; right: calc(40% + 8px); padding: 2px; }
-  .sold-map .mode-tabs a { padding: 4px 10px; font-size: 12px; }
+  .sold-map .mode-tabs, .active-map .mode-tabs { top: auto; bottom: 34px; right: calc(40% + 8px); padding: 2px; }
+  .sold-map .mode-tabs a, .active-map .mode-tabs a { padding: 4px 10px; font-size: 12px; }
   #controls .area-toggle button.area-btn.area-btn.area-btn { padding: 2px 6px; font-size: 11px; }
   .areas-table td { padding: 6px 4px; }
   .areas-table td.c-name { font-size: 11px; }

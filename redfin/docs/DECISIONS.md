@@ -259,6 +259,47 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   byte-identical (`neighbourhoods.js` is on the exclusion list of `build_site.py`, like `map.js`). It adds `shapely>=2.0`.
 - **Status**: accepted
 
+## D18. Neighbourhoods on the active map too: a lower minimum, a count that needs none, and phone tabs
+- **Date**: 2026-11-21 (same branch as D17, `feature/neighbourhoods`)
+- **Decision**: `/ottawa_active` gets the same Circle | Neighbourhood switch as the sold map (D17, same ONS Gen 3 polygons, same
+  point-in-polygon assignment, read time only, nothing stored). `POST /active-points` takes the same `area` (circle or
+  neighbourhood; the old top-level `center` / `radius_km` still means a circle), and `POST /active-neighbourhood-summary` returns
+  one row per neighbourhood plus the unassigned bucket: `n`, median asking price, average and median days on market, `with_cut`
+  and `cut_pct` (the listings whose last asking-price change was a cut: the page's "With a Price Cut" card). The sell-time curve
+  (D13) is computed for the selected neighbourhood the same way as for a circle: `comparable_sales` takes an area.
+- **Minimum sample 5, not 10 (`ACTIVE_MIN_SAMPLE`)**: on 2026-11-21 the snapshot held 326 active listings, about 3 per
+  neighbourhood. Listings per neighbourhood: 90 of 116 areas have at least 1, 27 have 5 or more, only 5 have 10 or more. With
+  D17's floor of 10 almost every area would be grey, and with a filter or two (condo, a price band) none would. 5 keeps the 27
+  busiest areas; below that a median asking price of a handful of homes says little. It is a constant in
+  `analytics/neighbourhoods.py` and moves with the snapshot (it grows by up to 200 pages a day once `run.daily` runs).
+- **The count needs no minimum**: the number of listings for sale in an area is a fact, not an estimate, so "Listing count" is
+  the default colour of the active map and colours every area that has at least one listing, whatever the sample. Only the
+  median, days on market and cut share are greyed below the floor (in the table the count stays dark and only those cells are
+  grey). The legend says "No listings" for empty areas and "Fewer than 5 listings" for the estimates.
+- **One front-end file for both maps**: `static/js/neighbourhoods.js` now holds one `NB` object per page (wording, metrics,
+  columns, which request to repeat, the "nothing picked yet" state). `active.js` keeps its own state and calls into it; the
+  active page's price-change buttons (applied in the browser for the map) are also sent to the summary as `changes`, so the table
+  and the map count the same listings. The table follows the filter panel, not the chart selections (brush, bars).
+- **Filters in one place**: `analytics/active_filters.py` holds `prepare_active_frame`, `apply_active_filters` (asking price, days
+  on market, beds, property type, price changes) and `beds_mask` (moved from `app/main.py` unchanged). The active frame is built
+  once per snapshot load and cleared by `load_active_data()`, like the sold frame.
+- **Hover and selection on the polygons (both maps)**: the area under the pointer glows (white edge, warm halo, brighter fill; no
+  glow on touch screens, where a tap selects) and the selected area has a white edge with a blue halo. D17's near-black selected
+  outline (`#0f172a`) is gone: it stayed on after a click and read as a black border on hover.
+- **Phones**: the active page had no tab bar, and its "Listings" button showed nothing on a phone (the desktop sidebar is hidden
+  there and there was no phone panel). It now has the sold map's tabs, Insights | Listings | Areas (Areas only in Neighbourhood
+  mode). On both pages the Sold | Active switch, which the controls bar used to cover on phones, is a slim strip above the map; the
+  controls are [Circle | Neighbourhood] [Filters] with the radius on a second row in Circle mode, and the tab bar replaces the
+  Listings and Neighbourhoods buttons.
+- **Alternatives rejected**: keeping 10 (a map of grey); letting the user set the minimum (one more control for a number that should
+  follow the data); wards for the active map (a second boundary set to explain; the same polygons answer "where" on both pages);
+  a separate `active_neighbourhoods.js` (the two files would drift).
+- **Consequences**: changes the production Flask pages `/ottawa_active` and `/ottawa_map` and adds routes; no extract, transform or
+  workflow code changes, so the daily scrape and `daily_scrape.yml` are untouched; none of the changed pages or scripts is in the
+  Pages build (`ottawa_active.html`, `active.js`, `neighbourhoods.js`, `map.css` are all on the exclusion lists of `build_site.py`).
+  A bad `area` on `/active-points` is now a 400 (it was a 500). P5 (store the id in silver or a gold dimension) now has two users.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)

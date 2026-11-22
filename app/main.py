@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 # The Redfin pipeline package (pip install -e redfin). These routes only read what it writes to Azure.
 from redfin import config as redfin_config
 from redfin.analytics import neighbourhoods as nbh
+from redfin.analytics.active_filters import apply_active_filters, beds_mask, prepare_active_frame
 from redfin.analytics.property_types import property_group
 from redfin.analytics.sale_curve import sale_curve
 from redfin.analytics.sale_filters import apply_sale_filters
@@ -142,11 +143,14 @@ ACTIVE_COLUMNS = ["mls", "status", "address", "list_price", "beds", "baths", "la
                   "last_change_amount", "last_change_pct", "last_change_date", "last_change_direction",
                   "price_vs_original", "as_of"]
 active_df = pd.DataFrame(columns=ACTIVE_COLUMNS)
+_active_frame = None   # the snapshot made ready to filter, with neighbourhood ids; rebuilt after every reload
+_active_unplaced = 0   # active listings with no coordinates (on no map, so not in the frame)
 
 
 def load_active_data():
     """Reloads the active-listing snapshot from Azure into memory. An empty frame when it is missing."""
-    global active_df
+    global active_df, _active_frame
+    _active_frame = None
     try:
         from azure.storage.blob import BlobServiceClient
         import io
@@ -196,13 +200,6 @@ def haversine_km(lon1, lat1, lon2, lat2):
     a = np.sin((lat2 - lat1) / 2.0) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin((lon2 - lon1) / 2.0) ** 2
     return 6371 * 2 * np.arcsin(np.sqrt(a))
 
-
-def beds_mask(beds, selected):
-    """True where `beds` is one of the selected counts; the "5+" button sends 5 and means 5 or more."""
-    mask = beds.isin(selected)
-    if 5 in selected:
-        mask = mask | (beds >= 5)
-    return mask
 
 # ---------------- App -----------------------------------------------------
 
@@ -383,6 +380,22 @@ def sold_frame():
     return _sold_frame
 
 
+def active_frame():
+    """Every active listing that has coordinates, ready to filter: numeric columns and the neighbourhood id of each
+    listing. Built once per snapshot load and cached (load_active_data() clears it). Callers must not change it:
+    selecting and filtering return copies."""
+    global _active_frame, _active_unplaced
+    if _active_frame is None:
+        df, _active_unplaced = prepare_active_frame(active_df)
+        try:
+            df = nbh.with_neighbourhood(df, get_neighbourhoods())
+        except Exception as e:  # circle mode must keep working without the boundary file
+            sys.stderr.write(f"ERROR assigning neighbourhoods to active listings: {e}\n{traceback.format_exc()}\n")
+            df["neighbourhood_id"] = nbh.UNASSIGNED_ID
+        _active_frame = df
+    return _active_frame
+
+
 def parse_area(data):
     """The area a request asks for, as a dict: {"type": "circle", "center": (lat, lng), "radius_km": r} or
     {"type": "neighbourhood", "id": n}. Accepts the new `area` object and the old top-level `center` / `radius_km`
@@ -441,6 +454,23 @@ def neighbourhood_summary():
                                       "no_coordinates": _sold_unplaced}))
     except Exception as e:
         sys.stderr.write(f"ERROR in neighbourhood_summary: {e}\n{traceback.format_exc()}\n")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/active-neighbourhood-summary", methods=["POST"])
+def active_neighbourhood_summary():
+    """The active map's twin of /neighbourhood-summary: one row per neighbourhood (plus the unassigned bucket) for the
+    active listings that pass `filters` (the /active-points filters, plus `changes`). Rows below `min_sample` carry
+    low_sample = true; the listing count `n` is always exact, so the page can colour by it whatever the sample."""
+    try:
+        data = request.get_json(silent=True) or {}
+        frame = active_frame()
+        df = apply_active_filters(frame, data.get("filters") or {})
+        rows = nbh.aggregate_active(df, get_neighbourhoods())
+        return jsonify(sanitize_json({"rows": rows, "min_sample": nbh.ACTIVE_MIN_SAMPLE, "total": int(len(df)),
+                                      "no_coordinates": _active_unplaced}))
+    except Exception as e:
+        sys.stderr.write(f"ERROR in active_neighbourhood_summary: {e}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
 
 
@@ -519,8 +549,9 @@ def filtered_points():
 SOLD_WINDOW_DAYS = 180
 
 
-def comparable_sales(center_lat, center_lng, radius_km, filters):
-    """Days on market of the recent sales inside the circle that pass the price, beds and property-type filters.
+def comparable_sales(area, filters):
+    """Days on market of the recent sales inside the area (a circle or a neighbourhood, see parse_area) that pass the
+    price, beds and property-type filters.
 
     The window is the SOLD_WINDOW_DAYS days ending on the latest sale in the data (not today's date, so it is the
     same for everyone and it still has sales when the sold scrape is a few days behind). Returns
@@ -534,9 +565,7 @@ def comparable_sales(center_lat, center_lng, radius_km, filters):
     if pd.isna(window_end):
         return [], None, None
     window_start = window_end - pd.Timedelta(days=SOLD_WINDOW_DAYS - 1)
-    df = df[(df["sold_date"] >= window_start) & (df["sold_date"] <= window_end)]
-    if not df.empty:
-        df = df[haversine_km(center_lng, center_lat, df["longitude"], df["latitude"]) <= radius_km]
+    df = select_area(df[(df["sold_date"] >= window_start) & (df["sold_date"] <= window_end)], area)
     if "min_price" in filters:
         df = df[df["price"] >= int(filters["min_price"])]
     if "max_price" in filters:
@@ -550,35 +579,18 @@ def comparable_sales(center_lat, center_lng, radius_km, filters):
 
 @app.route("/active-points", methods=["POST"])
 def active_points():
-    """Active listings inside the search circle (+ filters) and their insights: the counterpart of /filtered-points."""
+    """Active listings inside the area (+ filters) and their insights: the counterpart of /filtered-points. The area is
+    a circle or a neighbourhood: {"area": {"type": "circle", "center": [lat, lng], "radius_km": r}} or
+    {"area": {"type": "neighbourhood", "id": n}}; the old top-level `center` and `radius_km` still mean a circle."""
     try:
         data = request.get_json() or {}
-        center_lat, center_lng = data.get("center", [45.4215, -75.6972])
-        radius_km = data.get("radius_km", 5)
+        try:
+            area = parse_area(data)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 400
         filters = data.get("filters", {})
 
-        df = active_df.copy()
-        # The census can return homes that are no longer for sale (e.g. mlsStatus "Off Market"): show only "Active" ones.
-        # A row with no status (a snapshot written before the column existed) stays.
-        df = df[df["status"].isna() | (df["status"] == "Active")]
-        for col in ("latitude", "longitude", "list_price", "beds", "baths", "days_on_market", "cumulative_dom",
-                    "original_price", "price_changes", "last_change_amount", "last_change_pct", "price_vs_original"):
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-        df = df.dropna(subset=["latitude", "longitude"])
-        if not df.empty:
-            df = df[haversine_km(center_lng, center_lat, df["longitude"], df["latitude"]) <= radius_km]
-        if "min_price" in filters:
-            df = df[df["list_price"] >= int(filters["min_price"])]
-        if "max_price" in filters:
-            df = df[df["list_price"] <= int(filters["max_price"])]
-        if "min_dom" in filters:  # listings with no days-on-market value drop out once either bound is set
-            df = df[df["days_on_market"] >= int(filters["min_dom"])]
-        if "max_dom" in filters:
-            df = df[df["days_on_market"] <= int(filters["max_dom"])]
-        if filters.get("beds"):
-            df = df[beds_mask(df["beds"], filters["beds"])]
-        if filters.get("ptypes"):
-            df = df[df["property_type_name"].map(property_group).isin(filters["ptypes"])]
+        df = apply_active_filters(select_area(active_frame(), area), filters)
 
         df["price"] = df["list_price"]
         df["photo"] = df["photo_blob"].apply(photo_url)
@@ -609,7 +621,7 @@ def active_points():
         # How long comparable homes took to sell. A failure here must not take the listings down with it.
         sold = {"sold_curve": None, "sold_sample": 0, "sold_window": None}
         try:
-            days, window_start, window_end = comparable_sales(center_lat, center_lng, radius_km, filters)
+            days, window_start, window_end = comparable_sales(area, filters)
             sold = {
                 "sold_curve": sale_curve(days),  # None below 20 sales
                 "sold_sample": len(days),        # sales in the window, also when too few for a curve
@@ -617,7 +629,10 @@ def active_points():
             }
         except Exception as e:
             sys.stderr.write(f"ERROR in active_points sold curve: {e}\n{traceback.format_exc()}\n")
-        return jsonify({"points": sanitize_json(points), "summary": sanitize_json(summary), **sanitize_json(sold)})
+        response = {"points": sanitize_json(points), "summary": sanitize_json(summary), **sanitize_json(sold)}
+        if area["type"] == "neighbourhood":
+            response["area"] = {"type": "neighbourhood", "id": area["id"], "name": get_neighbourhoods().name_of(area["id"])}
+        return jsonify(response)
     except Exception as e:
         sys.stderr.write(f"ERROR in active_points: {e}\n{traceback.format_exc()}\n")
         return jsonify({"error": str(e)}), 500
