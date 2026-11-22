@@ -2303,6 +2303,18 @@ path.nb-selected.nb-hover {
   #controls { left: calc(50% - 60px); }
 }
 
+/* A 420px sidebar (listings or the neighbourhood table) is open: the bar sits on the map beside it, not over the sidebar's header
+   (it used to cover the "View Insights" button on windows under ~1250px) and wraps if the map is narrow. */
+@media (min-width: 769px) and (min-height: 501px) {
+  body.side-open #controls {
+    left: 436px;
+    transform: none;
+    max-width: calc(100vw - 436px - 200px);
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}
+
 /* Phones: the table is the Areas tab; the controls bar gets a second row for the switch */
 @media (max-width: 768px), (max-height: 500px) and (orientation: landscape) {
   #areasPanel { display: none !important; }

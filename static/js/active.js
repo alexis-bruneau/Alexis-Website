@@ -133,11 +133,14 @@ function setView(view) {
   }
   const areasBtn = document.getElementById("toggleAreas");
   if (areasBtn) areasBtn.classList.toggle("is-on", view === "areas");
+  document.body.classList.toggle("side-open", view === "listings" || view === "areas");   // CSS keeps the controls bar off the sidebar
   setTimeout(() => map.invalidateSize(), 310);
   if (view === "insights" || view === "areas") setTimeout(resizeCharts, 50);   // the charts were laid out while hidden
 }
 document.getElementById("toggleListings").addEventListener("click", () => setView("listings"));
-document.getElementById("viewInsightsBtn").addEventListener("click", () => setView(currentView === "insights" ? "listings" : "insights"));
+/** Where closing the listings sidebar goes back to: the neighbourhood table in Neighbourhood mode, else the insights. */
+function homeView() { return areaMode === "neighbourhood" ? "areas" : "insights"; }
+document.getElementById("viewInsightsBtn").addEventListener("click", () => setView(currentView === "listings" ? homeView() : "listings"));
 
 function hideFilterPanel() {
   const panel = document.getElementById("filterPanel");
@@ -150,7 +153,7 @@ function hideFilterPanel() {
 map.on("click", () => {
   if (selectedLocationKey) clearLocationSelection();
   hideFilterPanel();
-  if (currentView === "listings") setView("insights");
+  if (currentView === "listings") setView(homeView());
 });
 
 /************** FILTERS **************/
@@ -856,7 +859,7 @@ function openListing(pt) {
   selectedLocationKey = null;
   if (searchQuery) { searchQuery = ""; searchInput.value = ""; }
   setEmphasis("is-linked", []);
-  if (currentView === "insights") setView("listings");
+  if (currentView !== "listings") setView("listings");
   updateListingsSidebar();
   setTimeout(() => highlightListing(pt.mls), 150);
 }

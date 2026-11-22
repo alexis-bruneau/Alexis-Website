@@ -312,6 +312,19 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   Pages build change.
 - **Status**: accepted
 
+## D20. In Neighbourhood mode, closing the listings goes back to the neighbourhood table
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: clicking a listing marker opens the Listings sidebar, which replaces the neighbourhood table (both are 420 px
+  panels on the left). Closing the sidebar (the "View Insights" button, a click on the map) now returns to the table in
+  Neighbourhood mode and to the insights in Circle mode (`homeView()` in `map.js` and `active.js`). Before, the table was gone
+  after the first marker click and only the "Neighbourhoods" button brought it back, so it looked as if the comparison never showed.
+- **Controls bar**: while a sidebar is open (`body.side-open`, desktop only) the Circle | Neighbourhood bar sits at the sidebar's edge
+  and wraps when the map is narrow. It was centred on the window and covered the "View Insights" button under about 1250 px, so the
+  listings sidebar could not be closed with its button.
+- **Consequences**: front end only (`static/js/map.js`, `static/js/active.js`, `static/css/map.css`); no endpoint, daily scrape or
+  Pages build change.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)

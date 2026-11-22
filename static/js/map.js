@@ -60,13 +60,17 @@ function setView(view) {
   }
   const areasBtn = document.getElementById("toggleAreas");
   if (areasBtn) areasBtn.classList.toggle("is-on", view === "areas");
+  document.body.classList.toggle("side-open", view === "listings" || view === "areas");   // CSS keeps the controls bar off the sidebar
   setTimeout(() => map.invalidateSize(), 310);
 }
 
 // Global function for onclick handlers in HTML
 function toggleView() {
-  (window.setView || setView)(currentView === "insights" ? "listings" : "insights");
+  (window.setView || setView)(currentView === "listings" ? homeView() : "listings");
 }
+
+/** Where closing the listings sidebar goes back to: the neighbourhood table in Neighbourhood mode, else the insights. */
+function homeView() { return areaMode === "neighbourhood" ? "areas" : "insights"; }
 
 document.getElementById("toggleListings")
   .addEventListener("click", () => setView("listings"));
@@ -383,7 +387,7 @@ map.on("click", (e) => {
   // If sidebar is open, close it (returning to insights)
   if (currentView === "listings") {
     console.log("DEBUG: Closing sidebar");
-    setView("insights");
+    setView(homeView());
   }
 });
 
