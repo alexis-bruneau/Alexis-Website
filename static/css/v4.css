@@ -178,7 +178,9 @@ body #controls #toggleAreas.is-on { background: var(--accent); background-image:
   #appHeader { align-items: center; flex-wrap: nowrap; padding: 4px 10px 0; gap: 10px; height: 52px; }
   .wordmark { display: none; }
   .period-bar { order: 0; width: auto; margin-left: auto; border-bottom: 0; }
-  .period-tab { min-height: 40px; min-width: 40px; padding: 0 7px; }
+  .period-tab { min-height: 40px; min-width: 40px; padding: 0 3px; flex: none; }
+  #appHeader .mode-tabs { gap: 6px; }
+  #appHeader .mode-tabs a { min-width: 40px; padding: 0 4px; }
   #headline { display: none; }
   .sold-map #controls, .active-map #controls { top: 54px !important; position: absolute; }
   .period-dock { top: calc(100% + 4px); right: 10px; width: 320px; }
