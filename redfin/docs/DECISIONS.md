@@ -300,6 +300,18 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   A bad `area` on `/active-points` is now a 400 (it was a 500). P5 (store the id in silver or a gold dimension) now has two users.
 - **Status**: accepted
 
+## D19. The selected neighbourhood is an outline with a clear middle
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: the selected neighbourhood is drawn as a blue 4 px edge with a white and a blue glow and a fully clear fill, so the
+  map underneath and the listings on it show through. The other neighbourhoods keep their colours, and the hover glow (D18) is
+  unchanged (on the selected area it only adds a faint 10 % veil). This supersedes D18's "white edge with a blue halo" for the
+  selected state, which kept a 75 % fill over the street map.
+- **Why not `fill: false`**: a clear fill with `fillOpacity` 0 still counts as a click target, so clicking inside the selected area
+  behaves like clicking any area.
+- **Consequences**: front end only (`static/js/neighbourhoods.js` `styleFor`, `static/css/map.css`); no endpoint, daily scrape or
+  Pages build change.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)

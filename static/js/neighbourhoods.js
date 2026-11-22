@@ -183,15 +183,20 @@ function styleFor(feature) {
   const selected = !!selectedNeighbourhood && selectedNeighbourhood.id === id;
   const hovered = nbState.hoverId === id;
   const lit = selected || hovered;
-  const style = { weight: selected ? 3.5 : hovered ? 3 : 1, color: lit ? "#ffffff" : "#475569", opacity: lit ? 1 : 0.7 };
+  const style = { weight: selected ? 4 : hovered ? 3 : 1, color: selected ? "#2563eb" : hovered ? "#ffffff" : "#475569", opacity: lit ? 1 : 0.7 };
+  // The selected area is only an outline: its middle is clear so the map (and the listings on it) shows through.
+  // (fillOpacity 0, not fill:false, so a click inside it still counts as a click on the area.)
+  if (selected) {
+    return { ...style, fillColor: "#ffffff", fillOpacity: hovered ? 0.1 : 0, dashArray: null };
+  }
   if (nbUsable(row)) {
-    return { ...style, fillColor: colorFor(nbMetricValue(row)), fillOpacity: hovered ? 0.85 : selected ? 0.75 : 0.6, dashArray: null };
+    return { ...style, fillColor: colorFor(nbMetricValue(row)), fillOpacity: hovered ? 0.85 : 0.6, dashArray: null };
   }
   if (!row && nbState.status === "loading") {
     return { ...style, fillColor: "#cbd5e1", fillOpacity: hovered ? 0.55 : 0.3, dashArray: null };
   }
   // too few to colour: greyed out (still lights up under the pointer, so it can be clicked)
-  return { ...style, fillColor: LOW_FILL, fillOpacity: hovered ? 0.5 : selected ? 0.4 : 0.22, dashArray: lit ? null : "3 3" };
+  return { ...style, fillColor: LOW_FILL, fillOpacity: hovered ? 0.5 : 0.22, dashArray: lit ? null : "3 3" };
 }
 
 /** Style a polygon and set its glow classes (the classes live on the SVG element, which Leaflet's setStyle leaves alone). */
