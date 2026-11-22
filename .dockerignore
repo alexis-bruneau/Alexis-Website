@@ -1,0 +1,61 @@
+# .dockerignore: files in the build context that never reach the image.
+# Two reasons to list something: it is a SECRET (it must never be baked into an image layer) or it is
+# DEAD WEIGHT (it makes the image bigger and the build slower, and changing it busts the layer cache).
+
+# ---- Secrets: anyone who can pull the image can read every layer, so these must never be copied in ----
+.env
+.env.*
+*cookies*.json
+# Redfin login cookies (redfin/chrome_cookies.json). Also matched by *cookies*.json above, kept explicit
+redfin/chrome_cookies.json
+redfin/redfin_profile/
+redfin_profile/
+
+# ---- Version control: the whole history, often bigger than the code itself, and not needed to run ----
+.git
+.gitignore
+.gitattributes
+.github
+
+# ---- Build output and local junk: regenerated or machine-specific ----
+_site
+build_site.py
+# "**/" = at any depth. Without it a pattern only matches at the top of the project, so redfin/.pytest_cache or
+# app/__pycache__ would slip through.
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/output
+**/.pytest_cache
+**/.mypy_cache
+htmlcov/
+.coverage
+*.log
+
+# ---- Virtual environments: huge, and built for the wrong OS (Windows binaries do not run in Linux) ----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Tests, docs and scraper-only code: the web app does not use them at run time ----
+redfin/tests/
+redfin/docs/
+redfin/scripts/
+# The scraper's URL queue (the web app never reads it)
+redfin/data/queue/
+test/
+docs/
+
+# ---- Editor, assistant and OS files ----
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+redfin/CLAUDE.md
+.DS_Store
+Thumbs.db
+
+# ---- Docker's own files: no reason to copy them into the image ----
+Dockerfile
+.dockerignore

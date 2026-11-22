@@ -359,6 +359,57 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 - **Consequences**: JS and CSS only (`map.js`, `active.js`, `v2.css`); no endpoint, silver, daily scrape or Pages build change.
 - **Status**: accepted
 
+## D24. The web app ships as a Docker image: one gunicorn worker with 4 threads, web-only requirements
+- **Date**: 2026-11-22 (`feature/docker`, step 1 of the hosting plan; nothing is deployed yet)
+- **Decision**: `Dockerfile` (python:3.10-slim) runs `gunicorn app.main:app` on `0.0.0.0:$PORT` (default 8000) with
+  `--workers 1 --worker-class gthread --threads 4 --timeout 120`. The redfin package is installed editable and `--no-deps`.
+  The connection string is never in the image: `docker run --env-file .env` locally, an Azure secret later.
+- **Why one worker**: `app/main.py` loads the sold and active data from Azure when it is imported, so every worker process holds
+  its own full copy (measured: about 250 MB for one worker, 290 MB peak). Threads share one copy, and `/refresh-data` (called
+  by `redfin.run.daily`) reloads module globals in the one process that answers, so with several workers only a random one
+  would refresh. `--timeout 120` because the Azure download runs inside the worker's start-up.
+- **Why editable**: `redfin/config.py` finds `redfin/data/neighbourhoods/` relative to its own file; a normal install copies the
+  package into site-packages and the file would not be found. `--no-deps` keeps playwright, bs4 and requests out of the image.
+- **Requirements**: neither workflow reads the root `requirements.txt` (`daily_scrape.yml` installs `-e ./redfin`,
+  `deploy_pages.yml` only runs `build_site.py`), so it was trimmed to what the web app imports (playwright, beautifulsoup4,
+  Pillow and the `requests==2.24.0` pin removed; `redfin[dev]` still brings the scraping packages for local work).
+- **Consequences**: new `Dockerfile`, `.dockerignore`, `docs/DOCKER.md`; no change to `daily_scrape.yml`, `deploy_pages.yml`,
+  blobs or endpoints. Open point: a second worker would need `/refresh-data` to reach every worker, or the data moved out of
+  process. The first sold request after start takes about 6 s (it builds the neighbourhood frame).
+- **Status**: accepted
+
+---
+
+## D25. Master pushes deploy the web app to Azure Container Apps (blue-green, OpenID Connect)
+- **Date**: 2026-11-22 (`feature/docker`, step 2 of the hosting plan; first run happens when the branch is merged)
+- **Decision**: `.github/workflows/deploy_azure.yml` runs on pushes to master that touch `app/`, `templates/`, `static/`,
+  `redfin/` (not its docs, tests, scripts, data/queue: all in `.dockerignore`), `requirements.txt`, `Dockerfile`,
+  `.dockerignore` or the workflow files, and on manual dispatch (`build_only` option). One job: `az acr build` into
+  `acralexisbruneau` tagged with the commit SHA (an existing tag is never rebuilt), then `az containerapp update` creates a new
+  revision of `ca-alexis-web`, which is tested on its own revision address, gets 100% of the traffic, and is then smoke tested
+  on `quartierinsights.ca` (`/`, `/ottawa_map`) and `www.quartierinsights.ca`. Concurrency group `deploy-azure`,
+  `cancel-in-progress: false` (a running deploy finishes; only the newest waiting one is kept).
+- **Why Multiple revision mode**: the new revision is created with 0% traffic and tested on its own address before visitors
+  arrive, and a failed test after the switch sends the traffic back automatically (the previous revision is still running at
+  that point). In Single mode there is no test before visitors arrive. The workflow stops with a message if the app is still
+  in Single mode.
+- **Cost choice**: once both tests pass, every revision except the new one is deactivated, so only one copy (0.5 CPU / 1 GiB,
+  min replicas 1) is billed. Rollback after a green deploy is then "activate the previous revision in the portal, then move
+  the traffic" (about a minute) instead of an instant traffic switch. Keeping the previous revision running was rejected: it
+  roughly doubles the compute bill for an instant rollback this site does not need.
+- **Authentication**: OpenID Connect with `azure/login` (federated credential for `repo:alexis-bruneau/Alexis-Website:ref:refs/heads/master`);
+  no client secret exists. Only `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` are stored in GitHub (identifiers, not
+  passwords). `permissions: id-token: write, contents: read`. The storage connection string stays in the Container App secret
+  `conn`; the workflow never reads it.
+- **Least privilege**: Contributor on the resource group `rg-alexis-web` only (also covers registry push/pull). Narrower
+  role sets were not adopted because their exact minimum could not be verified without running against Azure.
+- **Consequences**: a third workflow triggered by master pushes (next to `daily_scrape.yml` and `deploy_pages.yml`, both unchanged);
+  new `docs/AZURE_DEPLOY.md` and `.github/scripts/wait_for_200.sh`. The Azure steps were written without being run: the first
+  real run is the merge. Open point: the running app loads its data only at start, so new daily-scrape data reaches the
+  site only after a deploy or restart; `/refresh-data` has no authentication and must be protected before anything calls it
+  from outside (to be decided separately, see STATUS "Next").
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)
