@@ -98,6 +98,7 @@ body {
 #listingsPanel {
   width: 420px;
   max-width: 90vw;
+  flex: none;   /* same as #areasPanel: keep its 420px next to the map */
   background: #ffffff;
   box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
   display: flex;
@@ -215,7 +216,9 @@ body {
 /* ─── 5. MAIN PANEL ─────────────────────────────────────────── */
 #mainPanel {
   flex: 1;
+  min-width: 0;   /* shrink beside an open sidebar instead of running off the right edge (wide charts set a large min width) */
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 1fr auto;
   height: 100%;
 }
@@ -2075,6 +2078,7 @@ canvas.brushing { touch-action: none; }
 #areasPanel {
   width: 420px;
   max-width: 90vw;
+  flex: none;   /* never let the map squeeze it: current Chrome shrank it to 0px wide, so the table never showed */
   background: #ffffff;
   box-shadow: 4px 0 12px rgba(0, 0, 0, 0.08);
   display: flex;

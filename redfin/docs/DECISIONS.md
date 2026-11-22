@@ -325,6 +325,16 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   Pages build change.
 - **Status**: accepted
 
+## D21. The side panels keep their width in Chrome
+- **Date**: 2026-11-22 (same branch, `feature/neighbourhoods`)
+- **Decision**: `#areasPanel` and `#listingsPanel` are `flex: none` (always 420 px) and `#mainPanel` gets `min-width: 0` with a
+  `minmax(0, 1fr)` column, so the map and insights shrink beside an open panel. In current desktop Chrome (not the Chromium
+  build used for the earlier checks) the active page's neighbourhood table opened at 0 px wide: the insights charts gave
+  `#mainPanel` a large minimum width and the flex layout squeezed the panel instead. That is why the comparison never showed on
+  `/ottawa_active` although the code opened it. Checked in desktop Chrome at 976 to 1464 px wide on both pages; phones unchanged.
+- **Consequences**: CSS only (`static/css/map.css`); no endpoint, daily scrape or Pages build change.
+- **Status**: accepted
+
 ---
 
 ## Proposed (open questions)
