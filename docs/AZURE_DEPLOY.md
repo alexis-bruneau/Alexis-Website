@@ -161,6 +161,26 @@ without creating a revision. A normal **Run workflow** (box unticked) redeploys 
 
 Pull requests do not deploy: only pushes to `master` and a manual run.
 
+## Part 7: the refresh token (so the daily scrape can reload the site)
+
+The daily scrape (`daily_scrape.yml`, 06:00 UTC) ends by calling `POST https://quartierinsights.ca/refresh-data`, which makes the
+running app re-read the new data from Azure Storage. That call is refused unless it carries a password, the **refresh token**.
+You make one up, store it once in GitHub, and the deploy copies it into the Container App.
+
+1. Make a long random value. In PowerShell: `-join ((48..57)+(65..90)+(97..122) | Get-Random -Count 40 | ForEach-Object {[char]$_})`.
+   Copy it; do not paste it into chat, a file in the repo or an issue.
+2. GitHub → repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → name `REFRESH_TOKEN`,
+   value = the random text → **Add secret**.
+3. Run **Deploy to Azure** (Actions → **Deploy to Azure** → **Run workflow**; merging a change to the app does the same). Its step
+   "Store the refresh token as a Container App secret" saves it as the Container App secret `refresh-token` and the new revision
+   gets it as the variable `REFRESH_TOKEN`. In the portal: Container App → **Settings** → **Secrets** lists `refresh-token`.
+4. Run **Daily Redfin Scrape** once by hand (Actions → **Run workflow**) and read its summary: the last line of the "website"
+   block must say the app was reloaded.
+
+To change the token later: change the GitHub secret, then run **Deploy to Azure** again (a running app keeps the old value
+until it gets a new revision). If `REFRESH_TOKEN` is missing from GitHub, the deploy still works (it prints a warning), the
+app refuses every refresh call, and the daily scrape stops at its first step with a message naming the missing secret.
+
 ## Reading the Actions log
 
 1. **Actions** → click the run → click **deploy** (left) → click a step to expand its output.
@@ -223,6 +243,8 @@ To go back to deploying by hand: set the image tag in the portal (Container App 
 
 ## What is not covered here
 
-- The daily scrape writes new data to Azure Storage, but the running app loads its data only when it starts. Getting the app
-  to pick up new data is a separate step (a protected refresh); until then a deploy or a restart of the revision reloads it.
-- `/refresh-data` has no login today. Do not rely on it from outside; it is dealt with in that separate step.
+- The running app loads its data when it starts and again when `/refresh-data` is called with the token (part 7). The daily
+  scrape calls it at the end of every run. If that call fails, the run fails and GitHub emails you; the site keeps showing
+  the previous data until the next successful run, a deploy or a restart.
+- The app runs one worker (D24), so one refresh reaches every visitor. With more workers or replicas, a refresh would reach only
+  the one that received the call.

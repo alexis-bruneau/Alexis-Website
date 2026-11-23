@@ -414,6 +414,28 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
 
 ## Proposed (open questions)
 
+## D26. The scheduled run is the whole daily pipeline, and it reloads the live site through a protected /refresh-data
+- **Date**: 2026-11-22 (`feature/daily-pipeline-ci`)
+- **Decision**: `daily_scrape.yml` (06:00 UTC, master) now runs one command, `python -m redfin.run.daily --limit-sold 200
+  --limit-active 200 --refresh-url https://quartierinsights.ca/refresh-data --require-refresh`, instead of three hand-wired steps
+  (discover, fetch_sold, transform.sold). That adds `transform.text`, the census, `fetch_active`, `transform.active` (homes that
+  sold leave the active list, D14), `redfin.run.verify` (stale silver fails the run, D15) and the reload of the live site.
+  The job fails early when a required secret is missing, uses a `daily-scrape` concurrency group (no two runs at once), has a
+  180-minute timeout and writes the run's summary to the run page.
+- **`/refresh-data` is protected** (it was open, D25's open point): when the env var `REFRESH_TOKEN` is set the caller must send
+  it in the `X-Refresh-Token` header (constant-time compare); when it is not set only loopback callers are accepted. Behind
+  Azure's proxy the app never sees a loopback caller, so a deployed app that lost its secret refuses everyone. A refused call is
+  HTTP 403. `run.daily` reads the token from the `REFRESH_TOKEN` environment variable (never from an argument, never printed).
+- **`--require-refresh`**: an app that cannot be reached is a failed step. Without the flag (local runs) it stays "not running,
+  not a failure" (D15). A refused token or a reload that reports `success: false` fails the run either way.
+- **Volume**: a scheduled run now fetches up to 200 sold + 200 active detail pages plus the ~41-page census (before: up to 300
+  sold pages). Redfin's Terms of Use still prohibit automated access (redfin/CLAUDE.md); the stop-after-8-failures and
+  3-empty-pages rules in `config.py` apply unchanged.
+- **Consequences**: new GitHub secret `REFRESH_TOKEN` and a Container App secret/env var of the same value (setup in
+  docs/AZURE_DEPLOY.md). The deployed app has one worker, so one reload reaches every request (D24). The run edits
+  `data/queue/property_urls.txt` inside the runner only; nothing commits it (as before).
+- **Status**: accepted
+
 ## P1. RAG / Q&A design over listings and insights
 - **Date**: 2026-11-21
 - **Question**: how should "ask a question about the market" work?

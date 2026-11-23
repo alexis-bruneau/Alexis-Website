@@ -65,13 +65,18 @@ def skip(module, why):
     print(f"\n=== {module} === skipped: {why}", flush=True)
 
 
-def refresh_app(url):
+def refresh_app(url, token=None, required=False):
     """Asks the running Flask app to reload silver (POST /refresh-data). Returns (exit code, note): 0 reloaded,
-    None the app is not running (not a failure: it loads the new data when it starts), 1 the reload failed."""
+    None the app is not running (not a failure: it loads the new data when it starts), 1 the reload failed.
+    token: sent as X-Refresh-Token (the deployed app requires it; the app on this machine does not).
+    required: an app that cannot be reached is a failure (the scheduled run asks for the live site, which must be up)."""
     print(f"\n=== {REFRESH} ===", flush=True)
     try:
-        resp = requests.post(url, timeout=120)
+        resp = requests.post(url, timeout=120, **({"headers": {"X-Refresh-Token": token}} if token else {}))
     except requests.exceptions.ConnectionError:
+        if required:
+            print(f"cannot reach {url}", flush=True)
+            return 1, "FAILED (cannot reach the site)"
         print(f"nothing is listening at {url}: the app will load the new data when it is started.", flush=True)
         return None, "not running; it loads the new data when started"
     except requests.RequestException as e:
@@ -172,6 +177,9 @@ def main(argv=None):
                     help="no discovery, fetch or census: only the transforms, the check and the refresh (never contacts redfin.ca)")
     ap.add_argument("--refresh-url", default=DEFAULT_REFRESH_URL, help=f"the app's reload endpoint (default {DEFAULT_REFRESH_URL})")
     ap.add_argument("--no-refresh", action="store_true", help="do not ask the app to reload")
+    ap.add_argument("--require-refresh", action="store_true",
+                    help="an app that cannot be reached fails the run (the scheduled run uses this against the live site). "
+                         "The token for a deployed app comes from the REFRESH_TOKEN environment variable, never from an argument")
     args = ap.parse_args(argv)
     if args.skip_sold and args.skip_active:
         ap.error("--skip-sold and --skip-active together leave nothing to run")
@@ -212,7 +220,8 @@ def main(argv=None):
         flags = (["--sold"] if not args.skip_sold else []) + (["--active"] if not args.skip_active else [])
         codes[VERIFY] = run(VERIFY, dict(env), *flags)
         if not args.no_refresh:
-            codes[REFRESH], refresh_note = refresh_app(args.refresh_url)
+            codes[REFRESH], refresh_note = refresh_app(args.refresh_url, os.environ.get("REFRESH_TOKEN") or None,
+                                                       args.require_refresh)
 
         stats = runstats.read(stats_path)
     finally:
