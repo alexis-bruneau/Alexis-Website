@@ -29,3 +29,11 @@ connection string in the repo, a workflow or a log**: it lives only in the Conta
 - Work on feature branches and open a PR to **master**. Don't push to master directly, and don't merge PRs yourself.
 - **master is production**: the scheduled `daily_scrape.yml` runs from master, and `deploy_pages.yml` publishes the site
   from master, and `deploy_azure.yml` deploys the web app from master. Mention in the PR when a change affects any of them.
+
+## Engineering log (resume)
+
+After completing any change that introduces a new tech component, an architectural or infrastructure decision, a non-trivial
+algorithm, or measurable reliability/perf/cost/security work, add an entry to [docs/ENGINEERING_LOG.md](docs/ENGINEERING_LOG.md)
+(format at the top of that file) in the same PR, and update the "Resume bullets" section if the change is significant. Skip
+routine work (bug fixes, refactors, formatting, small UI tweaks). Never invent metrics: write `TBD`. When unsure, ask me at
+the end of the task rather than adding noise.

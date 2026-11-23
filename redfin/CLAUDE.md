@@ -111,6 +111,9 @@ Production is `.github/workflows/daily_scrape.yml` on **master** (06:00 UTC): di
 When a change alters behaviour or makes a decision, update **docs/STATUS.md** and append to **docs/DECISIONS.md** in the
 same change (same commit). Never edit an old decision entry: add a new one that supersedes it.
 
+If the decision is resume-worthy (new infrastructure, architecture trade-off, non-trivial algorithm or data model, measurable
+reliability/security/cost work), also add an entry to [../docs/ENGINEERING_LOG.md](../docs/ENGINEERING_LOG.md); see "Engineering log (resume)" in the root CLAUDE.md for the bar.
+
 ## Model routing
 
 If the request looks mismatched to the current model, say so in one line and recommend a switch before starting.

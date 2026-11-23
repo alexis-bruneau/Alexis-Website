@@ -18,6 +18,12 @@ first; it has the layout, invariants and doc index.
 - `redfin/docs/DECISIONS.md`: append-only. Add a new entry at the end of the numbered list (next D number, or P number
   for open questions) with date, decision, why, alternatives rejected, status. Never rewrite an old entry; the only
   allowed edit to an old entry is its status line (`superseded by D<n>`).
+- `docs/ENGINEERING_LOG.md` (repo root `docs/`): when you append a D-entry and it meets the bar (new infrastructure or tech component,
+  architecture trade-off, non-trivial algorithm or data model, measurable reliability/security/cost/performance work, production/ops
+  concern), also add an entry at the top of the "Log" section in that file, in the format given at the top of it (dated, grouped per
+  decision, with a `Refs:` line pointing at the D-number). Skip bug fixes, refactors, formatting, renames, small UI tweaks and minor
+  features. Never invent metrics; write `TBD`. Do not touch "Resume bullets"; say in your final list when a bullet may need refreshing.
+  If unsure whether it meets the bar, do not add it; list it as a question instead.
 - Each fact lives in one doc. Link to it instead of repeating it.
 - Allowed shell commands: `git status`, `git diff`, `git log`, `python -m pytest redfin`. Never run anything in
   `redfin.extract` or `redfin.run` (they contact redfin.ca), and never write to Azure.
