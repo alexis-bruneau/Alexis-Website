@@ -12,7 +12,7 @@ Two things live in this repo:
 ```bash
 pip install -r requirements.txt       # Flask app
 pip install -e "./redfin[dev]"        # Redfin package + pytest
-python -m pytest redfin               # all tests
+python -m pytest redfin               # Redfin tests (the web app's analytics tests are in tests/: python -m pytest)
 python app/main.py                    # local Flask app (needs AZURE_STORAGE_CONNECTION_STRING in .env)
 ```
 
@@ -23,6 +23,9 @@ is web-only (no playwright); the scrape and Pages workflows do not use it.
 `.github/workflows/deploy_azure.yml` rebuilds that image in Azure and updates the Container App on master pushes that touch the
 web app (one-time setup, rollback, switching it off: [docs/AZURE_DEPLOY.md](docs/AZURE_DEPLOY.md)). **Never put the storage
 connection string in the repo, a workflow or a log**: it lives only in the Container App secret `conn`.
+
+**Visitor analytics** for the sold map (cookieless page views and daily uniques in Azure Tables, report script, privacy design):
+[docs/ANALYTICS.md](docs/ANALYTICS.md).
 
 ## Branch workflow
 

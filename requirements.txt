@@ -7,3 +7,4 @@ azure-storage-blob
 python-dotenv
 pyarrow
 shapely>=2.0
+azure-data-tables>=12.5

@@ -7,6 +7,14 @@ import numpy as np
 import sys
 import traceback
 from dotenv import load_dotenv
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Page-view counting for the sold map (docs/ANALYTICS.md). Imported as a package module under gunicorn (app.main:app)
+# and as a plain module under `python app/main.py`, where only the app/ folder is on the path.
+try:
+    from . import analytics
+except ImportError:
+    import analytics
 
 # The Redfin pipeline package (pip install -e redfin). These routes only read what it writes to Azure.
 from redfin import config as redfin_config
@@ -206,13 +214,36 @@ def haversine_km(lon1, lat1, lon2, lat2):
 
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
+# The Container Apps ingress is one proxy (Envoy) between the visitor and this app. It appends the address it saw to
+# X-Forwarded-For, so with PROXY_HOPS = 1 the LAST entry is the real visitor, and anything a visitor put in the header
+# themselves sits before it and is ignored. Trusting more hops than there are proxies would let a visitor choose their own
+# address; fewer would give the proxy's address (every visitor the same). Change it if a CDN is ever put in front.
+# Only the client address is taken from the proxy: the host and scheme are left alone (MAP_HOSTS below, redirect()).
+# It also means request.remote_addr is the visitor, which _refresh_allowed() is fine with: it only needs "not loopback".
+PROXY_HOPS = 1
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=PROXY_HOPS, x_proto=0, x_host=0, x_port=0, x_prefix=0)
+
 # On the real-estate domain the front door is the sold map. The portfolio home page is still served on any other host
 # (local development, the long azurecontainerapps.io address) and at /index.html.
 MAP_HOSTS = ("quartierinsights.ca", "www.quartierinsights.ca")
 
+
+def is_map_host():
+    return request.host.split(":")[0].lower() in MAP_HOSTS
+
+
+@app.after_request
+def count_map_pageview(response):
+    """Counts a view of the sold map (analytics.TRACKED_PATHS). On the map hosts "/" answers 302 and the visit is counted
+    at /ottawa_map; on any other host "/" is the portfolio home page, which is not counted."""
+    if request.path != "/" or is_map_host():
+        analytics.track_request(request, response)
+    return response
+
+
 @app.route("/")
 def home():
-    if request.host.split(":")[0].lower() in MAP_HOSTS:
+    if is_map_host():
         # A relative Location, so the browser keeps https (behind Azure's proxy this app only sees http)
         response = redirect("/ottawa_map")
         response.autocorrect_location_header = False
