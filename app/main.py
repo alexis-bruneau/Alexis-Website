@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file, send_from_directory, redirect
+import hmac
 import os
 import duckdb
 import pandas as pd
@@ -218,10 +219,21 @@ def home():
         return response
     return render_template("index.html")
 
+def _refresh_allowed():
+    """Who may call /refresh-data. REFRESH_TOKEN set (the deployed app): the caller must send it in the X-Refresh-Token
+    header. REFRESH_TOKEN not set (local development): only this machine. Behind Azure's proxy the caller is never
+    loopback, so a deployed app that lost its secret refuses everyone instead of accepting anyone."""
+    token = os.environ.get("REFRESH_TOKEN", "")
+    if token:
+        return hmac.compare_digest(request.headers.get("X-Refresh-Token", ""), token)
+    return request.remote_addr in ("127.0.0.1", "::1")
+
 @app.route("/refresh-data", methods=["POST"])
 def refresh_data():
-    """Trigger a data reload from Azure without restarting"""
+    """Trigger a data reload from Azure without restarting (called by redfin.run.daily after the daily pipeline)"""
     global _sold_frame
+    if not _refresh_allowed():
+        return jsonify({"success": False, "message": "forbidden"}), 403
     success, msg = load_data()
     _sold_frame = None  # the sold frame (map, curve, neighbourhoods) is rebuilt from the reloaded data
     active_ok, active_msg = load_active_data()

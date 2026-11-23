@@ -27,6 +27,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
   (`POST /refresh-data`). `python -m redfin.run.daily --transform-only` rebuilds silver from the bronze already saved without
   contacting redfin.ca. Found on 2026-11-21: 150 sold and 150 active pages had been fetched but the transforms had not run, so
   the maps still showed the 2026-10-18 data (50 active listings, no 2026-11 sold file).
+- **The scheduled run is the whole pipeline** (D26, `feature/daily-pipeline-ci`, not merged yet): `daily_scrape.yml` calls
+  `redfin.run.daily` (sold block, census, active block with sold homes removed, verify, reload of quartierinsights.ca). `/refresh-data`
+  now needs the `X-Refresh-Token` header (env `REFRESH_TOKEN`); without that variable only loopback is accepted.
 - **Listing text**: `transform.text` → `silver/listing_text.parquet` (already run against live silver).
 - **Package restructure** (2026-11-21): `redfin/` package, `config.py`, shared browser helpers, lazy Azure client, docs
   under `redfin/docs/`. See D11.
@@ -66,9 +69,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 
 ## Next
 
-0. After the first successful deploy: make the running app pick up the daily scrape's data (the app loads data only at start). Options and a
-   recommendation to be given before any code change; `/refresh-data` is unauthenticated and must not be left open.
-1. Wire `transform.text --incremental --out-prefix silver` into `daily_scrape.yml` after the sold transform.
+0. Merge `feature/daily-pipeline-ci` (D26) and do its one-time setup (the `REFRESH_TOKEN` secret in GitHub and in the Container
+   App, docs/AZURE_DEPLOY.md), then watch the first scheduled run. After that, `daily_scrape.yml` runs the whole pipeline and
+   reloads the live site by itself.
 2. Implement D7 (sold-only `listed_properties`): rebuild into `silver_v2`, expect `compare_silver.py` to show only the ~113
    unsold keys dropped, then switch.
 3. Fix the longitude parser gap (25 rows, see known issues), via the same silver_v2 pattern.
@@ -99,8 +102,8 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 | A partial census shrinks the active list | `transform.active` | rows exist only for MLS in that day's census; `redfin.run.daily` says so in the summary |
 | Reconcile only knows sales that reached silver | `transform.active` | a home sold since the last `transform.sold` shows as active until the next run; matched on MLS only (`listed_properties` rows whose MLS is the page's first `TREB #` can differ from the sold MLS, ACTIVE_LISTINGS.md finding 7) |
 | `/active-points` hides every non-`Active` status, including `Pending` | `app/main.py` | only `Active` and `Off Market` have been seen (the 4-home fixture); check the real census before relying on it |
-| `redfin.run.daily` reloads the app at `http://127.0.0.1:5000/refresh-data` only | `daily.py` | `--refresh-url` for another address; an app that isn't running is not an error. A deployed copy is not refreshed (the Azure app only sees new data after a deploy or restart, D25) |
-| `daily_scrape.yml` does not run `transform.text`, the census or the active path | workflow | the scheduled job stays sold-only; only `redfin.run.daily` (by hand) does the rest |
+| `redfin.run.daily` reloads `http://127.0.0.1:5000/refresh-data` unless told otherwise | `daily.py` | locally an app that isn't running is not an error. The scheduled run passes `--refresh-url https://quartierinsights.ca/refresh-data --require-refresh` and the token in `REFRESH_TOKEN` (D26); unreachable, refused (403) or `success: false` fails the run |
+| The first scheduled run of the whole pipeline (D26) has not happened yet | `daily_scrape.yml` | it was written and tested offline (158 tests, endpoint cases through Flask's test client); the Azure and Redfin sides run for the first time on the first dispatch after merge. Volume rises from 300 sold pages to 200 sold + 200 active + the census |
 | Container is publicly readable, including bronze/silver | Azure | P2 |
 | Manual backups under `silver_backup/<timestamp>/` contain `listed_properties` files | Azure | harmless (the map only reads `silver/`), but nothing documents or cleans them |
 | Map still reads the legacy columns `Days On Market` / `Sold Price Difference` | `app/main.py` | dropping them needs the app switched to the new names first |

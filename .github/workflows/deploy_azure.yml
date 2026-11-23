@@ -109,13 +109,31 @@ jobs:
           # From here on a new revision gets 0% until we say otherwise.
           az containerapp ingress traffic set -n "$APP_NAME" -g "$AZ_RG" --revision-weight "$prev=100" -o none
 
+      - name: Store the refresh token as a Container App secret (the daily scrape needs it to reload the site)
+        if: ${{ !inputs.build_only }}
+        env:
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+        run: |
+          # Same value as the GitHub secret the daily scrape sends in X-Refresh-Token. Without it /refresh-data refuses
+          # everyone (docs/AZURE_DEPLOY.md, part 7); the deploy itself must not be blocked by that.
+          if [ -z "$REFRESH_TOKEN" ]; then
+            echo "::warning::GitHub secret REFRESH_TOKEN is not set: the app deploys without it and /refresh-data refuses every call."
+          else
+            az containerapp secret set -n "$APP_NAME" -g "$AZ_RG" --secrets "refresh-token=$REFRESH_TOKEN" -o none
+            echo "WITH_REFRESH_TOKEN=true" >> "$GITHUB_ENV"
+          fi
+
       - name: Create the new revision (no traffic yet)
         if: ${{ !inputs.build_only }}
         run: |
           suffix="s${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          extra=()
+          if [ "${WITH_REFRESH_TOKEN:-}" = "true" ]; then
+            extra=(--set-env-vars "REFRESH_TOKEN=secretref:refresh-token")
+          fi
           az containerapp update -n "$APP_NAME" -g "$AZ_RG" \
             --image "$ACR_NAME.azurecr.io/$IMAGE_REPO:$GITHUB_SHA" \
-            --revision-suffix "$suffix" -o none
+            --revision-suffix "$suffix" "${extra[@]}" -o none
           echo "NEW_REVISION=$APP_NAME--$suffix" >> "$GITHUB_ENV"
           echo "New revision: $APP_NAME--$suffix"
 

@@ -81,9 +81,10 @@ SILVER_PREFIX=silver_v2 python app/main.py              # look at it on the map
 python -m redfin.transform.sold --out-prefix silver     # switch (back up silver/ first)
 ```
 
-Production is `.github/workflows/daily_scrape.yml` on **master** (06:00 UTC): discover_sold, then fetch_sold
-(`MAX_SCRAPE_COUNT=300`), then `transform.sold --incremental --out-prefix silver`. Needs secrets
-`AZURE_STORAGE_CONNECTION_STRING` and `REDFIN_COOKIES_JSON` (written to `redfin/chrome_cookies.json`).
+Production is `.github/workflows/daily_scrape.yml` on **master** (06:00 UTC): one call to `python -m redfin.run.daily --limit-sold 200
+--limit-active 200 --refresh-url https://quartierinsights.ca/refresh-data --require-refresh` (the whole pipeline, D26): the run fails when
+silver is stale or the live site cannot be reloaded. Needs secrets `AZURE_STORAGE_CONNECTION_STRING`, `REFRESH_TOKEN` (same value as the
+Container App's; `/refresh-data` refuses calls without it) and optionally `REDFIN_COOKIES_JSON` (written to `redfin/chrome_cookies.json`).
 
 ## Redfin rate limits and Terms of Use
 

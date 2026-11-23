@@ -81,9 +81,13 @@ class DailyTest(unittest.TestCase):
         patch.start()
         self.addCleanup(patch.stop)
 
-    def run_daily(self, *argv, codes=None, new_urls=0, stats=None, post=None):
-        """-> (exit code, fake subprocess, output, requests.post mock). `events` lists subprocess modules and 'POST' in order."""
+    def run_daily(self, *argv, codes=None, new_urls=0, stats=None, post=None, token=None):
+        """-> (exit code, fake subprocess, output, requests.post mock). `events` lists subprocess modules and 'POST' in order.
+        token: the REFRESH_TOKEN of the environment (none by default, whatever the developer's shell has)."""
         events = []
+        env = {k: v for k, v in os.environ.items() if k != "REFRESH_TOKEN"}
+        if token:
+            env["REFRESH_TOKEN"] = token
         fake = FakeRedfin(self.urls_file, events, codes, new_urls, STATS if stats is None else stats)
         post = post or mock.Mock(return_value=reply())
 
@@ -93,7 +97,7 @@ class DailyTest(unittest.TestCase):
 
         out = io.StringIO()
         with mock.patch("subprocess.call", fake), mock.patch("redfin.run.daily.requests.post", recording_post), \
-                contextlib.redirect_stdout(out):
+                mock.patch.dict(os.environ, env, clear=True), contextlib.redirect_stdout(out):
             code = daily.main(list(argv))
         return code, fake, out.getvalue(), post
 
@@ -253,6 +257,28 @@ class DailyTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("app reloaded             not running; it loads the new data when started", out)
         self.assertIn("app.refresh            skipped (app not running)", out)
+
+    def test_the_token_goes_in_a_header_only_when_there_is_one(self):
+        live = "https://quartierinsights.ca/refresh-data"
+        _, _, _, post = self.run_daily("--refresh-url", live, token="s3cret")
+        post.assert_called_once_with(live, timeout=120, headers={"X-Refresh-Token": "s3cret"})
+        _, _, _, post = self.run_daily("--refresh-url", live)
+        post.assert_called_once_with(live, timeout=120)
+
+    def test_the_token_is_never_printed(self):
+        _, _, out, _ = self.run_daily(token="s3cret")
+        self.assertNotIn("s3cret", out)
+
+    def test_a_site_that_cannot_be_reached_fails_a_run_that_requires_the_refresh(self):
+        post = mock.Mock(side_effect=requests.exceptions.ConnectionError("refused"))
+        code, _, out, _ = self.run_daily("--require-refresh", post=post)
+        self.assertEqual(code, 1)
+        self.assertIn("app reloaded             FAILED (cannot reach the site)", out)
+
+    def test_a_refused_token_fails_the_run(self):
+        code, _, out, _ = self.run_daily(post=mock.Mock(return_value=reply(ok=False, body={"success": False, "message": "forbidden"}, status=403)))
+        self.assertEqual(code, 1)
+        self.assertIn("app reloaded             FAILED", out)
 
     def test_a_reload_that_the_app_reports_as_failed_fails_the_run(self):
         body = {"success": True, "message": "ok", "active": {"success": False, "message": "silver/active/listings.parquet not found"}}

@@ -1,16 +1,48 @@
 name: Daily Redfin Scrape
 
+# The whole daily pipeline, in the order python -m redfin.run.daily runs it:
+#   sold:    discover new URLs -> fetch pages into bronze -> transform into silver (+ listing text)
+#   active:  census of every for-sale home -> fetch detail pages -> transform into silver/active (sold homes removed)
+#   check:   redfin.run.verify (silver is as new as bronze and the census); stale = the run FAILS
+#   reload:  POST /refresh-data on the live site, so quartierinsights.ca shows the new data; unreachable or refused = FAILS
+# A failed run emails the repo owner (GitHub's default). The summary of every run is on the run's page.
+# Needs the secrets AZURE_STORAGE_CONNECTION_STRING, REFRESH_TOKEN (same value as the Container App secret, docs/AZURE_DEPLOY.md)
+# and, optionally, REDFIN_COOKIES_JSON.
+
 on:
   schedule:
     # Runs at 06:00 UTC every day (approx 1:00 AM EST)
     - cron: '0 6 * * *'
   workflow_dispatch:  # Allows manual triggering from GitHub UI
 
+# One run at a time: a manual run started while the scheduled one is going waits instead of fetching in parallel.
+concurrency:
+  group: daily-scrape
+  cancel-in-progress: false
+
+env:
+  SITE_URL: https://quartierinsights.ca
+
 jobs:
   scrape-and-upload:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 180
+
     steps:
+      - name: Check the secrets are set (before anything contacts Redfin)
+        env:
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+        run: |
+          missing=0
+          for name in AZURE_STORAGE_CONNECTION_STRING REFRESH_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The GitHub secret $name is not set (Settings > Secrets and variables > Actions)."
+              missing=1
+            fi
+          done
+          exit $missing
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -38,24 +70,27 @@ jobs:
             echo "No REDFIN_COOKIES_JSON secret set; continuing without cookies."
           fi
 
-      - name: Discover New Properties
+      - name: Daily pipeline (fetch, transform, remove sold from active, verify, reload the site)
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
         run: |
-          python -m redfin.extract.discover_sold
+          # bash runs this with pipefail, so a failing daily run fails the step even through tee.
+          python -m redfin.run.daily \
+            --limit-sold 200 --limit-active 200 \
+            --refresh-url "$SITE_URL/refresh-data" --require-refresh \
+            2>&1 | tee daily.log
 
-      - name: Extract (fetch pages into bronze)
-        env:
-          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
-          # Cap per scheduled run so it always finishes; locally the default is "all pending".
-          MAX_SCRAPE_COUNT: 300
-        run: |
-          python -m redfin.extract.fetch_sold
-
-      - name: Transform (bronze to silver)
-        # Also runs when extract stopped early, so pages already saved still reach silver.
+      - name: Publish the run summary
         if: always()
-        env:
-          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
         run: |
-          python -m redfin.transform.sold --incremental --out-prefix silver
+          {
+            echo '### Daily pipeline'
+            echo '```'
+            if grep -q '=== summary ===' daily.log 2>/dev/null; then
+              sed -n '/=== summary ===/,$p' daily.log
+            else
+              echo "The run stopped before it produced a summary; see the step log."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
