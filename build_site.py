@@ -16,7 +16,7 @@ EXCLUDE_STATIC = {"js/map.js", "js/neighbourhoods.js", "js/active.js", "css/map.
 
 # The real-estate dashboard runs on Azure (Container App ca-alexis-web) under its own domain. The published menu links
 # there; change this one line if the address changes.
-DASHBOARD_URL = "https://www.quartierinsights.ca/ottawa_map"
+DASHBOARD_URL = "https://quartierinsights.ca/ottawa_map"
 
 
 def main():
