@@ -45,6 +45,8 @@ redfin/scripts/
 # The scraper's URL queue (the web app never reads it)
 redfin/data/queue/
 test/
+tests/
+scripts/
 docs/
 
 # ---- Editor, assistant and OS files ----
