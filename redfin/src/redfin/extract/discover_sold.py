@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""DISCOVERY (sold): page through redfin.ca's "sold in the last 3 years" search, newest sale first, and append
-listing URLs that are not yet known (in silver or in the queue) to the queue file (config.URLS_FILE).
+"""DISCOVERY (sold): page through redfin.ca's "sold in the last 3 years" search, newest sale first, and put the
+listing URLs that are not yet in silver at the TOP of the queue file (config.URLS_FILE), in that order. URLs queued
+earlier that this run did not see stay below them. extract.fetch_sold takes the queue from the top, so each run
+fetches the newest sales first and spends what is left of its limit on older ones.
 
-Stops after MAX_NEW_URLS new URLs, at the end of the results, or after 3 pages in a row without listings
+Stops after MAX_NEW_URLS such URLs, at the end of the results, or after 3 pages in a row without listings
 (Redfin is blocking us). When blocked it saves one screenshot to config.DEBUG_SCREENSHOT and exits with code 2.
 
     python -m redfin.extract.discover_sold                   # up to MAX_NEW_URLS (default 500) new URLs
@@ -52,31 +54,37 @@ def get_latest_azure_urls():
         print(f"Error fetching Azure data: {e}")
         return set()
 
-def get_local_urls():
+def read_queue():
+    """The queued URLs, in file order."""
     if not config.URLS_FILE.exists():
-        return set()
+        return []
     with config.URLS_FILE.open("r", encoding="utf-8") as f:
-        return set(line.strip() for line in f if line.strip())
+        return [line.strip() for line in f if line.strip()]
 
-def save_urls(new_urls):
-    # Append to file
-    with config.URLS_FILE.open("a", encoding="utf-8") as f:
-        for url in new_urls:
-            f.write(f"{url}\n")
-    print(f"✅ Saved {len(new_urls)} new URLs to {config.URLS_FILE}")
+def save_urls(found):
+    """Rewrites the queue: the URLs found by this run (newest sale first) on top, then every other queued URL in its
+    old order. A home that was already queued moves up to its place in this run and is not listed twice."""
+    def home(url):
+        return property_id(url) or url
+
+    queued = read_queue()
+    found_homes = {home(u) for u in found}
+    queued_homes = {home(u) for u in queued}
+    rest = [u for u in queued if home(u) not in found_homes]
+    with config.URLS_FILE.open("w", encoding="utf-8") as f:
+        f.writelines(f"{url}\n" for url in found + rest)
+    print(f"✅ Put {len(found)} URLs at the top of {config.URLS_FILE} "
+          f"({len(found_homes - queued_homes)} new to the queue, {len(rest)} older ones below)")
 
 # ---------------- Main Logic ----------------------------------------------
 
 def main():
     argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter).parse_args()
-    # 1. Load Ignore List
-    azure_urls = get_latest_azure_urls()
-    local_urls = get_local_urls()
-    
-    known_urls = azure_urls.union(local_urls)
-    known_ids = {property_id(u) for u in known_urls}
-    print(f"ℹ️ Total known URLs to ignore: {len(known_urls)}")
-    
+    # 1. Load Ignore List: only what is already in silver. A URL still waiting in the queue is NOT ignored: finding it
+    # again puts it back in its place by sale date (save_urls), ahead of older ones.
+    known_ids = {property_id(u) for u in get_latest_azure_urls()}
+    print(f"ℹ️ Homes already in silver to ignore: {len(known_ids)}")
+
     new_found = []
     blocked = False
     

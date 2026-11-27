@@ -7,7 +7,7 @@ Environment (read once, at import; `.env` at the repo root is loaded first, real
     AZURE_STORAGE_CONNECTION_STRING  required by anything that touches Azure
     MAX_SCRAPE_COUNT          sold extract: max pages per run, 0 = every pending URL (the daily Action sets 300)
     MAX_CONSECUTIVE_FAILURES  extract: stop after this many failed fetches in a row (blocked / cookies expired)
-    MAX_NEW_URLS              sold discovery: max new URLs per run
+    MAX_NEW_URLS              sold discovery: max URLs not yet in silver per run
     CENSUS_SLICE_MAX          census: a price band with more results than this is split
     SAVE_STREETVIEW           "1" (default) = use Google Street View as the fallback photo
     REDFIN_COOKIE_FILE        override the cookie file location

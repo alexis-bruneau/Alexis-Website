@@ -5,8 +5,9 @@ Each step is a subprocess. Needs AZURE_STORAGE_CONNECTION_STRING and the Redfin 
 steps themselves. This contacts redfin.ca (discovery, 200 sold pages, the ~41-page census, 200 active pages): run it
 yourself, once a day, not in a loop.
 
-  sold block     1 extract.discover_sold   new sold URLs into the queue file (edits the committed data/queue/property_urls.txt)
-                 2 extract.fetch_sold      up to --limit-sold pages into bronze/<day>/
+  sold block     1 extract.discover_sold   sold URLs not yet in silver to the top of the queue file, newest sale first (edits
+                                           the committed data/queue/property_urls.txt)
+                 2 extract.fetch_sold      up to --limit-sold pages into bronze/<day>/, from the top of the queue
                  3 transform.sold          --incremental --out-prefix silver (also when step 2 stopped early)
                  4 transform.text          --incremental --out-prefix silver: listing descriptions (nothing on the maps reads them yet)
   active block   5 extract.census          today's snapshot of every for-sale home

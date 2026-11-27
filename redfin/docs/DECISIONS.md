@@ -436,6 +436,22 @@ Status: `accepted` (in force), `accepted, not implemented`, `proposed` (open que
   `data/queue/property_urls.txt` inside the runner only; nothing commits it (as before).
 - **Status**: accepted
 
+## D27. The sold queue is fetched newest sale first: discovery puts what it finds on top
+- **Date**: 2026-11-26 (`fix/sold-queue-newest-first`)
+- **Problem**: `discover_sold` appended new URLs to the end of the queue and `fetch_sold` takes pending URLs from the top.
+  While the committed queue held a backlog, the daily run fetched only old sales: on 2026-11-26 all 200 pages were sales of
+  Sep 8 to 15, the map stayed at Nov 22, and the 533 URLs just discovered were dropped with the runner. `run.verify` passed,
+  because silver did hold everything that had been fetched.
+- **Decision**: discovery ignores only homes already in silver (no longer the queued ones) and rewrites the queue with
+  everything it found on top, in Redfin's newest-sale-first order; the other queued URLs follow in their old order, one line
+  per home. `fetch_sold` is unchanged: new sales get the first slots of `--limit-sold`, older ones what is left.
+- **Why not only prepend the unqueued ones**: discovery finds up to `MAX_NEW_URLS` (500) URLs each run, more than a run
+  fetches, so older queued homes would stay behind them for good. Found again, they take their place by sale date.
+- **Consequences**: no extra requests to redfin.ca (queued URLs now count toward the 500, so discovery can stop sooner).
+  `MAX_NEW_URLS` now caps the URLs not yet in silver. The queue is still not committed by the Action (D26); that no longer
+  delays new sales, since each run rediscovers them.
+- **Status**: accepted
+
 ## P1. RAG / Q&A design over listings and insights
 - **Date**: 2026-11-21
 - **Question**: how should "ask a question about the market" work?
