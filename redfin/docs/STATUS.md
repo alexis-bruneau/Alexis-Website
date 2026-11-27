@@ -5,6 +5,9 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 
 ## Done
 
+- **New sales are fetched first** (D27, `fix/sold-queue-newest-first`, 2026-11-26, tested offline, **not yet run against
+  redfin.ca**): discovery puts the sales not yet in silver on top of the queue, newest first; older queued URLs get what is
+  left of the limit. Before, a backlog in the committed queue kept the live map at 2026-11-22.
 - **Sold pipeline in production** (daily on master): discover_sold → fetch_sold (≤ 300 pages/run) → `transform.sold
   --incremental --out-prefix silver`. Live silver: 7,577 listings in 3 monthly `listed_properties` files, plus
   `silver/sale_history.parquet`.
@@ -95,7 +98,8 @@ behaviour change (see redfin/CLAUDE.md, "End of task").
 | ~113 unsold listings in `listed_properties` show as sales | transform writes every parsed page | D7, not implemented |
 | `transform.text` and the whole active path are not in `daily_scrape.yml` | workflow | run by hand for now |
 | Re-sales of a known home are never fetched | `discover_sold` and `fetch_sold` dedup on `property_id` | fixed by the planned `fetch_plan()` (ACTIVE_LISTINGS.md §6) |
-| Discovered URLs beyond the 300-page cap are not kept by the Action | the runner appends to `data/queue/property_urls.txt` but never commits it | queue updates only land when someone commits them locally |
+| Discovered URLs beyond the run's page limit are not kept by the Action | the runner rewrites `data/queue/property_urls.txt` but never commits it | queue updates only land when someone commits them locally. New sales are rediscovered and fetched first (D27); older queued URLs that Redfin's search no longer reaches wait below everything it finds |
+| A run can pass while the newest sale on the map falls behind | `run/verify.py` checks silver against bronze, not how recent the sales are | seen 2026-11-26 (D27). The run summary does not print the newest sale date |
 | `fetch_sold` / `fetch_active` stop after 8 failures in a row; `fetch_sold` still exits 0 then | `extract/fetch_sold.py` | `redfin.run.daily` can't see it from the exit code, so it reads `stopped_early` from the step's counts and prints a warning (exit code unchanged: `daily_scrape.yml` depends on it) |
 | One failed page makes `fetch_active` exit 2 | `extract/fetch_active.py` | `redfin.run.daily` then reports that step as failed (exit 1) although the other pages were saved |
 | Active rows with a stale page keep an approximate `last_change_date` | `transform.active` | a price change since the page was fetched is dated as the census day; `page_day` shows how old the page is |

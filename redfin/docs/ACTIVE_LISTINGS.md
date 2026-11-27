@@ -17,7 +17,7 @@ Measured on the live container on 2026-10-18 (one-off read-only queries, not com
 | Claim | Verified? | Where |
 |---|---|---|
 | Daily Action runs discovery → extract → transform | Yes, as three workflow steps (not via `redfin.pipeline`, which is the local equivalent) | `.github/workflows/daily_scrape.yml` |
-| Discovery pages `sold-3yr`, dedups against silver + the URL queue, stops after 3 empty pages | Yes. Dedup is by **property_id** | `extract/discover_sold.py` |
+| Discovery pages `sold-3yr`, dedups against silver, stops after 3 empty pages | Yes. Dedup is by **property_id**. What it finds goes on top of the URL queue, newest sale first (D27) | `extract/discover_sold.py` |
 | Extract writes `bronze/<day>/<name>.html.gz`, skips property ids in silver | Yes. Name = MLS or `P<property_id>`; one page per name per day (`put_bronze` refuses overwrite) | `extract/fetch_sold.py`, `storage/azure_store.py` `put_bronze` |
 | Transform: newest bronze page per listing wins, monthly `listed_properties`, `--incremental`, `silver_v2` + `scripts/compare_silver.py` | Yes. `--incremental` skips any `(property_id, MLS)` already written, so **a row is never updated** once written | `transform/sold.py` `main` |
 | Sale history is a separate event table | Yes, and it is no longer a CSV: `silver/sale_history.parquet`, keyed by `property_id`, each event tagged with its `mls` | `parsing.history_rows`, `transform/sold.py` `write_sale_history` |

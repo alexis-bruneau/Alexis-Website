@@ -4,8 +4,9 @@
 No parsing happens here. Turning the HTML into rows (and fetching images) is redfin.transform.sold's job,
 so a parser fix never needs another visit to redfin.ca. Bronze pages are written once and never changed.
 
-Which URLs are pending: the ones in the queue (config.URLS_FILE) that are not yet in silver. Run
-redfin.transform.sold afterwards so silver catches up, otherwise the next extract fetches the same pages again.
+Which URLs are pending: the ones in the queue (config.URLS_FILE) that are not yet in silver, taken from the top of
+the file (extract.discover_sold keeps the newest sales there). Run redfin.transform.sold afterwards so silver catches
+up, otherwise the next extract fetches the same pages again.
 
     python -m redfin.extract.fetch_sold              # every pending URL (or MAX_SCRAPE_COUNT)
     python -m redfin.extract.fetch_sold --limit 20   # at most 20 pages
